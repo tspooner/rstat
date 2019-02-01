@@ -2,7 +2,7 @@ use consts::{PI, PI_16, THREE_HALVES};
 use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
-use std::fmt;
+use std::{f64::INFINITY, fmt};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Levy {
@@ -53,11 +53,11 @@ impl ContinuousDistribution for Levy {
 
 impl UnivariateMoments for Levy {
     fn mean(&self) -> f64 {
-        unimplemented!("Mean of the Levy distribution always diverges to infinity.")
+        INFINITY
     }
 
     fn variance(&self) -> f64 {
-        unimplemented!("Variance of the Levy distribution always diverges to infinity.")
+        INFINITY
     }
 
     fn skewness(&self) -> f64 {
@@ -69,19 +69,20 @@ impl UnivariateMoments for Levy {
     }
 }
 
-// impl Quantiles for Levy {
-    // fn quantile(&self, p: Probability) -> f64 {
-        // unimplemented!()
-    // }
+impl Quantiles for Levy {
+    fn quantile(&self, _: Probability) -> f64 {
+        unimplemented!()
+    }
 
-    // fn median(&self) -> f64 {
-        // if self.mu.abs() < 1e-7 {
-            // unimplemented!()
-        // } else {
-            // unimplemented!("Median of the Levy distribution is defined only for mu = 0.")
-        // }
-    // }
-// }
+    fn median(&self) -> f64 {
+        if self.mu.abs() < 1e-7 {
+            // TODO
+            unimplemented!("Need an implementation of the inverse ERFC function.")
+        } else {
+            unimplemented!("Median of the Levy distribution is defined only for mu = 0.")
+        }
+    }
+}
 
 impl Modes for Levy {
     fn modes(&self) -> Vec<f64> {
