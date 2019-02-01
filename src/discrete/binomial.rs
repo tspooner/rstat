@@ -2,7 +2,7 @@ use consts::PI_E;
 use core::*;
 use discrete::Bernoulli;
 use rand::Rng;
-use spaces::{Matrix, discrete::Discrete};
+use spaces::{Matrix, discrete::Ordinal};
 use std::fmt;
 use super::choose;
 
@@ -27,9 +27,9 @@ impl Binomial {
 }
 
 impl Distribution for Binomial {
-    type Support = Discrete;
+    type Support = Ordinal;
 
-    fn support(&self) -> Discrete { Discrete::new(self.n as usize) }
+    fn support(&self) -> Ordinal { Ordinal::new(self.n as usize) }
 
     fn cdf(&self, k: usize) -> Probability {
         use special_fun::FloatSpecial;

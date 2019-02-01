@@ -1,6 +1,6 @@
 use core::*;
 use rand::Rng;
-use spaces::{Vector, Matrix, discrete::Discrete, product::RegularSpace};
+use spaces::{Vector, Matrix, discrete::Ordinal, product::LinearSpace};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -31,30 +31,30 @@ impl Multinomial {
 }
 
 impl Distribution for Multinomial {
-    type Support = RegularSpace<Discrete>;
+    type Support = LinearSpace<Ordinal>;
 
-    fn support(&self) -> RegularSpace<Discrete> {
-        RegularSpace::new(vec![Discrete::new(self.n); self.ps.len()])
+    fn support(&self) -> LinearSpace<Ordinal> {
+        LinearSpace::new(vec![Ordinal::new(self.n); self.ps.len()])
     }
 
-    fn cdf(&self, _: Vec<usize>) -> Probability {
+    fn cdf(&self, _: Vector<usize>) -> Probability {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<usize> {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vector<usize> {
         unimplemented!()
     }
 }
 
 impl DiscreteDistribution for Multinomial {
-    fn pmf(&self, xs: Vec<usize>) -> Probability {
+    fn pmf(&self, xs: Vector<usize>) -> Probability {
         match xs.iter().fold(0, |acc, x| acc + *x) {
             0 => Probability(0.0),
             _ => Probability(self.logpmf(xs).exp()),
         }
     }
 
-    fn logpmf(&self, xs: Vec<usize>) -> f64 {
+    fn logpmf(&self, xs: Vector<usize>) -> f64 {
         assert_len!(xs => self.ps.len(); K);
 
         if xs.iter().fold(0, |acc, v| acc + *v) == self.n {

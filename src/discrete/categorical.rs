@@ -1,6 +1,6 @@
 use core::*;
 use rand::Rng;
-use spaces::{Vector, discrete::Discrete};
+use spaces::{Vector, discrete::Ordinal};
 use std::fmt;
 
 pub type Multinoulli = Categorical;
@@ -19,9 +19,9 @@ impl Categorical {
 }
 
 impl Distribution for Categorical {
-    type Support = Discrete;
+    type Support = Ordinal;
 
-    fn support(&self) -> Discrete { Discrete::new(self.ps.len() as usize) }
+    fn support(&self) -> Ordinal { Ordinal::new(self.ps.len() as usize) }
 
     fn cdf(&self, _: usize) -> Probability {
         unimplemented!()
