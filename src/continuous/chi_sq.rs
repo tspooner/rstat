@@ -27,7 +27,7 @@ impl Distribution for ChiSq {
         let k = self.k as f64;
         let ko2 = k / 2.0;
 
-        (ko2.gammainc(ko2) / ko2.gamma()).into()
+        (ko2.gammainc(x / 2.0) / ko2.gamma()).into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
