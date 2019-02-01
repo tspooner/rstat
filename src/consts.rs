@@ -1,3 +1,4 @@
+#![allow(unused)]
 pub use std::f64::consts::{E, PI};
 
 pub const PI_E: f64 = PI * E;
@@ -6,6 +7,7 @@ pub const PI_E_2: f64 = PI_E * 2.0;
 pub const PI_16: f64 = PI * 16.0;
 pub const PI_OVER_2: f64 = PI / 2.0;
 pub const PI_OVER_4: f64 = PI / 4.0;
+pub const PI2_OVER_6: f64 = PI2 / 6.0;
 
 pub const PI2: f64 = PI * PI;
 pub const PI3: f64 = PI * PI * PI;
