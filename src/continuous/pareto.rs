@@ -1,7 +1,7 @@
 use core::*;
 use rand::Rng;
-use spaces::{Matrix, continuous::Interval};
-use std::fmt;
+use spaces::{continuous::Interval, Matrix};
+use std::{f64::INFINITY, fmt};
 
 #[derive(Debug, Clone, Copy)]
 pub struct Pareto {
@@ -57,25 +57,25 @@ impl ContinuousDistribution for Pareto {
 impl UnivariateMoments for Pareto {
     fn mean(&self) -> f64 {
         if self.alpha <= 1.0 {
-            unimplemented!("Mean is infinite for alpha <= 1.")
+            INFINITY
+        } else {
+            self.alpha * self.x_m / (self.alpha - 1.0)
         }
-
-        self.alpha * self.x_m / (self.alpha - 1.0)
     }
 
     fn variance(&self) -> f64 {
         if self.alpha <= 2.0 {
-            unimplemented!("Variance is infinite for alpha <= 2.")
+            INFINITY
+        } else {
+            let am1 = self.alpha - 1.0;
+
+            self.x_m * self.x_m * self.alpha / am1 / am1 / (self.alpha - 2.0)
         }
-
-        let am1 = self.alpha - 1.0;
-
-        self.x_m * self.x_m * self.alpha / am1 / am1 / (self.alpha - 2.0)
     }
 
     fn skewness(&self) -> f64 {
         if self.alpha <= 3.0 {
-            unimplemented!("Variance is infinite for alpha <= 3.")
+            unimplemented!("Variance is undefined for alpha <= 3.")
         }
 
         2.0 * (1.0 + self.alpha) / (self.alpha - 3.0) * ((self.alpha - 2.0) / self.alpha).sqrt()
@@ -83,14 +83,16 @@ impl UnivariateMoments for Pareto {
 
     fn excess_kurtosis(&self) -> f64 {
         if self.alpha <= 4.0 {
-            unimplemented!("Kurtosis is infinite for alpha <= 4.")
+            unimplemented!("Kurtosis is undefined for alpha <= 4.")
         }
 
         let a2 = self.alpha * self.alpha;
         let a3 = a2 * self.alpha;
 
-        6.0 * (a3 + a2 - 6.0 * self.alpha - 2.0) /
-            self.alpha / (self.alpha - 3.0) / (self.alpha - 4.0)
+        6.0 * (a3 + a2 - 6.0 * self.alpha - 2.0)
+            / self.alpha
+            / (self.alpha - 3.0)
+            / (self.alpha - 4.0)
     }
 }
 
