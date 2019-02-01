@@ -72,7 +72,7 @@ impl UnivariateMoments for Bernoulli {
 }
 
 impl Quantiles for Bernoulli {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

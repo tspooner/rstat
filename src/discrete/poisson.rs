@@ -25,11 +25,11 @@ impl Distribution for Poisson {
 
     fn support(&self) -> Naturals { Naturals }
 
-    fn cdf(&self, k: u64) -> Probability {
+    fn cdf(&self, _: u64) -> Probability {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 {
         unimplemented!()
     }
 }
@@ -51,7 +51,7 @@ impl UnivariateMoments for Poisson {
 }
 
 impl Quantiles for Poisson {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

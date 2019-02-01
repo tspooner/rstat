@@ -78,7 +78,7 @@ impl UnivariateMoments for Binomial {
 }
 
 impl Quantiles for Binomial {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
