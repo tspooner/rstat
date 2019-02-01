@@ -61,12 +61,17 @@ pub trait Quantiles: Distribution {
     /// The quantile function specifies the value `x` of a random variable `X` at which the
     /// probability is less than or equal to `p`: `Q(p) = inf{ x in R : p <= F(x)}`. For continuous
     /// and strictly monotonically increasing CDFs, it takes the exact form: `Q = 1 / F`.
-    fn quantile(&self, p: Probability) -> f64;
+    fn quantile(&self, p: Probability) -> f64 {
+        self.cquantile(!p)
+    }
 
     /// Evaluates the complementary quantile function at `x`: `Q(1 - p)`.
     fn cquantile(&self, p: Probability) -> f64 {
         self.quantile(!p)
     }
+
+    /// Computes the lower quartile of the distribution, `Q(0.25)`.
+    fn lower_quartile(&self) -> f64 { self.quantile(Probability(0.25)) }
 
     /// Computes the median value of the distribution, `Q(0.5)`.
     ///
@@ -74,6 +79,24 @@ pub trait Quantiles: Distribution {
     /// however, that you provide specialised version as it is generally more efficient than
     /// evaluating `Q`.
     fn median(&self) -> f64 { self.quantile(Probability(0.5)) }
+
+    /// Computes the upper quartile of the distribution, `Q(0.75)`.
+    fn upper_quartile(&self) -> f64 { self.quantile(Probability(0.75)) }
+
+    /// Computes the interquartile range (IQR) of the distribution, `Q(0.75) - Q(0.25)`.
+    fn iqr(&self) -> f64 { self.upper_quartile() - self.lower_quartile() }
+
+    /// Computes the lower fence of the distribution, `Q(0.25) - 1.5 · IQR`.
+    ///
+    /// The lower fence is typically used to define the lower limit of the distribution, beyond
+    /// which values are deemed outliers.
+    fn lower_fence(&self) -> f64 { self.lower_quartile() - 1.5 * self.iqr() }
+
+    /// Computes the lower fence of the distribution, `Q(0.75) + 1.5 · IQR`.
+    ///
+    /// The upper fence is typically used to define the upper limit of the distribution, beyond
+    /// which values are deemed outliers.
+    fn upper_fence(&self) -> f64 { self.upper_quartile() + 1.5 * self.iqr() }
 }
 
 pub trait Modes: Distribution {
