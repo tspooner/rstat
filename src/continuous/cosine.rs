@@ -1,4 +1,4 @@
-use consts::{ONE_THIRD, TWO_OVER_PI2, PI2, PI4};
+use consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2};
 use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
@@ -12,7 +12,19 @@ pub struct Cosine {
 
 impl Cosine {
     pub fn new(mu: f64, s: f64) -> Cosine {
+        assert_positive_real!(s);
+
         Cosine { mu, s }
+    }
+
+    #[inline]
+    fn z(&self, x: f64) -> f64 {
+        (x - self.mu) / self.s
+    }
+
+    #[inline]
+    fn hvc(&self, x: f64) -> f64 {
+        ((self.z(x) * PI).cos() + 1.0) / 2.0
     }
 }
 
@@ -24,7 +36,9 @@ impl Distribution for Cosine {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        unimplemented!()
+        let z = self.z(x);
+
+        (0.5 * (1.0 + z + ONE_OVER_PI * (z * PI).sin())).into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
