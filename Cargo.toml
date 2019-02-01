@@ -5,6 +5,6 @@ authors = ["Tom Spooner <spooner10000@gmail.com>"]
 
 [dependencies]
 rand = "0.6"
-spaces = "3.3"
+spaces = "4.2"
 ndarray = "0.12"
 special-fun = "0.1"
