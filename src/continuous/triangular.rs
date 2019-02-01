@@ -1,4 +1,4 @@
-use consts::{THREE_HALVES, THREE_FIFTHS, TWELVE_FIFTHS};
+use consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS};
 use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
@@ -32,7 +32,9 @@ impl Triangular {
 impl Distribution for Triangular {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::bounded(self.a, self.b) }
+    fn support(&self) -> Interval {
+        Interval::bounded(self.a, self.b)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         if x <= self.a {
@@ -43,7 +45,8 @@ impl Distribution for Triangular {
             1.0 - (self.b - x) * (self.b - x) / (self.b - self.a) / (self.b - self.c)
         } else {
             1.0
-        }.into()
+        }
+        .into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -63,7 +66,8 @@ impl ContinuousDistribution for Triangular {
             2.0 * (self.b - x) / (self.b - self.a) / (self.b - self.c)
         } else {
             0.0
-        }.into()
+        }
+        .into()
     }
 }
 
@@ -80,26 +84,29 @@ impl UnivariateMoments for Triangular {
     }
 
     fn skewness(&self) -> f64 {
-
         let sq_terms = self.a * self.a + self.b * self.b + self.c * self.c;
         let cross_terms = self.a * self.b + self.a * self.c + self.b * self.c;
 
-        let numerator = 2.0f64.sqrt() *
-            (self.a + self.b - 2.0 * self.c) *
-            (2.0 * self.a - self.b - self.c) *
-            (self.a - 2.0 * self.b + self.c);
+        let numerator = 2.0f64.sqrt()
+            * (self.a + self.b - 2.0 * self.c)
+            * (2.0 * self.a - self.b - self.c)
+            * (self.a - 2.0 * self.b + self.c);
         let denominator = 5.0 * (sq_terms - cross_terms).powf(THREE_HALVES);
 
         numerator / denominator
     }
 
-    fn kurtosis(&self) -> f64 { TWELVE_FIFTHS }
+    fn kurtosis(&self) -> f64 {
+        TWELVE_FIFTHS
+    }
 
-    fn excess_kurtosis(&self) -> f64 { -THREE_FIFTHS }
+    fn excess_kurtosis(&self) -> f64 {
+        -THREE_FIFTHS
+    }
 }
 
 impl Quantiles for Triangular {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
@@ -115,7 +122,9 @@ impl Quantiles for Triangular {
 }
 
 impl Modes for Triangular {
-    fn modes(&self) -> Vec<f64> { vec![self.c] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.c]
+    }
 }
 
 impl Entropy for Triangular {

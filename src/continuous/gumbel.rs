@@ -32,7 +32,9 @@ impl Default for Gumbel {
 impl Distribution for Gumbel {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         let z = self.z(x);
@@ -80,7 +82,7 @@ impl UnivariateMoments for Gumbel {
 }
 
 impl Quantiles for Gumbel {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

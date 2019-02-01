@@ -1,7 +1,7 @@
 use consts::PI_2;
 use core::*;
 use rand::Rng;
-use spaces::{Matrix, continuous::PositiveReals};
+use spaces::{continuous::PositiveReals, Matrix};
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -24,14 +24,19 @@ impl LogNormal {
 
 impl Default for LogNormal {
     fn default() -> LogNormal {
-        LogNormal { mu: 0.0, sigma: 1.0 }
+        LogNormal {
+            mu: 0.0,
+            sigma: 1.0,
+        }
     }
 }
 
 impl Distribution for LogNormal {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -78,7 +83,7 @@ impl UnivariateMoments for LogNormal {
 }
 
 impl Quantiles for LogNormal {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
@@ -104,10 +109,15 @@ impl FisherInformation for LogNormal {
         let one_over_sigma2 = 1.0 / self.sigma / self.sigma;
 
         unsafe {
-            Matrix::from_shape_vec_unchecked((2, 2), vec![
-                one_over_sigma2, 0.0,
-                0.0, one_over_sigma2 * one_over_sigma2 / 2.0
-            ])
+            Matrix::from_shape_vec_unchecked(
+                (2, 2),
+                vec![
+                    one_over_sigma2,
+                    0.0,
+                    0.0,
+                    one_over_sigma2 * one_over_sigma2 / 2.0,
+                ],
+            )
         }
     }
 }

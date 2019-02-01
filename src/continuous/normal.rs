@@ -1,7 +1,7 @@
 use consts::{PI_2, PI_E_2};
 use core::*;
 use rand::Rng;
-use spaces::{Vector, Matrix, continuous::Reals};
+use spaces::{continuous::Reals, Matrix, Vector};
 use std::fmt;
 
 pub type Gaussian = Normal;
@@ -51,7 +51,9 @@ impl Default for Normal {
 impl Distribution for Normal {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -74,27 +76,41 @@ impl ContinuousDistribution for Normal {
 }
 
 impl UnivariateMoments for Normal {
-    fn mean(&self) -> f64 { self.mu }
+    fn mean(&self) -> f64 {
+        self.mu
+    }
 
-    fn variance(&self) -> f64 { self.sigma * self.sigma }
+    fn variance(&self) -> f64 {
+        self.sigma * self.sigma
+    }
 
-    fn skewness(&self) -> f64 { 0.0 }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 
-    fn kurtosis(&self) -> f64 { 0.0 }
+    fn kurtosis(&self) -> f64 {
+        0.0
+    }
 
-    fn excess_kurtosis(&self) -> f64 { -3.0 }
+    fn excess_kurtosis(&self) -> f64 {
+        -3.0
+    }
 }
 
 impl Quantiles for Normal {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { self.mu }
+    fn median(&self) -> f64 {
+        self.mu
+    }
 }
 
 impl Modes for Normal {
-    fn modes(&self) -> Vec<f64> { vec![self.mu] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.mu]
+    }
 }
 
 impl Entropy for Normal {
@@ -108,10 +124,10 @@ impl FisherInformation for Normal {
         let precision = self.precision();
 
         unsafe {
-            Matrix::from_shape_vec_unchecked((2, 2), vec![
-                precision, 0.0,
-                0.0, precision * precision / 2.0
-            ])
+            Matrix::from_shape_vec_unchecked(
+                (2, 2),
+                vec![precision, 0.0, 0.0, precision * precision / 2.0],
+            )
         }
     }
 }
@@ -136,7 +152,7 @@ impl MLE for Normal {
         let sample_mean = samples.scalar_sum() / n;
 
         let residuals = samples - sample_mean;
-        let sample_var = residuals.fold(0.0, |acc, v| acc + v*v) / n;
+        let sample_var = residuals.fold(0.0, |acc, v| acc + v * v) / n;
 
         Normal::new(sample_mean, sample_var.sqrt())
     }

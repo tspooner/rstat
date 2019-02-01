@@ -1,6 +1,6 @@
 use core::*;
 use rand::Rng;
-use spaces::{Matrix, continuous::PositiveReals};
+use spaces::{continuous::PositiveReals, Matrix};
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -15,7 +15,9 @@ impl Exponential {
         Exponential { lambda }
     }
 
-    pub fn mu(&self) -> f64 { 1.0 / self.lambda }
+    pub fn mu(&self) -> f64 {
+        1.0 / self.lambda
+    }
 }
 
 impl Default for Exponential {
@@ -27,7 +29,9 @@ impl Default for Exponential {
 impl Distribution for Exponential {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         (1.0 - (-self.lambda * x).exp()).into()
@@ -45,25 +49,35 @@ impl ContinuousDistribution for Exponential {
 }
 
 impl UnivariateMoments for Exponential {
-    fn mean(&self) -> f64 { 1.0 / self.lambda }
+    fn mean(&self) -> f64 {
+        1.0 / self.lambda
+    }
 
     fn variance(&self) -> f64 {
         1.0 / self.lambda / self.lambda
     }
 
-    fn skewness(&self) -> f64 { 2.0 }
+    fn skewness(&self) -> f64 {
+        2.0
+    }
 
-    fn kurtosis(&self) -> f64 { 3.0 }
+    fn kurtosis(&self) -> f64 {
+        3.0
+    }
 
-    fn excess_kurtosis(&self) -> f64 { 6.0 }
+    fn excess_kurtosis(&self) -> f64 {
+        6.0
+    }
 }
 
 impl Quantiles for Exponential {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { self.mean() * 2.0f64.ln() }
+    fn median(&self) -> f64 {
+        self.mean() * 2.0f64.ln()
+    }
 }
 
 impl Modes for Exponential {
@@ -73,7 +87,9 @@ impl Modes for Exponential {
 }
 
 impl Entropy for Exponential {
-    fn entropy(&self) -> f64 { 1.0 - self.lambda.ln() }
+    fn entropy(&self) -> f64 {
+        1.0 - self.lambda.ln()
+    }
 }
 
 impl FisherInformation for Exponential {

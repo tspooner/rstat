@@ -1,9 +1,9 @@
+use super::Gaussian;
 use consts::{PI_2, PI_E_2};
 use core::*;
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;
-use super::Gaussian;
 
 pub type InvGaussian = InvNormal;
 
@@ -21,7 +21,8 @@ impl InvNormal {
         assert_positive_real!(lambda);
 
         InvNormal {
-            mu, lambda,
+            mu,
+            lambda,
             sgd: Gaussian::standard(),
         }
     }
@@ -29,14 +30,20 @@ impl InvNormal {
 
 impl Default for InvNormal {
     fn default() -> InvNormal {
-        InvNormal { mu: 1.0, lambda: 1.0, sgd: Gaussian::standard() }
+        InvNormal {
+            mu: 1.0,
+            lambda: 1.0,
+            sgd: Gaussian::standard(),
+        }
     }
 }
 
 impl Distribution for InvNormal {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         let xom = x / self.mu;
@@ -65,7 +72,9 @@ impl ContinuousDistribution for InvNormal {
 }
 
 impl UnivariateMoments for InvNormal {
-    fn mean(&self) -> f64 { self.mu }
+    fn mean(&self) -> f64 {
+        self.mu
+    }
 
     fn variance(&self) -> f64 {
         self.mu * self.mu * self.mu / self.lambda

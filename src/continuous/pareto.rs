@@ -20,20 +20,25 @@ impl Pareto {
 
 impl Default for Pareto {
     fn default() -> Pareto {
-        Pareto { x_m: 1.0, alpha: 1.0 }
+        Pareto {
+            x_m: 1.0,
+            alpha: 1.0,
+        }
     }
 }
 
 impl Distribution for Pareto {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::left_bounded(self.x_m) }
+    fn support(&self) -> Interval {
+        Interval::left_bounded(self.x_m)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         (1.0 - (self.x_m / x).powf(self.alpha)).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         unimplemented!()
     }
 }
@@ -44,7 +49,8 @@ impl ContinuousDistribution for Pareto {
             0.0
         } else {
             self.alpha * self.x_m.powf(self.alpha) / x.powf(self.alpha + 1.0)
-        }.into()
+        }
+        .into()
     }
 }
 
@@ -89,7 +95,7 @@ impl UnivariateMoments for Pareto {
 }
 
 impl Quantiles for Pareto {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
@@ -99,7 +105,9 @@ impl Quantiles for Pareto {
 }
 
 impl Modes for Pareto {
-    fn modes(&self) -> Vec<f64> { vec![self.x_m] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.x_m]
+    }
 }
 
 impl Entropy for Pareto {
@@ -113,10 +121,15 @@ impl FisherInformation for Pareto {
         let off_diag = -1.0 / self.x_m;
 
         unsafe {
-            Matrix::from_shape_vec_unchecked((2, 2), vec![
-                self.alpha / self.x_m / self.x_m, off_diag,
-                off_diag, 1.0 / self.alpha / self.alpha,
-            ])
+            Matrix::from_shape_vec_unchecked(
+                (2, 2),
+                vec![
+                    self.alpha / self.x_m / self.x_m,
+                    off_diag,
+                    off_diag,
+                    1.0 / self.alpha / self.alpha,
+                ],
+            )
         }
     }
 }

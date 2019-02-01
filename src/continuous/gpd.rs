@@ -1,5 +1,5 @@
-use core::*;
 use consts::ONE_THIRD;
+use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
 use std::fmt;
@@ -25,7 +25,11 @@ impl Distribution for GeneralisedPareto {
     fn support(&self) -> Interval {
         use std::cmp::Ordering::*;
 
-        match self.zeta.partial_cmp(&0.0).expect("Invalid value provided for `zeta`.") {
+        match self
+            .zeta
+            .partial_cmp(&0.0)
+            .expect("Invalid value provided for `zeta`.")
+        {
             Less => Interval::bounded(self.mu, self.mu - self.sigma / self.zeta),
             Equal | Greater => Interval::left_bounded(self.mu),
         }
@@ -79,9 +83,10 @@ impl UnivariateMoments for GeneralisedPareto {
         if self.zeta <= ONE_THIRD {
             unimplemented!("Skewness is undefined for zeta <= 1/3.")
         } else {
-            3.0 * (1.0 - 2.0 * self.zeta) * (2.0 * self.zeta * self.zeta + self.zeta + 3.0) /
-                (1.0 - 3.0 * self.zeta) / (1.0 - 4.0 * self.zeta) - 3.0
-
+            3.0 * (1.0 - 2.0 * self.zeta) * (2.0 * self.zeta * self.zeta + self.zeta + 3.0)
+                / (1.0 - 3.0 * self.zeta)
+                / (1.0 - 4.0 * self.zeta)
+                - 3.0
         }
     }
 }

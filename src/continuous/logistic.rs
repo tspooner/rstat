@@ -31,13 +31,15 @@ impl Default for Logistic {
 impl Distribution for Logistic {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         (1.0 / (1.0 + (-self.z(x)).exp())).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         unimplemented!()
     }
 }
@@ -52,31 +54,47 @@ impl ContinuousDistribution for Logistic {
 }
 
 impl UnivariateMoments for Logistic {
-    fn mean(&self) -> f64 { self.mu }
+    fn mean(&self) -> f64 {
+        self.mu
+    }
 
-    fn variance(&self) -> f64 { self.s * self.s * PI2 / 3.0 }
+    fn variance(&self) -> f64 {
+        self.s * self.s * PI2 / 3.0
+    }
 
-    fn skewness(&self) -> f64 { unimplemented!() }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 
-    fn kurtosis(&self) -> f64 { TWENTY_ONE_FIFTHS }
+    fn kurtosis(&self) -> f64 {
+        TWENTY_ONE_FIFTHS
+    }
 
-    fn excess_kurtosis(&self) -> f64 { SIX_FIFTHS }
+    fn excess_kurtosis(&self) -> f64 {
+        SIX_FIFTHS
+    }
 }
 
 impl Quantiles for Logistic {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { self.mu }
+    fn median(&self) -> f64 {
+        self.mu
+    }
 }
 
 impl Modes for Logistic {
-    fn modes(&self) -> Vec<f64> { vec![self.mu] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.mu]
+    }
 }
 
 impl Entropy for Logistic {
-    fn entropy(&self) -> f64 { self.s.ln() + 2.0 }
+    fn entropy(&self) -> f64 {
+        self.s.ln() + 2.0
+    }
 }
 
 impl fmt::Display for Logistic {

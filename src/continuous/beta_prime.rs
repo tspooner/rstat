@@ -14,23 +14,25 @@ impl BetaPrime {
         assert_positive_real!(alpha);
         assert_positive_real!(beta);
 
-        BetaPrime {
-            alpha,
-            beta,
-        }
+        BetaPrime { alpha, beta }
     }
 }
 
 impl Default for BetaPrime {
     fn default() -> BetaPrime {
-        BetaPrime { alpha: 1.0, beta: 1.0 }
+        BetaPrime {
+            alpha: 1.0,
+            beta: 1.0,
+        }
     }
 }
 
 impl Distribution for BetaPrime {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -80,19 +82,16 @@ impl UnivariateMoments for BetaPrime {
 
         let bm1 = self.beta - 1.0;
 
-        2.0 * (2.0 * self.alpha + bm1) /
-            (self.beta - 3.0) *
-            ((self.beta - 2.0) / (self.alpha * (self.alpha + bm1))).sqrt()
+        2.0 * (2.0 * self.alpha + bm1) / (self.beta - 3.0)
+            * ((self.beta - 2.0) / (self.alpha * (self.alpha + bm1))).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
         let bm1 = self.beta - 1.0;
 
         let numerator =
-            6.0 * (self.alpha + bm1) * (5.0 * self.beta - 11.0) +
-            bm1 * bm1 * (self.beta - 2.0);
-        let denominator =
-            self.alpha * (self.alpha + bm1) * (self.beta - 3.0) * (self.beta - 4.0);
+            6.0 * (self.alpha + bm1) * (5.0 * self.beta - 11.0) + bm1 * bm1 * (self.beta - 2.0);
+        let denominator = self.alpha * (self.alpha + bm1) * (self.beta - 3.0) * (self.beta - 4.0);
 
         numerator / denominator
     }
@@ -114,10 +113,10 @@ impl Entropy for BetaPrime {
 
         let apb = self.alpha + self.beta;
 
-        self.alpha.logbeta(self.beta) -
-            (self.alpha - 1.0) * self.alpha.digamma() -
-            (self.beta - 1.0) * self.beta.digamma() +
-            (apb - 2.0) * apb.digamma()
+        self.alpha.logbeta(self.beta)
+            - (self.alpha - 1.0) * self.alpha.digamma()
+            - (self.beta - 1.0) * self.beta.digamma()
+            + (apb - 2.0) * apb.digamma()
     }
 }
 

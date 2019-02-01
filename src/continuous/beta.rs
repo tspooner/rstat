@@ -1,6 +1,9 @@
 use consts::{ONE_THIRD, TWO_THIRDS};
 use core::*;
-use rand::{Rng, distributions::{Distribution as Sampler, Beta as BetaSampler}};
+use rand::{
+    distributions::{Beta as BetaSampler, Distribution as Sampler},
+    Rng,
+};
 use spaces::continuous::Interval;
 use std::fmt;
 
@@ -15,23 +18,25 @@ impl Beta {
         assert_positive_real!(alpha);
         assert_positive_real!(beta);
 
-        Beta {
-            alpha,
-            beta,
-        }
+        Beta { alpha, beta }
     }
 }
 
 impl Default for Beta {
     fn default() -> Beta {
-        Beta { alpha: 1.0, beta: 1.0 }
+        Beta {
+            alpha: 1.0,
+            beta: 1.0,
+        }
     }
 }
 
 impl Distribution for Beta {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::bounded(0.0, 1.0) }
+    fn support(&self) -> Interval {
+        Interval::bounded(0.0, 1.0)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -69,9 +74,9 @@ impl UnivariateMoments for Beta {
     fn skewness(&self) -> f64 {
         let apb = self.alpha + self.beta;
 
-        2.0 * (self.beta - self.alpha) * (apb + 1.0).sqrt() /
-            (apb + 2.0) /
-            (self.alpha * self.beta).sqrt()
+        2.0 * (self.beta - self.alpha) * (apb + 1.0).sqrt()
+            / (apb + 2.0)
+            / (self.alpha * self.beta).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
@@ -81,13 +86,12 @@ impl UnivariateMoments for Beta {
 
         let apbp2 = apb + 2.0;
 
-        3.0 * asb * asb * (apb + 1.0) - amb * apbp2 /
-            amb / apbp2 / (apb + 3.0)
+        3.0 * asb * asb * (apb + 1.0) - amb * apbp2 / amb / apbp2 / (apb + 3.0)
     }
 }
 
 impl Quantiles for Beta {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
@@ -128,10 +132,10 @@ impl Entropy for Beta {
 
         let apb = self.alpha + self.beta;
 
-        self.alpha.logbeta(self.beta) -
-            (self.alpha - 1.0) * self.alpha.digamma() -
-            (self.beta - 1.0) * self.beta.digamma() +
-            (apb - 2.0) * apb.digamma()
+        self.alpha.logbeta(self.beta)
+            - (self.alpha - 1.0) * self.alpha.digamma()
+            - (self.beta - 1.0) * self.beta.digamma()
+            + (apb - 2.0) * apb.digamma()
     }
 }
 

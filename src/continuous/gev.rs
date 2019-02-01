@@ -1,12 +1,9 @@
+use consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS};
 use core::*;
-use consts::{ONE_THIRD, TWELVE_FIFTHS, PI2_OVER_6, PI3};
 use rand::Rng;
 use spaces::continuous::Interval;
 use special_fun::FloatSpecial;
-use std::{
-    fmt,
-    f64::INFINITY,
-};
+use std::{f64::INFINITY, fmt};
 
 #[derive(Debug, Clone, Copy)]
 pub struct GeneralisedExtremeValue {
@@ -44,7 +41,11 @@ impl Distribution for GeneralisedExtremeValue {
     fn support(&self) -> Interval {
         use std::cmp::Ordering::*;
 
-        match self.zeta.partial_cmp(&0.0).expect("Invalid value provided for `zeta`.") {
+        match self
+            .zeta
+            .partial_cmp(&0.0)
+            .expect("Invalid value provided for `zeta`.")
+        {
             Less => Interval::right_bounded(self.mu - self.sigma / self.zeta),
             Equal => Interval::unbounded(),
             Greater => Interval::left_bounded(self.mu - self.sigma / self.zeta),

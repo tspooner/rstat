@@ -1,5 +1,5 @@
-use core::*;
 use continuous::Exponential;
+use core::*;
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;
@@ -25,14 +25,19 @@ impl Gamma {
 
 impl Default for Gamma {
     fn default() -> Gamma {
-        Gamma { alpha: 1.0, beta: 1.0 }
+        Gamma {
+            alpha: 1.0,
+            beta: 1.0,
+        }
     }
 }
 
 impl Distribution for Gamma {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -49,12 +54,9 @@ impl ContinuousDistribution for Gamma {
     fn pdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (
-            self.beta.powf(self.alpha) *
-            x.powf(self.alpha - 1.0) *
-            (-self.beta * x).exp() /
-            self.alpha.gamma()
-        ).into()
+        (self.beta.powf(self.alpha) * x.powf(self.alpha - 1.0) * (-self.beta * x).exp()
+            / self.alpha.gamma())
+        .into()
     }
 }
 
@@ -90,9 +92,9 @@ impl Entropy for Gamma {
     fn entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        self.alpha - self.beta.ln() +
-            self.alpha.gamma().ln() +
-            (1.0 - self.alpha) * self.alpha.digamma()
+        self.alpha - self.beta.ln()
+            + self.alpha.gamma().ln()
+            + (1.0 - self.alpha) * self.alpha.digamma()
     }
 }
 

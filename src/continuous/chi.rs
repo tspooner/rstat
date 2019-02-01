@@ -18,7 +18,9 @@ impl Chi {
 impl Distribution for Chi {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -76,7 +78,7 @@ impl UnivariateMoments for Chi {
 }
 
 impl Quantiles for Chi {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

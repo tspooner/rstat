@@ -21,7 +21,9 @@ impl FDist {
 impl Distribution for FDist {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -131,11 +133,11 @@ impl Entropy for FDist {
         let d1o2 = d1 / 2.0;
         let d2o2 = d2 / 2.0;
 
-        d1o2.gamma().ln() + d2o2.gamma().ln() - ((d1 + d2) / 2.0).gamma().ln() +
-            (1.0 - d1o2) * (1.0 + d1o2).digamma() -
-            (1.0 - d2o2) * (1.0 + d2o2).digamma() +
-            ((d1 + d2) / 2.0) * ((d1 + d2) / 2.0).digamma() +
-            (d1 / d2).ln()
+        d1o2.gamma().ln() + d2o2.gamma().ln() - ((d1 + d2) / 2.0).gamma().ln()
+            + (1.0 - d1o2) * (1.0 + d1o2).digamma()
+            - (1.0 - d2o2) * (1.0 + d2o2).digamma()
+            + ((d1 + d2) / 2.0) * ((d1 + d2) / 2.0).digamma()
+            + (d1 / d2).ln()
     }
 }
 

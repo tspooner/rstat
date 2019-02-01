@@ -30,14 +30,20 @@ impl Frechet {
 
 impl Default for Frechet {
     fn default() -> Frechet {
-        Frechet { alpha: 1.0, s: 1.0, m: 1.0 }
+        Frechet {
+            alpha: 1.0,
+            s: 1.0,
+            m: 1.0,
+        }
     }
 }
 
 impl Distribution for Frechet {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::left_bounded(self.m) }
+    fn support(&self) -> Interval {
+        Interval::left_bounded(self.m)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         let z = self.z(x);
@@ -92,9 +98,8 @@ impl UnivariateMoments for Frechet {
         let gamma_1m1oa = (1.0 - 1.0 / self.alpha).gamma();
         let gamma_1m2oa = (1.0 - 2.0 / self.alpha).gamma();
 
-        let numerator = (1.0 - 3.0 / self.alpha).gamma() -
-            3.0 * gamma_1m2oa * gamma_1m1oa +
-            2.0 * gamma_1m1oa * gamma_1m1oa * gamma_1m1oa;
+        let numerator = (1.0 - 3.0 / self.alpha).gamma() - 3.0 * gamma_1m2oa * gamma_1m1oa
+            + 2.0 * gamma_1m1oa * gamma_1m1oa * gamma_1m1oa;
         let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
         let denominator = (denominator_inner * denominator_inner * denominator_inner).sqrt();
 
@@ -111,9 +116,9 @@ impl UnivariateMoments for Frechet {
         let gamma_1m1oa = (1.0 - 1.0 / self.alpha).gamma();
         let gamma_1m2oa = (1.0 - 2.0 / self.alpha).gamma();
 
-        let numerator = (1.0 - 4.0 / self.alpha).gamma() -
-            4.0 * (1.0 - 3.0 / self.alpha).gamma() * gamma_1m1oa +
-            3.0 * gamma_1m2oa * gamma_1m2oa;
+        let numerator = (1.0 - 4.0 / self.alpha).gamma()
+            - 4.0 * (1.0 - 3.0 / self.alpha).gamma() * gamma_1m1oa
+            + 3.0 * gamma_1m2oa * gamma_1m2oa;
         let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
         let denominator = denominator_inner * denominator_inner;
 
@@ -122,7 +127,7 @@ impl UnivariateMoments for Frechet {
 }
 
 impl Quantiles for Frechet {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

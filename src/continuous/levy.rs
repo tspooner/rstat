@@ -27,7 +27,9 @@ impl Default for Levy {
 impl Distribution for Levy {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::left_bounded(self.mu) }
+    fn support(&self) -> Interval {
+        Interval::left_bounded(self.mu)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -35,7 +37,7 @@ impl Distribution for Levy {
         (self.c / 2.0 / (x - self.mu)).erfc().into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         unimplemented!()
     }
 }

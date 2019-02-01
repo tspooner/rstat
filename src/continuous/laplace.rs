@@ -27,13 +27,15 @@ impl Default for Laplace {
 impl Distribution for Laplace {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         ((-((x - self.mu).abs() / self.b).abs()).exp() / 2.0 / self.b).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
         unimplemented!()
     }
 }
@@ -42,44 +44,59 @@ impl ContinuousDistribution for Laplace {
     fn pdf(&self, x: f64) -> Probability {
         use std::cmp::Ordering::*;
 
-        match x.partial_cmp(&self.mu) {
-            Some(Less) | Some(Equal) => {
-                ((x - self.mu) / self.b).exp() / 2.0
-            },
-            Some(Greater) => {
-                1.0 - ((self.mu - x) / self.b).exp() / 2.0
-            },
-            None => unreachable!(),
-        }.into()
+        match x
+            .partial_cmp(&self.mu)
+            .expect("Invalid value provided for `mu`.")
+        {
+            Less | Equal => ((x - self.mu) / self.b).exp() / 2.0,
+            Greater => 1.0 - ((self.mu - x) / self.b).exp() / 2.0,
+        }
+        .into()
     }
 }
 
 impl UnivariateMoments for Laplace {
-    fn mean(&self) -> f64 { self.mu }
+    fn mean(&self) -> f64 {
+        self.mu
+    }
 
-    fn variance(&self) -> f64 { 2.0 * self.b * self.b }
+    fn variance(&self) -> f64 {
+        2.0 * self.b * self.b
+    }
 
-    fn skewness(&self) -> f64 { unimplemented!() }
-
-    fn kurtosis(&self) -> f64 { 6.0 }
-
-    fn excess_kurtosis(&self) -> f64 { 3.0 }
-}
-
-impl Quantiles for Laplace {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn skewness(&self) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { self.mu }
+    fn kurtosis(&self) -> f64 {
+        6.0
+    }
+
+    fn excess_kurtosis(&self) -> f64 {
+        3.0
+    }
+}
+
+impl Quantiles for Laplace {
+    fn quantile(&self, _: Probability) -> f64 {
+        unimplemented!()
+    }
+
+    fn median(&self) -> f64 {
+        self.mu
+    }
 }
 
 impl Modes for Laplace {
-    fn modes(&self) -> Vec<f64> { vec![self.mu] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.mu]
+    }
 }
 
 impl Entropy for Laplace {
-    fn entropy(&self) -> f64 { (2.0 * self.b * E).ln() }
+    fn entropy(&self) -> f64 {
+        (2.0 * self.b * E).ln()
+    }
 }
 
 impl fmt::Display for Laplace {

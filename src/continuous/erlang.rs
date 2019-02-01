@@ -17,7 +17,9 @@ impl Erlang {
         Erlang { k, lambda }
     }
 
-    pub fn mu(&self) -> f64 { 1.0 / self.lambda }
+    pub fn mu(&self) -> f64 {
+        1.0 / self.lambda
+    }
 }
 
 impl Default for Erlang {
@@ -29,13 +31,14 @@ impl Default for Erlang {
 impl Distribution for Erlang {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        ((self.k as f64).gammainc(self.lambda * x) /
-            (self.k as f64).factorial()).into()
+        ((self.k as f64).gammainc(self.lambda * x) / (self.k as f64).factorial()).into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -47,15 +50,16 @@ impl ContinuousDistribution for Erlang {
     fn pdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (self.lambda.powi(self.k as i32) *
-            x.powi(self.k as i32 - 1) *
-            (-self.lambda * x).exp() /
-            (self.k as f64).factorial()).into()
+        (self.lambda.powi(self.k as i32) * x.powi(self.k as i32 - 1) * (-self.lambda * x).exp()
+            / (self.k as f64).factorial())
+        .into()
     }
 }
 
 impl UnivariateMoments for Erlang {
-    fn mean(&self) -> f64 { self.k as f64 / self.lambda }
+    fn mean(&self) -> f64 {
+        self.k as f64 / self.lambda
+    }
 
     fn variance(&self) -> f64 {
         self.k as f64 / self.lambda / self.lambda

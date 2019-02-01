@@ -17,7 +17,9 @@ impl ChiSq {
 impl Distribution for ChiSq {
     type Support = PositiveReals;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -46,7 +48,9 @@ impl ContinuousDistribution for ChiSq {
 }
 
 impl UnivariateMoments for ChiSq {
-    fn mean(&self) -> f64 { self.k as f64 }
+    fn mean(&self) -> f64 {
+        self.k as f64
+    }
 
     fn variance(&self) -> f64 {
         (2 * self.k) as f64
@@ -62,7 +66,7 @@ impl UnivariateMoments for ChiSq {
 }
 
 impl Quantiles for ChiSq {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 

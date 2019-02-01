@@ -1,4 +1,4 @@
-use consts::{PI_OVER_4, TWO_OVER_PI, ONE_OVER_PI, ONE_EIGHTH, THREE_HALVES};
+use consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI};
 use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
@@ -25,7 +25,9 @@ impl Default for Arcsine {
 impl Distribution for Arcsine {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::bounded(self.a, self.b) }
+    fn support(&self) -> Interval {
+        Interval::bounded(self.a, self.b)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         let xab = (x - self.a) / (self.b - self.a);
@@ -57,15 +59,21 @@ impl UnivariateMoments for Arcsine {
         ONE_EIGHTH * diff * diff
     }
 
-    fn skewness(&self) -> f64 { 0.0 }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 
-    fn kurtosis(&self) -> f64 { THREE_HALVES }
+    fn kurtosis(&self) -> f64 {
+        THREE_HALVES
+    }
 
-    fn excess_kurtosis(&self) -> f64 { -THREE_HALVES }
+    fn excess_kurtosis(&self) -> f64 {
+        -THREE_HALVES
+    }
 }
 
 impl Quantiles for Arcsine {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
@@ -81,7 +89,9 @@ impl Modes for Arcsine {
 }
 
 impl Entropy for Arcsine {
-    fn entropy(&self) -> f64 { PI_OVER_4.ln() }
+    fn entropy(&self) -> f64 {
+        PI_OVER_4.ln()
+    }
 }
 
 impl fmt::Display for Arcsine {

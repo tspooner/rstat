@@ -1,4 +1,4 @@
-use consts::{SIX_FIFTHS, NINE_FIFTHS};
+use consts::{NINE_FIFTHS, SIX_FIFTHS};
 use core::*;
 use rand::Rng;
 use spaces::continuous::Interval;
@@ -18,20 +18,30 @@ impl Uniform {
             panic!("b must be strictly greater than a.")
         }
 
-        Uniform { a, b, prob: 1.0 / (b - a) }
+        Uniform {
+            a,
+            b,
+            prob: 1.0 / (b - a),
+        }
     }
 }
 
 impl Default for Uniform {
     fn default() -> Uniform {
-        Uniform { a: 0.0, b: 1.0, prob: 1.0 }
+        Uniform {
+            a: 0.0,
+            b: 1.0,
+            prob: 1.0,
+        }
     }
 }
 
 impl Distribution for Uniform {
     type Support = Interval;
 
-    fn support(&self) -> Interval { Interval::bounded(self.a, self.b) }
+    fn support(&self) -> Interval {
+        Interval::bounded(self.a, self.b)
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         if x < self.a {
@@ -40,7 +50,8 @@ impl Distribution for Uniform {
             1.0
         } else {
             (x - self.a) * self.prob
-        }.into()
+        }
+        .into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -54,7 +65,8 @@ impl ContinuousDistribution for Uniform {
             0.0
         } else {
             self.prob
-        }.into()
+        }
+        .into()
     }
 }
 
@@ -69,11 +81,17 @@ impl UnivariateMoments for Uniform {
         width * width / 12.0
     }
 
-    fn skewness(&self) -> f64 { 0.0 }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 
-    fn kurtosis(&self) -> f64 { NINE_FIFTHS }
+    fn kurtosis(&self) -> f64 {
+        NINE_FIFTHS
+    }
 
-    fn excess_kurtosis(&self) -> f64 { -SIX_FIFTHS }
+    fn excess_kurtosis(&self) -> f64 {
+        -SIX_FIFTHS
+    }
 }
 
 impl Quantiles for Uniform {
@@ -87,7 +105,9 @@ impl Quantiles for Uniform {
 }
 
 impl Entropy for Uniform {
-    fn entropy(&self) -> f64 { (self.b - self.a).ln() }
+    fn entropy(&self) -> f64 {
+        (self.b - self.a).ln()
+    }
 }
 
 impl fmt::Display for Uniform {

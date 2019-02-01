@@ -1,5 +1,3 @@
-// TODO: Generalised Extreme Value distribution
-// TODO: Generalised Pareto distribution
 // TODO: Noncentral chi-squared distribution
 // TODO: Normal-inverse Gaussian distribution
 // TODO: VonMises distribution
@@ -19,6 +17,8 @@ import_all!(exponential);
 import_all!(f_dist);
 import_all!(frechet);
 import_all!(gamma);
+import_all!(gev);
+import_all!(gpd);
 import_all!(gumbel);
 import_all!(inverse_gamma);
 import_all!(inverse_normal);

@@ -1,6 +1,6 @@
 use core::*;
 use rand::Rng;
-use spaces::{Vector, Matrix, continuous::Interval, product::RegularSpace};
+use spaces::{continuous::Interval, product::LinearSpace, Matrix, Vector};
 use std::fmt;
 
 #[derive(Debug, Clone)]
@@ -30,43 +30,43 @@ impl Dirichlet {
         let alpha0 = alphas.scalar_sum();
 
         Dirichlet {
-            ln_beta_alphas: alphas.iter().fold(-alpha0.loggamma(), |acc, a| {
-                acc + a.loggamma()
-            }),
+            ln_beta_alphas: alphas
+                .iter()
+                .fold(-alpha0.loggamma(), |acc, a| acc + a.loggamma()),
 
             alphas,
-            alpha0
+            alpha0,
         }
     }
 }
 
 impl Distribution for Dirichlet {
-    type Support = RegularSpace<Interval>;
+    type Support = LinearSpace<Interval>;
 
-    fn support(&self) -> RegularSpace<Interval> {
-        RegularSpace::new(vec![Interval::bounded(0.0, 1.0); self.alphas.len()])
+    fn support(&self) -> LinearSpace<Interval> {
+        LinearSpace::new(vec![Interval::bounded(0.0, 1.0); self.alphas.len()])
     }
 
-    fn cdf(&self, _: Vec<f64>) -> Probability {
+    fn cdf(&self, _: Vector<f64>) -> Probability {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<f64> {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vector<f64> {
         unimplemented!()
     }
 }
 
 impl ContinuousDistribution for Dirichlet {
-    fn pdf(&self, xs: Vec<f64>) -> Probability {
+    fn pdf(&self, xs: Vector<f64>) -> Probability {
         self.logpdf(xs).exp().into()
     }
 
-    fn logpdf(&self, xs: Vec<f64>) -> f64 {
+    fn logpdf(&self, xs: Vector<f64>) -> f64 {
         assert_len!(xs => self.alphas.len(); K);
 
-        xs.iter().zip(self.alphas.iter()).fold(-self.ln_beta_alphas, |acc, (x, a)| {
-            acc + (a - 1.0) * x.ln()
-        })
+        xs.iter()
+            .zip(self.alphas.iter())
+            .fold(-self.ln_beta_alphas, |acc, (x, a)| acc + (a - 1.0) * x.ln())
     }
 }
 
@@ -100,10 +100,10 @@ impl MultivariateMoments for Dirichlet {
 }
 
 impl Modes for Dirichlet {
-    fn modes(&self) -> Vec<Vec<f64>> {
+    fn modes(&self) -> Vec<Vector<f64>> {
         let k = self.alphas.len() as f64;
 
-        vec![self.alphas.map(|a| (a - 1.0) / (self.alpha0 - k)).to_vec()]
+        vec![self.alphas.map(|a| (a - 1.0) / (self.alpha0 - k))]
     }
 }
 

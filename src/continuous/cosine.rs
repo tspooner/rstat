@@ -34,18 +34,22 @@ impl Distribution for Cosine {
 
 impl ContinuousDistribution for Cosine {
     fn pdf(&self, x: f64) -> Probability {
-        unimplemented!()
+        (0.5 * self.hvc(x)).into()
     }
 }
 
 impl UnivariateMoments for Cosine {
-    fn mean(&self) -> f64 { self.mu }
+    fn mean(&self) -> f64 {
+        self.mu
+    }
 
     fn variance(&self) -> f64 {
         self.s * self.s * (ONE_THIRD - TWO_OVER_PI2)
     }
 
-    fn skewness(&self) -> f64 { 0.0 }
+    fn skewness(&self) -> f64 {
+        0.0
+    }
 
     fn excess_kurtosis(&self) -> f64 {
         let v = PI2 - 6.0;
@@ -55,15 +59,19 @@ impl UnivariateMoments for Cosine {
 }
 
 impl Quantiles for Cosine {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { self.mu }
+    fn median(&self) -> f64 {
+        self.mu
+    }
 }
 
 impl Modes for Cosine {
-    fn modes(&self) -> Vec<f64> { vec![self.mu] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.mu]
+    }
 }
 
 impl fmt::Display for Cosine {

@@ -1,7 +1,7 @@
-use consts::{PI, ONE_OVER_PI};
+use consts::{ONE_OVER_PI, PI};
 use core::*;
 use rand::Rng;
-use spaces::{Matrix, continuous::Reals};
+use spaces::continuous::Reals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -27,14 +27,19 @@ impl Cauchy {
 
 impl Default for Cauchy {
     fn default() -> Cauchy {
-        Cauchy { x0: 0.0, gamma: 1.0 }
+        Cauchy {
+            x0: 0.0,
+            gamma: 1.0,
+        }
     }
 }
 
 impl Distribution for Cauchy {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         (ONE_OVER_PI * self.z(x).atan() + 0.5).into()
@@ -58,11 +63,15 @@ impl Quantiles for Cauchy {
         self.x0 + self.gamma * (PI * (p.0 - 0.5)).tan()
     }
 
-    fn median(&self) -> f64 { self.x0 }
+    fn median(&self) -> f64 {
+        self.x0
+    }
 }
 
 impl Modes for Cauchy {
-    fn modes(&self) -> Vec<f64> { vec![self.x0] }
+    fn modes(&self) -> Vec<f64> {
+        vec![self.x0]
+    }
 }
 
 impl Entropy for Cauchy {

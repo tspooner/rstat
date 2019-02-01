@@ -4,7 +4,6 @@ use rand::Rng;
 use spaces::continuous::Reals;
 use std::fmt;
 
-
 #[derive(Debug, Clone, Copy)]
 pub struct StudentT {
     pub nu: f64,
@@ -21,7 +20,9 @@ impl StudentT {
 impl Distribution for StudentT {
     type Support = Reals;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals {
+        Reals
+    }
 
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
@@ -87,15 +88,19 @@ impl UnivariateMoments for StudentT {
 }
 
 impl Quantiles for StudentT {
-    fn quantile(&self, p: Probability) -> f64 {
+    fn quantile(&self, _: Probability) -> f64 {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 { 0.0 }
+    fn median(&self) -> f64 {
+        0.0
+    }
 }
 
 impl Modes for StudentT {
-    fn modes(&self) -> Vec<f64> { vec![0.0] }
+    fn modes(&self) -> Vec<f64> {
+        vec![0.0]
+    }
 }
 
 impl Entropy for StudentT {
