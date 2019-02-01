@@ -6,11 +6,8 @@ extern crate special_fun;
 mod consts;
 mod macros;
 
-pub mod core;
 pub mod continuous;
+pub mod core;
 pub mod discrete;
 
-pub use self::core::{
-    Distribution,
-    Probability
-};
+pub use self::core::{Distribution, Probability};

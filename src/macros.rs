@@ -19,7 +19,7 @@ macro_rules! assert_positive_real {
         if $var <= 0.0f64 {
             panic!("$var must be a positive, finite real number.")
         }
-    }
+    };
 }
 
 macro_rules! assert_natural {
@@ -27,7 +27,7 @@ macro_rules! assert_natural {
         if $var == 0usize {
             panic!("$var must be a positive, finite real number.")
         }
-    }
+    };
 }
 
 macro_rules! assert_len {
@@ -35,7 +35,7 @@ macro_rules! assert_len {
         if $var.len() == $len {
             panic!("$var must have length $name.")
         }
-    }
+    };
 }
 
 macro_rules! assert_dim {
@@ -43,5 +43,5 @@ macro_rules! assert_dim {
         if $var.dim() == $dim {
             panic!("$var must have dimensions $name.")
         }
-    }
+    };
 }
