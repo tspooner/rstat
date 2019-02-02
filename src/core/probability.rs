@@ -1,16 +1,61 @@
-use std::{fmt, ops::{Add, Sub, Mul, Div, Not}};
+use std::{error::Error, fmt, ops::{Add, Sub, Mul, Div, Not}};
 
-#[inline]
-fn check_f64(p: f64) {
-    if p < 0.0 || p > 1.0 {
-        panic!("Value of {:?} is invalid, probabilities must lie in the range [0.0, 1.0].", p);
+#[derive(Debug, Clone)]
+pub enum ProbabilityError {
+    InvalidProbability,
+}
+
+pub type ProbabilityResult<T> = Result<T, ProbabilityError>;
+
+impl ProbabilityError {
+    #[inline(always)]
+    pub fn check_bounded(p: f64) -> ProbabilityResult<f64> {
+        if p >= 0.0 && p <= 1.0 {
+            Err(ProbabilityError::InvalidProbability)
+        } else {
+            Ok(p)
+        }
+    }
+}
+
+impl fmt::Display for ProbabilityError {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        match *self {
+            ProbabilityError::InvalidProbability => f.write_str("InvalidProbability"),
+        }
+    }
+}
+
+
+impl Error for ProbabilityError {
+    fn description(&self) -> &str {
+        match *self {
+            ProbabilityError::InvalidProbability =>
+                "Probabilities must lie in the range [0.0, 1.0].",
+        }
     }
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, PartialOrd)]
-pub struct Probability(pub f64);
+pub struct Probability(f64);
 
 impl Probability {
+    pub fn new(p: f64) -> ProbabilityResult<Probability> {
+        ProbabilityError::check_bounded(p).map(|p| Probability(p))
+    }
+
+    pub fn zero() -> Probability {
+        Probability(0.0)
+    }
+
+    pub fn half() -> Probability {
+        Probability(0.5)
+    }
+
+    pub fn one() -> Probability {
+        Probability(1.0)
+    }
+
     pub fn powf(self, e: f64) -> Probability {
         Probability(self.0.powf(e))
     }
@@ -42,9 +87,7 @@ impl fmt::Display for Probability {
 
 impl From<f64> for Probability {
     fn from(p: f64) -> Probability {
-        check_f64(p);
-
-        Probability(p)
+        Probability::new(p).unwrap()
     }
 }
 

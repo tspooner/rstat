@@ -49,8 +49,9 @@ impl Distribution for InvNormal {
         let xom = x / self.mu;
         let lox_sqrt = (self.lambda / x).sqrt();
 
-        let term1 = self.sgd.cdf(lox_sqrt * (xom - 1.0)).0;
-        let term2 = (2.0 * self.lambda / self.mu).exp() * self.sgd.cdf(-lox_sqrt * (xom + 1.0)).0;
+        let term1 = f64::from(self.sgd.cdf(lox_sqrt * (xom - 1.0)));
+        let term2 = (2.0 * self.lambda / self.mu).exp() *
+            f64::from(self.sgd.cdf(-lox_sqrt * (xom + 1.0)));
 
         (term1 + term2).into()
     }

@@ -60,7 +60,7 @@ impl ContinuousDistribution for Cauchy {
 
 impl Quantiles for Cauchy {
     fn quantile(&self, p: Probability) -> f64 {
-        self.x0 + self.gamma * (PI * (p.0 - 0.5)).tan()
+        self.x0 + self.gamma * (PI * (f64::from(p) - 0.5)).tan()
     }
 
     fn median(&self) -> f64 {

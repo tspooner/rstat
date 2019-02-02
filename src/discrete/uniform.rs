@@ -82,7 +82,7 @@ impl Quantiles for Uniform {
     fn quantile(&self, p: Probability) -> f64 {
         let n = self.span() as f64;
 
-        self.a as f64 + (p.0 * n).floor()
+        self.a as f64 + (f64::from(p) * n).floor()
     }
 
     fn median(&self) -> f64 {

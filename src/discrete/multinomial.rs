@@ -19,7 +19,7 @@ impl Multinomial {
     pub fn equiprobable(n: usize, k: usize) -> Multinomial {
         let p = 1.0 / k as f64;
 
-        Multinomial::new(n, vec![Probability(p); k])
+        Multinomial::new(n, vec![p; k])
     }
 }
 
@@ -49,8 +49,8 @@ impl Distribution for Multinomial {
 impl DiscreteDistribution for Multinomial {
     fn pmf(&self, xs: Vector<usize>) -> Probability {
         match xs.iter().fold(0, |acc, x| acc + *x) {
-            0 => Probability(0.0),
-            _ => Probability(self.logpmf(xs).exp()),
+            0 => Probability::zero(),
+            _ => Probability::new(self.logpmf(xs).exp()).unwrap(),
         }
     }
 
@@ -64,12 +64,12 @@ impl DiscreteDistribution for Multinomial {
         use special_fun::FloatSpecial;
 
         let term_1 = (self.n as f64 + 1.0).loggamma();
-        let term_2 = xs.iter().zip(self.ps.iter()).fold(0.0, |acc, (&x, p)| {
+        let term_2 = xs.iter().zip(self.ps.iter()).fold(0.0, |acc, (&x, &p)| {
             let x_f64 = x as f64;
             let xlogy = if x == 0 {
                 0.0
             } else {
-                x_f64 * p.0.ln()
+                x_f64 * f64::from(p).ln()
             };
 
             acc + xlogy - (x_f64 + 1.0).loggamma()
@@ -81,11 +81,13 @@ impl DiscreteDistribution for Multinomial {
 
 impl MultivariateMoments for Multinomial {
     fn mean(&self) -> Vector<f64> {
-        self.ps.map(|p| p.0 * self.n as f64)
+        self.ps.map(|&p| f64::from(p) * self.n as f64)
     }
 
     fn variance(&self) -> Vector<f64> {
-        self.ps.map(|p| p.0 * (p.0 - 1.0) * self.n as f64)
+        self.ps.map(|&p| {
+            f64::from(p * !p) * self.n as f64
+        })
     }
 
     fn covariance(&self) -> Matrix<f64> {
@@ -96,9 +98,9 @@ impl MultivariateMoments for Multinomial {
             if i == j {
                 let p = self.ps[i];
 
-                p.0 * (1.0 - p.0) * n
+                f64::from(p * !p) * n
             } else {
-                -(self.ps[i] * self.ps[j]).0 * n
+                -f64::from(self.ps[i] * self.ps[j]) * n
             }
         })
     }
@@ -107,8 +109,8 @@ impl MultivariateMoments for Multinomial {
         let d = self.ps.len();
 
         Matrix::from_shape_fn((d, d), |(i, j)| {
-            let pi = self.ps[i].0;
-            let pj = self.ps[j].0;
+            let pi = f64::from(self.ps[i]);
+            let pj = f64::from(self.ps[j]);
 
             -(pi * pj / (1.0 - pi) / (1.0 - pj)).sqrt()
         })

@@ -1,7 +1,28 @@
-use core::{Probability, Sampler};
+use core::Probability;
 use ndarray::{Array, Dimension, ShapeBuilder};
 use rand::Rng;
 use spaces::{Space, Vector};
+
+pub struct Sampler<D, R> {
+    pub(super) distribution: D,
+    pub(super) rng: R,
+}
+
+impl<D, R> Iterator for Sampler<D, R>
+    where D: Distribution,
+          R: Rng,
+{
+    type Item = <D::Support as Space>::Value;
+
+    #[inline(always)]
+    fn next(&mut self) -> Option<Self::Item> {
+        Some(self.distribution.sample(&mut self.rng))
+    }
+
+    fn size_hint(&self) -> (usize, Option<usize>) {
+        (usize::max_value(), None)
+    }
+}
 
 macro_rules! ln_variant {
     ($(#[$attr:meta])* => $name:ident, $name_ln:ident, $x:ty) => {

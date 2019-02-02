@@ -96,7 +96,7 @@ impl UnivariateMoments for Uniform {
 
 impl Quantiles for Uniform {
     fn quantile(&self, p: Probability) -> f64 {
-        self.a + p.0 * (self.b - self.a)
+        self.a + f64::from(p) * (self.b - self.a)
     }
 
     fn median(&self) -> f64 {

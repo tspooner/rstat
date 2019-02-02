@@ -77,9 +77,9 @@ impl Quantiles for Bernoulli {
     }
 
     fn median(&self) -> f64 {
-        match self.p {
-            Probability(p) if (p - 0.5).abs() < 1e-7 => 0.5,
-            Probability(p) if (p < 0.5) => 0.0,
+        match f64::from(self.p) {
+            p if (p - 0.5).abs() < 1e-7 => 0.5,
+            p if (p < 0.5) => 0.0,
             _ => 1.0,
         }
     }

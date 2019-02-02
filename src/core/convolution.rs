@@ -8,6 +8,8 @@ pub enum ConvolutionError {
     MixedParameters,
 }
 
+pub type ConvolutionResult<T> = Result<T, ConvolutionError>;
+
 impl ConvolutionError {
     #[inline(always)]
     pub fn check_count<T>(rvs: &Vec<T>) -> ConvolutionResult<usize> {
@@ -42,8 +44,6 @@ impl Error for ConvolutionError {
     }
 }
 
-pub type ConvolutionResult<D> = Result<D, ConvolutionError>;
-
 pub trait Convolution<T: Distribution = Self>
     where Self: Sized
 {
@@ -52,6 +52,7 @@ pub trait Convolution<T: Distribution = Self>
 
     fn convolve_many(mut rvs: Vec<T>) -> ConvolutionResult<Self> {
         let _ = ConvolutionError::check_count(&rvs)?;
+
         let rv1 = rvs.pop().unwrap();
         let rv2 = rvs.pop().unwrap();
 
