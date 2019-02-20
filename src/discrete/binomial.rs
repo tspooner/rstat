@@ -1,7 +1,10 @@
 use consts::PI_E;
 use core::*;
 use discrete::Bernoulli;
-use rand::Rng;
+use rand::{
+    distributions::{Binomial as BinomialSampler, Distribution as Sampler},
+    Rng,
+};
 use spaces::{Matrix, discrete::Ordinal};
 use std::fmt;
 use super::choose;
@@ -40,8 +43,8 @@ impl Distribution for Binomial {
         f64::from(self.q).betainc(a, b).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> usize {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+        BinomialSampler::new(self.n as u64, self.p.into()).sample(rng) as usize
     }
 }
 
