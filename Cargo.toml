@@ -1,5 +1,5 @@
 [package]
-name = "dists"
+name = "distrs"
 version = "0.0.0"
 authors = ["Tom Spooner <spooner10000@gmail.com>"]
 
