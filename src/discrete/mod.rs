@@ -18,4 +18,3 @@ import_all!(categorical);
 import_all!(geometric);
 import_all!(multinomial);
 import_all!(poisson);
-import_all!(uniform);
