@@ -31,8 +31,10 @@ impl Distribution for Poisson {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
+        use rand::distributions::{Poisson as PoissonSampler, Distribution as DistSampler};
+
+        PoissonSampler::new(self.lambda).sample(rng)
     }
 }
 
