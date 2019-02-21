@@ -56,8 +56,10 @@ impl Distribution for Uniform {
         .into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
+
+        UniformSampler::new(self.a, self.b).sample(rng)
     }
 }
 

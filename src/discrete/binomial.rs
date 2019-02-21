@@ -3,10 +3,7 @@ use crate::{
     core::*,
     discrete::Bernoulli,
 };
-use rand::{
-    distributions::{Binomial as BinomialSampler, Distribution as Sampler},
-    Rng,
-};
+use rand::Rng;
 use spaces::{Matrix, discrete::Ordinal};
 use std::fmt;
 use super::choose;
@@ -46,6 +43,8 @@ impl Distribution for Binomial {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+        use rand::distributions::{Binomial as BinomialSampler, Distribution as DistSampler};
+
         BinomialSampler::new(self.n as u64, self.p.into()).sample(rng) as usize
     }
 }

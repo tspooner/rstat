@@ -35,8 +35,10 @@ impl Distribution for StudentT {
         (0.5 + x * np1o2.gamma() * hyp2f1 / (self.nu * PI).sqrt() * (self.nu / 2.0).gamma()).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{StudentT as STSampler, Distribution as DistSampler};
+
+        STSampler::new(self.nu).sample(rng)
     }
 }
 

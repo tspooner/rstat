@@ -47,8 +47,10 @@ impl Distribution for Gamma {
         (self.alpha.gammainc(self.beta * x) / self.alpha.gamma()).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Gamma as GammaSampler, Distribution as DistSampler};
+
+        GammaSampler::new(self.alpha, self.beta).sample(rng)
     }
 }
 

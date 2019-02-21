@@ -37,8 +37,10 @@ impl Distribution for Exponential {
         (1.0 - (-self.lambda * x).exp()).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Exp as ExpSampler, Distribution as DistSampler};
+
+        ExpSampler::new(self.lambda).sample(rng)
     }
 }
 
