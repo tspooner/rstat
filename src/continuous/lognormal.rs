@@ -46,8 +46,10 @@ impl Distribution for LogNormal {
         (0.5 + (self.z(x) / 2.0f64.sqrt()).erf() / 2.0).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{LogNormal as LNSampler, Distribution as DistSampler};
+
+        LNSampler::new(self.mu, self.sigma).sample(rng)
     }
 }
 
