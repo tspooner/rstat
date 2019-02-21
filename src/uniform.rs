@@ -157,13 +157,15 @@ impl Distribution for Uniform<i64> {
         }.into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> i64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> i64 {
+        use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
+
+        UniformSampler::new(self.a, self.b).sample(rng)
     }
 }
 
-impl ContinuousDistribution for Uniform<i64> {
-    fn pdf(&self, x: i64) -> Probability {
+impl DiscreteDistribution for Uniform<i64> {
+    fn pmf(&self, x: i64) -> Probability {
         if x < self.a || x > self.b {
             0.0
         } else {
