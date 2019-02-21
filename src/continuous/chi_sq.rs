@@ -30,8 +30,10 @@ impl Distribution for ChiSq {
         (ko2.gammainc(x / 2.0) / ko2.gamma()).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{ChiSquared as ChiSqSampler, Distribution as DistSampler};
+
+        ChiSqSampler::new(self.k as f64).sample(rng)
     }
 }
 
