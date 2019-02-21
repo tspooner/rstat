@@ -52,8 +52,10 @@ impl Distribution for Weibull {
         .into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Weibull as WeibullSampler, Distribution as DistSampler};
+
+        WeibullSampler::new(self.lambda, self.k).sample(rng)
     }
 }
 
