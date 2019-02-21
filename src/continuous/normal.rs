@@ -63,8 +63,10 @@ impl Distribution for Normal {
         (0.5 + (self.z(x) / 2.0f64.sqrt()).erf() / 2.0).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Distribution as DistSampler, Normal as NormalSampler};
+
+        NormalSampler::new(self.mu, self.sigma).sample(rng)
     }
 }
 
