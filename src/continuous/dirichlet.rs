@@ -51,8 +51,16 @@ impl Distribution for Dirichlet {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vector<f64> {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vector<f64> {
+        use rand::distributions::{Gamma as GammaSampler, Distribution as DistSampler};
+
+        let mut sum = 0.0f64;
+
+        self.alphas.iter().map(|&alpha| {
+            let sample = GammaSampler::new(alpha, 1.0).sample(rng);
+            sum += sample;
+            sample
+        }).collect::<Vector<f64>>() / sum
     }
 }
 
