@@ -1,5 +1,7 @@
-use consts::{ONE_THIRD, TWO_THIRDS};
-use core::*;
+use crate::{
+    consts::{ONE_THIRD, TWO_THIRDS},
+    core::*,
+};
 use rand::{
     distributions::{Beta as BetaSampler, Distribution as Sampler},
     Rng,

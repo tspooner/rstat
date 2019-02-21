@@ -1,5 +1,7 @@
-use consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS};
-use core::*;
+use crate::{
+    consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS},
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::Interval;
 use special_fun::FloatSpecial;

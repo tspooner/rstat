@@ -1,5 +1,7 @@
-use continuous::Exponential;
-use core::*;
+use crate::{
+    continuous::Exponential,
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;

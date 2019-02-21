@@ -1,5 +1,7 @@
-use consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360};
-use core::*;
+use crate::{
+    consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
+    core::*,
+};
 use rand::Rng;
 use spaces::{Vector, Matrix, discrete::Naturals};
 use std::fmt;

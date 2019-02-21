@@ -1,5 +1,7 @@
-use consts::SIX_FIFTHS;
-use core::*;
+use crate::{
+    consts::SIX_FIFTHS,
+    core::*,
+};
 use rand::Rng;
 use spaces::discrete::Interval;
 use std::fmt;

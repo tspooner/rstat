@@ -1,5 +1,7 @@
-use consts::E;
-use core::*;
+use crate::{
+    consts::E,
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::Reals;
 use std::fmt;

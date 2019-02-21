@@ -1,5 +1,7 @@
-use consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS};
-use core::*;
+use crate::{
+    consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::Reals;
 use std::fmt;

@@ -1,4 +1,4 @@
-use core::distribution::Distribution;
+use crate::core::Distribution;
 use std::{error::Error, fmt};
 
 

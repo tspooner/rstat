@@ -1,5 +1,7 @@
-use consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI};
-use core::*;
+use crate::{
+    consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::Interval;
 use std::fmt;

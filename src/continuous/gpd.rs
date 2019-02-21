@@ -1,5 +1,7 @@
-use consts::ONE_THIRD;
-use core::*;
+use crate::{
+    consts::ONE_THIRD,
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::Interval;
 use std::fmt;

@@ -1,4 +1,4 @@
-use core::{Probability, distribution::Distribution};
+use crate::core::{Probability, Distribution};
 use spaces::{Space, Vector, Matrix};
 
 

@@ -1,5 +1,7 @@
-use consts::{PI, PI2, PI_OVER_2, THREE_HALVES};
-use core::*;
+use crate::{
+    consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;

@@ -1,4 +1,4 @@
-use core::Probability;
+use crate::core::Probability;
 use ndarray::{Array, Dimension, ShapeBuilder};
 use rand::Rng;
 use spaces::{Space, Vector};

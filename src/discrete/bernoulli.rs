@@ -1,4 +1,4 @@
-use core::*;
+use crate::core::*;
 use rand::Rng;
 use spaces::{Vector, Matrix, discrete::Binary};
 use std::fmt;

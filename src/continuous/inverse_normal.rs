@@ -1,6 +1,8 @@
-use super::Gaussian;
-use consts::{PI_2, PI_E_2};
-use core::*;
+use crate::{
+    consts::{PI_2, PI_E_2},
+    continuous::Gaussian,
+    core::*,
+};
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;

@@ -1,4 +1,4 @@
-use core::Distribution;
+use crate::core::Distribution;
 use spaces::{Space, Vector};
 
 

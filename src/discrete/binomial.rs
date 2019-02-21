@@ -1,6 +1,8 @@
-use consts::PI_E;
-use core::*;
-use discrete::Bernoulli;
+use crate::{
+    consts::PI_E,
+    core::*,
+    discrete::Bernoulli,
+};
 use rand::{
     distributions::{Binomial as BinomialSampler, Distribution as Sampler},
     Rng,
