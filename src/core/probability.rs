@@ -11,9 +11,9 @@ impl ProbabilityError {
     #[inline(always)]
     pub fn check_bounded(p: f64) -> ProbabilityResult<f64> {
         if p >= 0.0 && p <= 1.0 {
-            Err(ProbabilityError::InvalidProbability)
-        } else {
             Ok(p)
+        } else {
+            Err(ProbabilityError::InvalidProbability)
         }
     }
 }
