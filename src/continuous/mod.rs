@@ -31,5 +31,4 @@ import_all!(pareto);
 import_all!(rayleigh);
 import_all!(student_t);
 import_all!(triangular);
-import_all!(uniform);
 import_all!(weibull);
