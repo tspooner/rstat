@@ -51,8 +51,10 @@ impl Distribution for Triangular {
         .into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Triangular as TriangularSampler, Distribution as DistSampler};
+
+        TriangularSampler::new(self.a, self.b, self.c).sample(rng)
     }
 }
 
