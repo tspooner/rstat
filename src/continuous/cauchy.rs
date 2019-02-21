@@ -47,8 +47,10 @@ impl Distribution for Cauchy {
         (ONE_OVER_PI * self.z(x).atan() + 0.5).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Cauchy as CauchySampler, Distribution as DistSampler};
+
+        CauchySampler::new(self.x0, self.gamma).sample(rng)
     }
 }
 
