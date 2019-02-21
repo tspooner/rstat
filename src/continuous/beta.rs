@@ -2,10 +2,7 @@ use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
     core::*,
 };
-use rand::{
-    distributions::{Beta as BetaSampler, Distribution as Sampler},
-    Rng,
-};
+use rand::Rng;
 use spaces::continuous::Interval;
 use std::fmt;
 
@@ -47,6 +44,8 @@ impl Distribution for Beta {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Beta as BetaSampler, Distribution as DistSampler};
+
         BetaSampler::new(self.alpha, self.beta).sample(rng)
     }
 }
