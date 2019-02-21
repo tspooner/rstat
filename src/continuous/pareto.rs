@@ -38,8 +38,10 @@ impl Distribution for Pareto {
         (1.0 - (self.x_m / x).powf(self.alpha)).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{Pareto as ParetoSampler, Distribution as DistSampler};
+
+        ParetoSampler::new(self.x_m, self.alpha).sample(rng)
     }
 }
 
