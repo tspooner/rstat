@@ -119,7 +119,9 @@ pub trait DiscreteDistribution: Distribution {
     /// The PMF is defined as the probability that a random variable `X` takes a value exactly
     /// equal to `x`: `f(x) = P(X = x) = P({s in S : X(s) = x})`. We require that all sum of
     /// probabilities over all possible outcomes sums to 1.
-    fn pmf(&self, x: <Self::Support as Space>::Value) -> Probability;
+    fn pmf(&self, x: <Self::Support as Space>::Value) -> Probability {
+        self.logpmf(x).exp().into()
+    }
 
     ln_variant!(
         /// Evaluates the log PMF at `x`.
@@ -148,7 +150,9 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Alternatively, one may interpret the PDF, for infinitely small `dt`, as the following:
     /// `f(t)dt = P(t < X < t + dt)`.
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability;
+    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+        self.logpdf(x).exp().into()
+    }
 
     ln_variant!(
         /// Evaluates the log PDF at `x`.
