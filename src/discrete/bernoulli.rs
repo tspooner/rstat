@@ -1,5 +1,5 @@
 use crate::core::*;
-use rand::Rng;
+use rand;
 use spaces::{Vector, Matrix, discrete::Binary};
 use std::fmt;
 
@@ -24,6 +24,18 @@ impl Bernoulli {
     }
 }
 
+impl Into<rand::distributions::Bernoulli> for Bernoulli {
+    fn into(self) -> rand::distributions::Bernoulli {
+        rand::distributions::Bernoulli::new(f64::from(self.p))
+    }
+}
+
+impl Into<rand::distributions::Bernoulli> for &Bernoulli {
+    fn into(self) -> rand::distributions::Bernoulli {
+        rand::distributions::Bernoulli::new(f64::from(self.p))
+    }
+}
+
 impl Distribution for Bernoulli {
     type Support = Binary;
 
@@ -37,7 +49,7 @@ impl Distribution for Bernoulli {
         }
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> bool {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
         rng.gen_bool(self.p.into())
     }
 }

@@ -3,7 +3,7 @@ use crate::{
     core::*,
     discrete::Bernoulli,
 };
-use rand::Rng;
+use rand;
 use spaces::{Matrix, discrete::Ordinal};
 use std::fmt;
 use super::choose;
@@ -28,6 +28,18 @@ impl Binomial {
     }
 }
 
+impl Into<rand::distributions::Binomial> for Binomial {
+    fn into(self) -> rand::distributions::Binomial {
+        rand::distributions::Binomial::new(self.n as u64, f64::from(self.p))
+    }
+}
+
+impl Into<rand::distributions::Binomial> for &Binomial {
+    fn into(self) -> rand::distributions::Binomial {
+        rand::distributions::Binomial::new(self.n as u64, f64::from(self.p))
+    }
+}
+
 impl Distribution for Binomial {
     type Support = Ordinal;
 
@@ -42,10 +54,12 @@ impl Distribution for Binomial {
         f64::from(self.q).betainc(a, b).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> usize {
         use rand::distributions::{Binomial as BinomialSampler, Distribution as DistSampler};
 
-        BinomialSampler::new(self.n as u64, self.p.into()).sample(rng) as usize
+        let sampler: BinomialSampler = self.into();
+
+        sampler.sample(rng) as usize
     }
 }
 
