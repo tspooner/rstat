@@ -44,6 +44,10 @@ impl Probability {
         ProbabilityError::check_bounded(p).map(|p| Probability(p))
     }
 
+    pub(crate) fn new_unchecked(p: f64) -> Probability {
+        Probability(p)
+    }
+
     pub fn zero() -> Probability {
         Probability(0.0)
     }
