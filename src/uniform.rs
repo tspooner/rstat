@@ -17,6 +17,24 @@ pub struct Uniform<T = f64> {
     prob: f64,
 }
 
+impl<T> Into<rand::distributions::Uniform<T>> for Uniform<T>
+where
+    T: rand::distributions::uniform::SampleUniform,
+{
+    fn into(self) -> rand::distributions::Uniform<T> {
+        rand::distributions::Uniform::new(self.a, self.b)
+    }
+}
+
+impl<T: Clone> Into<rand::distributions::Uniform<T>> for &Uniform<T>
+where
+    T: rand::distributions::uniform::SampleUniform,
+{
+    fn into(self) -> rand::distributions::Uniform<T> {
+        rand::distributions::Uniform::new(self.a.clone(), self.b.clone())
+    }
+}
+
 // Continuous:
 impl Uniform<f64> {
     pub fn new(a: f64, b: f64) -> Uniform<f64> {
@@ -63,7 +81,9 @@ impl Distribution for Uniform<f64> {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
 
-        UniformSampler::new(self.a, self.b).sample(rng)
+        let sampler: UniformSampler<f64> = self.into();
+
+        sampler.sample(rng)
     }
 }
 
@@ -160,7 +180,9 @@ impl Distribution for Uniform<i64> {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> i64 {
         use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
 
-        UniformSampler::new(self.a, self.b).sample(rng)
+        let sampler: UniformSampler<i64> = self.into();
+
+        sampler.sample(rng)
     }
 }
 
