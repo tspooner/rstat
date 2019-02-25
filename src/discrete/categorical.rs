@@ -16,6 +16,10 @@ impl Categorical {
 
         Categorical { ps }
     }
+
+    pub fn n_categories(&self) -> usize {
+        self.ps.len()
+    }
 }
 
 impl Distribution for Categorical {
