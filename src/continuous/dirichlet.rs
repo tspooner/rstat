@@ -40,6 +40,18 @@ impl Dirichlet {
     }
 }
 
+impl Into<rand::distributions::Dirichlet> for Dirichlet {
+    fn into(self) -> rand::distributions::Dirichlet {
+        rand::distributions::Dirichlet::new(self.alphas.to_vec())
+    }
+}
+
+impl Into<rand::distributions::Dirichlet> for &Dirichlet {
+    fn into(self) -> rand::distributions::Dirichlet {
+        rand::distributions::Dirichlet::new(self.alphas.to_vec())
+    }
+}
+
 impl Distribution for Dirichlet {
     type Support = LinearSpace<Interval>;
 

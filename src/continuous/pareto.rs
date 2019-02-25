@@ -27,6 +27,18 @@ impl Default for Pareto {
     }
 }
 
+impl Into<rand::distributions::Pareto> for Pareto {
+    fn into(self) -> rand::distributions::Pareto {
+        rand::distributions::Pareto::new(self.x_m, self.alpha)
+    }
+}
+
+impl Into<rand::distributions::Pareto> for &Pareto {
+    fn into(self) -> rand::distributions::Pareto {
+        rand::distributions::Pareto::new(self.x_m, self.alpha)
+    }
+}
+
 impl Distribution for Pareto {
     type Support = Interval;
 
@@ -41,7 +53,9 @@ impl Distribution for Pareto {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Pareto as ParetoSampler, Distribution as DistSampler};
 
-        ParetoSampler::new(self.x_m, self.alpha).sample(rng)
+        let sampler: ParetoSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

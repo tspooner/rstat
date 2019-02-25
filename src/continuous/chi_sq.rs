@@ -1,5 +1,5 @@
 use crate::core::*;
-use rand::Rng;
+use rand;
 use spaces::continuous::PositiveReals;
 use std::fmt;
 
@@ -11,6 +11,18 @@ pub struct ChiSq {
 impl ChiSq {
     pub fn new(k: usize) -> ChiSq {
         ChiSq { k }
+    }
+}
+
+impl Into<rand::distributions::ChiSquared> for ChiSq {
+    fn into(self) -> rand::distributions::ChiSquared {
+        rand::distributions::ChiSquared::new(self.k as f64)
+    }
+}
+
+impl Into<rand::distributions::ChiSquared> for &ChiSq {
+    fn into(self) -> rand::distributions::ChiSquared {
+        rand::distributions::ChiSquared::new(self.k as f64)
     }
 }
 
@@ -30,10 +42,12 @@ impl Distribution for ChiSq {
         (ko2.gammainc(x / 2.0) / ko2.gamma()).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{ChiSquared as ChiSqSampler, Distribution as DistSampler};
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{ChiSquared, Distribution};
 
-        ChiSqSampler::new(self.k as f64).sample(rng)
+        let sampler: ChiSquared = self.into();
+
+        sampler.sample(rng)
     }
 }
 

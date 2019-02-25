@@ -18,6 +18,18 @@ impl FDist {
     }
 }
 
+impl Into<rand::distributions::FisherF> for FDist {
+    fn into(self) -> rand::distributions::FisherF {
+        rand::distributions::FisherF::new(self.d1 as f64, self.d2 as f64)
+    }
+}
+
+impl Into<rand::distributions::FisherF> for &FDist {
+    fn into(self) -> rand::distributions::FisherF {
+        rand::distributions::FisherF::new(self.d1 as f64, self.d2 as f64)
+    }
+}
+
 impl Distribution for FDist {
     type Support = PositiveReals;
 
@@ -36,8 +48,12 @@ impl Distribution for FDist {
         x.betainc(d1 / 2.0, d2 / 2.0).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand::distributions::{FisherF as FisherFSampler, Distribution as DistSampler};
+
+        let sampler: FisherFSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

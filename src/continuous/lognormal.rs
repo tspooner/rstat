@@ -33,6 +33,18 @@ impl Default for LogNormal {
     }
 }
 
+impl Into<rand::distributions::LogNormal> for LogNormal {
+    fn into(self) -> rand::distributions::LogNormal {
+        rand::distributions::LogNormal::new(self.mu, self.sigma)
+    }
+}
+
+impl Into<rand::distributions::LogNormal> for &LogNormal {
+    fn into(self) -> rand::distributions::LogNormal {
+        rand::distributions::LogNormal::new(self.mu, self.sigma)
+    }
+}
+
 impl Distribution for LogNormal {
     type Support = PositiveReals;
 
@@ -49,7 +61,9 @@ impl Distribution for LogNormal {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{LogNormal as LNSampler, Distribution as DistSampler};
 
-        LNSampler::new(self.mu, self.sigma).sample(rng)
+        let sampler: LNSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

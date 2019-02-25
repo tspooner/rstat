@@ -36,6 +36,18 @@ impl Default for Cauchy {
     }
 }
 
+impl Into<rand::distributions::Cauchy> for Cauchy {
+    fn into(self) -> rand::distributions::Cauchy {
+        rand::distributions::Cauchy::new(self.x0, self.gamma)
+    }
+}
+
+impl Into<rand::distributions::Cauchy> for &Cauchy {
+    fn into(self) -> rand::distributions::Cauchy {
+        rand::distributions::Cauchy::new(self.x0, self.gamma)
+    }
+}
+
 impl Distribution for Cauchy {
     type Support = Reals;
 
@@ -50,7 +62,9 @@ impl Distribution for Cauchy {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Cauchy as CauchySampler, Distribution as DistSampler};
 
-        CauchySampler::new(self.x0, self.gamma).sample(rng)
+        let sampler: CauchySampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 
