@@ -34,6 +34,18 @@ impl Default for Gamma {
     }
 }
 
+impl Into<rand::distributions::Gamma> for Gamma {
+    fn into(self) -> rand::distributions::Gamma {
+        rand::distributions::Gamma::new(self.alpha, self.beta)
+    }
+}
+
+impl Into<rand::distributions::Gamma> for &Gamma {
+    fn into(self) -> rand::distributions::Gamma {
+        rand::distributions::Gamma::new(self.alpha, self.beta)
+    }
+}
+
 impl Distribution for Gamma {
     type Support = PositiveReals;
 
@@ -50,7 +62,9 @@ impl Distribution for Gamma {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Gamma as GammaSampler, Distribution as DistSampler};
 
-        GammaSampler::new(self.alpha, self.beta).sample(rng)
+        let sampler: GammaSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

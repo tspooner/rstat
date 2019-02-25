@@ -2,7 +2,7 @@ use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
     core::*,
 };
-use rand::Rng;
+use rand;
 use spaces::continuous::Interval;
 use std::fmt;
 
@@ -30,6 +30,18 @@ impl Default for Beta {
     }
 }
 
+impl Into<rand::distributions::Beta> for Beta {
+    fn into(self) -> rand::distributions::Beta {
+        rand::distributions::Beta::new(self.alpha, self.beta)
+    }
+}
+
+impl Into<rand::distributions::Beta> for &Beta {
+    fn into(self) -> rand::distributions::Beta {
+        rand::distributions::Beta::new(self.alpha, self.beta)
+    }
+}
+
 impl Distribution for Beta {
     type Support = Interval;
 
@@ -43,10 +55,12 @@ impl Distribution for Beta {
         x.betainc(self.alpha, self.beta).into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Beta as BetaSampler, Distribution as DistSampler};
 
-        BetaSampler::new(self.alpha, self.beta).sample(rng)
+        let sampler: BetaSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

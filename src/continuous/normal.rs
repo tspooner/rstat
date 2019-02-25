@@ -50,6 +50,18 @@ impl Default for Normal {
     }
 }
 
+impl Into<rand::distributions::Normal> for Normal {
+    fn into(self) -> rand::distributions::Normal {
+        rand::distributions::Normal::new(self.mu, self.sigma)
+    }
+}
+
+impl Into<rand::distributions::Normal> for &Normal {
+    fn into(self) -> rand::distributions::Normal {
+        rand::distributions::Normal::new(self.mu, self.sigma)
+    }
+}
+
 impl Distribution for Normal {
     type Support = Reals;
 
@@ -66,7 +78,9 @@ impl Distribution for Normal {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Distribution as DistSampler, Normal as NormalSampler};
 
-        NormalSampler::new(self.mu, self.sigma).sample(rng)
+        let sampler: NormalSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

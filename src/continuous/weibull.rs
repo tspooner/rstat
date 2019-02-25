@@ -36,6 +36,18 @@ impl Default for Weibull {
     }
 }
 
+impl Into<rand::distributions::Weibull> for Weibull {
+    fn into(self) -> rand::distributions::Weibull {
+        rand::distributions::Weibull::new(self.lambda, self.k)
+    }
+}
+
+impl Into<rand::distributions::Weibull> for &Weibull {
+    fn into(self) -> rand::distributions::Weibull {
+        rand::distributions::Weibull::new(self.lambda, self.k)
+    }
+}
+
 impl Distribution for Weibull {
     type Support = PositiveReals;
 
@@ -55,7 +67,9 @@ impl Distribution for Weibull {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Weibull as WeibullSampler, Distribution as DistSampler};
 
-        WeibullSampler::new(self.lambda, self.k).sample(rng)
+        let sampler: WeibullSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

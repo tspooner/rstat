@@ -19,6 +19,18 @@ impl StudentT {
     }
 }
 
+impl Into<rand::distributions::StudentT> for StudentT {
+    fn into(self) -> rand::distributions::StudentT {
+        rand::distributions::StudentT::new(self.nu)
+    }
+}
+
+impl Into<rand::distributions::StudentT> for &StudentT {
+    fn into(self) -> rand::distributions::StudentT {
+        rand::distributions::StudentT::new(self.nu)
+    }
+}
+
 impl Distribution for StudentT {
     type Support = Reals;
 
@@ -38,7 +50,9 @@ impl Distribution for StudentT {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{StudentT as STSampler, Distribution as DistSampler};
 
-        STSampler::new(self.nu).sample(rng)
+        let sampler: STSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

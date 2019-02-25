@@ -22,6 +22,18 @@ impl Poisson {
     }
 }
 
+impl Into<rand::distributions::Poisson> for Poisson {
+    fn into(self) -> rand::distributions::Poisson {
+        rand::distributions::Poisson::new(self.lambda)
+    }
+}
+
+impl Into<rand::distributions::Poisson> for &Poisson {
+    fn into(self) -> rand::distributions::Poisson {
+        rand::distributions::Poisson::new(self.lambda)
+    }
+}
+
 impl Distribution for Poisson {
     type Support = Naturals;
 
@@ -34,7 +46,9 @@ impl Distribution for Poisson {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
         use rand::distributions::{Poisson as PoissonSampler, Distribution as DistSampler};
 
-        PoissonSampler::new(self.lambda).sample(rng)
+        let sampler: PoissonSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

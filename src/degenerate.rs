@@ -40,7 +40,7 @@ impl Distribution for Degenerate<f64> {
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+        self.k
     }
 }
 
@@ -115,7 +115,7 @@ impl Distribution for Degenerate<i64> {
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> i64 {
-        unimplemented!()
+        self.k
     }
 }
 

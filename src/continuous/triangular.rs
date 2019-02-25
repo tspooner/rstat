@@ -31,6 +31,18 @@ impl Triangular {
     }
 }
 
+impl Into<rand::distributions::Triangular> for Triangular {
+    fn into(self) -> rand::distributions::Triangular {
+        rand::distributions::Triangular::new(self.a, self.b, self.c)
+    }
+}
+
+impl Into<rand::distributions::Triangular> for &Triangular {
+    fn into(self) -> rand::distributions::Triangular {
+        rand::distributions::Triangular::new(self.a, self.b, self.c)
+    }
+}
+
 impl Distribution for Triangular {
     type Support = Interval;
 
@@ -54,7 +66,9 @@ impl Distribution for Triangular {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Triangular as TriangularSampler, Distribution as DistSampler};
 
-        TriangularSampler::new(self.a, self.b, self.c).sample(rng)
+        let sampler: TriangularSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 

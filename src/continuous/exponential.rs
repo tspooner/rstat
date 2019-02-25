@@ -26,6 +26,18 @@ impl Default for Exponential {
     }
 }
 
+impl Into<rand::distributions::Exp> for Exponential {
+    fn into(self) -> rand::distributions::Exp {
+        rand::distributions::Exp::new(self.lambda)
+    }
+}
+
+impl Into<rand::distributions::Exp> for &Exponential {
+    fn into(self) -> rand::distributions::Exp {
+        rand::distributions::Exp::new(self.lambda)
+    }
+}
+
 impl Distribution for Exponential {
     type Support = PositiveReals;
 
@@ -40,7 +52,9 @@ impl Distribution for Exponential {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand::distributions::{Exp as ExpSampler, Distribution as DistSampler};
 
-        ExpSampler::new(self.lambda).sample(rng)
+        let sampler: ExpSampler = self.into();
+
+        sampler.sample(rng)
     }
 }
 
