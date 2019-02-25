@@ -83,6 +83,12 @@ impl Probability {
     }
 }
 
+impl Probability {
+    pub fn non_zero(&self) -> bool {
+        self.0 > 1e-7
+    }
+}
+
 impl fmt::Display for Probability {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "{}", self.0)
