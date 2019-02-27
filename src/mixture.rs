@@ -3,15 +3,20 @@ use crate::{
     discrete::Categorical,
 };
 use rand::Rng;
-use spaces::{Space, Vector};
+use spaces::{Space, Enclose};
 
 #[derive(Debug, Clone)]
-pub struct Mixture<C> {
+pub struct Mixture<C: Distribution> {
     pub dist: Categorical,
     pub components: Vec<C>,
+
+    support: C::Support,
 }
 
-impl<C> Mixture<C> {
+impl<C: Distribution> Mixture<C>
+where
+    C::Support: Enclose,
+{
     pub fn new<T: Into<Categorical>>(prior: T, components: Vec<C>) -> Mixture<C> {
         let prior: Categorical = prior.into();
 
@@ -19,9 +24,13 @@ impl<C> Mixture<C> {
             panic!("Number of components must match the number of assigned probabilities.")
         }
 
+        let support = Self::compute_support(&components);
+
         Mixture {
             dist: prior.into(),
             components,
+
+            support,
         }
     }
 
@@ -30,33 +39,44 @@ impl<C> Mixture<C> {
 
         Mixture::new(Categorical::equiprobable(n_components), components)
     }
+
+    fn compute_support(components: &[C]) -> C::Support {
+        components.iter().skip(1)
+            .fold(components[0].support(), |acc, c| acc.enclose(&c.support()))
+    }
 }
 
-impl<C> Mixture<C> {
+impl<C: Distribution> Mixture<C> {
     pub fn n_components(&self) -> usize {
         self.components.len()
     }
 }
 
-impl<C: Distribution> Distribution for Mixture<C> {
+impl<C: Distribution> Distribution for Mixture<C>
+where
+    C::Support: Clone,
+{
     type Support = C::Support;
 
     fn support(&self) -> Self::Support {
-        unimplemented!()
+        self.support.clone()
     }
 
-    fn cdf(&self, _: <Self::Support as Space>::Value) -> Probability {
-        unimplemented!()
+    fn cdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+        self.components.iter().zip(self.dist.ps.iter())
+            .fold(Probability::zero(), |acc, (c, p)| acc + *p * c.cdf(x.clone()))
+            .into()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> <Self::Support as Space>::Value {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> <Self::Support as Space>::Value {
+        self.components[self.dist.sample(rng)].sample(rng)
     }
 }
 
 impl<C: ContinuousDistribution> ContinuousDistribution for Mixture<C>
 where
-    <Self::Support as Space>::Value: Clone
+    C::Support: Clone,
+    <C::Support as Space>::Value: Clone,
 {
     fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
         Probability::new_unchecked(self.components.iter()
@@ -71,7 +91,10 @@ where
     }
 }
 
-impl<C: UnivariateMoments> UnivariateMoments for Mixture<C> {
+impl<C: UnivariateMoments> UnivariateMoments for Mixture<C>
+where
+    C::Support: Clone,
+{
     fn mean(&self) -> f64 {
         self.components.iter()
             .zip(self.dist.ps.iter())

@@ -8,7 +8,7 @@ authors = ["Tom Spooner <spooner10000@gmail.com>"]
 license = "MIT"
 readme = "README.md"
 
-keywords = ["probability", "statistics"]
+keywords = ["probability", "statistics", "sampling", "distribution"]
 
 repository = "https://github.com/tspooner/rstat"
 documentation = "https://docs.rs/rstat"
@@ -17,6 +17,6 @@ edition = "2018"
 
 [dependencies]
 rand = "0.6"
-spaces = "4.2"
+spaces = "4.3"
 ndarray = "0.12"
 special-fun = "0.1"
