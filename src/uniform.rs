@@ -10,7 +10,7 @@ use spaces::{
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Uniform<T = f64> {
+pub struct Uniform<T> {
     pub a: T,
     pub b: T,
 

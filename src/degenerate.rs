@@ -7,7 +7,7 @@ use spaces::{
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
-pub struct Degenerate<T = f64> {
+pub struct Degenerate<T> {
     pub k: T,
 }
 
@@ -174,7 +174,7 @@ impl<T> Entropy for Degenerate<T> {
     }
 }
 
-impl fmt::Display for Degenerate {
+impl<T: fmt::Display> fmt::Display for Degenerate<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "δ(x - {})", self.k)
     }

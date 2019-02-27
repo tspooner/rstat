@@ -18,3 +18,5 @@ import_all!(categorical);
 import_all!(geometric);
 import_all!(multinomial);
 import_all!(poisson);
+
+pub type Uniform = crate::Uniform<i64>;

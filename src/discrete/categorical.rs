@@ -16,6 +16,20 @@ impl Categorical {
 
         Categorical { ps }
     }
+
+    pub fn equiprobable(n: usize) -> Categorical {
+        Categorical::new(vec![1.0 / n as f64; n])
+    }
+
+    pub fn n_categories(&self) -> usize {
+        self.ps.len()
+    }
+}
+
+impl<P: Into<Probability>> From<Vec<P>> for Categorical {
+    fn from(ps: Vec<P>) -> Categorical {
+        Categorical::new(ps)
+    }
 }
 
 impl Distribution for Categorical {

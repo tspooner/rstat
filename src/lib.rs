@@ -12,5 +12,6 @@ pub mod discrete;
 
 import_all!(uniform);
 import_all!(degenerate);
+import_all!(mixture);
 
 pub use self::core::{Distribution, Probability};
