@@ -135,20 +135,32 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        Uniform,
+        continuous::{Normal, Uniform},
         core::UnivariateMoments,
     };
     use super::Mixture;
 
     #[test]
     fn test_uniform_pair_mixture() {
-        let uniform = Uniform::<f64>::new(0.0, 2.0);
+        let uniform = Uniform::new(0.0, 2.0);
         let mixture = Mixture::homogeneous(vec![
-            Uniform::<f64>::new(0.0, 1.0),
-            Uniform::<f64>::new(1.0, 2.0),
+            Uniform::new(0.0, 1.0),
+            Uniform::new(1.0, 2.0),
         ]);
 
         assert!((uniform.mean() - mixture.mean()).abs() < 1e-7);
         assert!((uniform.variance() - mixture.variance()).abs() < 1e-7);
+    }
+
+    #[test]
+    fn test_gmm() {
+        let gmm = Mixture::new(
+            vec![0.2, 0.5, 0.3],
+            vec![Normal::new(-2.0, 1.2), Normal::new(0.0, 1.0), Normal::new(3.0, 2.5)],
+        );
+
+        assert!((gmm.mean() - 0.5).abs() < 1e-7);
+        assert!((gmm.variance() - 5.913).abs() < 1e-7);
+        assert!((gmm.standard_deviation() - gmm.variance().sqrt()).abs() < 1e-7);
     }
 }
