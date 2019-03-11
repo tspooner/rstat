@@ -1,7 +1,7 @@
 use crate::{
     consts::PI_E,
     core::*,
-    discrete::Bernoulli,
+    univariate::discrete::Bernoulli,
 };
 use rand;
 use spaces::{Matrix, discrete::Ordinal};

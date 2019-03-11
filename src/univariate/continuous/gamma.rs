@@ -1,10 +1,8 @@
-use crate::{
-    continuous::Exponential,
-    core::*,
-};
+use crate::core::*;
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;
+use super::Exponential;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Gamma {

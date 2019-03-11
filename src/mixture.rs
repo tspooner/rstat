@@ -1,6 +1,6 @@
 use crate::{
     core::*,
-    discrete::Categorical,
+    univariate::discrete::Categorical,
 };
 use rand::Rng;
 use spaces::{Space, Enclose};
@@ -135,8 +135,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        continuous::{Normal, Uniform},
         core::UnivariateMoments,
+        univariate::continuous::{Normal, Uniform},
     };
     use super::Mixture;
 

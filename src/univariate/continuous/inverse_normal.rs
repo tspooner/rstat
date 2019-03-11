@@ -1,11 +1,11 @@
 use crate::{
     consts::{PI_2, PI_E_2},
-    continuous::Gaussian,
     core::*,
 };
 use rand::Rng;
 use spaces::continuous::PositiveReals;
 use std::fmt;
+use super::Gaussian;
 
 pub type InvGaussian = InvNormal;
 

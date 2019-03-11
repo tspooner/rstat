@@ -19,4 +19,4 @@ import_all!(geometric);
 import_all!(multinomial);
 import_all!(poisson);
 
-pub type Uniform = crate::Uniform<i64>;
+pub type Uniform = super::Uniform<i64>;

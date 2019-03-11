@@ -33,4 +33,4 @@ import_all!(student_t);
 import_all!(triangular);
 import_all!(weibull);
 
-pub type Uniform = crate::Uniform<f64>;
+pub type Uniform = super::Uniform<f64>;
