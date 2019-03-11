@@ -16,7 +16,6 @@ import_all!(beta_binomial);
 import_all!(binomial);
 import_all!(categorical);
 import_all!(geometric);
-import_all!(multinomial);
 import_all!(poisson);
 
 pub type Uniform = super::Uniform<i64>;
