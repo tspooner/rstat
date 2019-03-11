@@ -12,4 +12,5 @@ pub mod multivariate;
 
 import_all!(mixture);
 
-pub use self::core::{Distribution, Probability};
+pub use self::core::Probability;
+pub use self::core::distribution::*;

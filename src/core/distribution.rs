@@ -1,7 +1,7 @@
 use crate::core::Probability;
 use ndarray::{Array, Dimension, ShapeBuilder};
 use rand::Rng;
-use spaces::{Space, Vector};
+use spaces::{Space, Vector, product::{PairSpace, LinearSpace}};
 
 pub struct Sampler<D, R> {
     pub(super) distribution: D,
@@ -41,6 +41,10 @@ macro_rules! batch_variant {
         }
     }
 }
+
+pub type UnivariateDistribution<S> = Distribution<Support = S>;
+pub type BivariateDistribution<S1, S2> = Distribution<Support = PairSpace<S1, S2>>;
+pub type MultivariateDistribution<S> = Distribution<Support = LinearSpace<S>>;
 
 pub trait Distribution {
     type Support: Space;

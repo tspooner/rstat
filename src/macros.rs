@@ -9,7 +9,7 @@ macro_rules! clip {
 
 macro_rules! import_all {
     ($module:ident) => {
-        mod $module;
+        pub(crate) mod $module;
         pub use self::$module::*;
     };
 }
