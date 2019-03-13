@@ -43,7 +43,7 @@ impl Distribution for Laplace {
 }
 
 impl ContinuousDistribution for Laplace {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use std::cmp::Ordering::*;
 
         match x
@@ -53,7 +53,6 @@ impl ContinuousDistribution for Laplace {
             Less | Equal => ((x - self.mu) / self.b).exp() / 2.0,
             Greater => 1.0 - ((self.mu - x) / self.b).exp() / 2.0,
         }
-        .into()
     }
 }
 

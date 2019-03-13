@@ -77,8 +77,8 @@ impl Distribution for Dirichlet {
 }
 
 impl ContinuousDistribution for Dirichlet {
-    fn pdf(&self, xs: Vector<f64>) -> Probability {
-        self.logpdf(xs).exp().into()
+    fn pdf(&self, xs: Vector<f64>) -> f64 {
+        self.logpdf(xs).exp()
     }
 
     fn logpdf(&self, xs: Vector<f64>) -> f64 {

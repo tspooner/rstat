@@ -69,10 +69,10 @@ impl Distribution for Cauchy {
 }
 
 impl ContinuousDistribution for Cauchy {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = self.z(x);
 
-        (1.0 / PI / self.gamma / (1.0 + z * z)).into()
+        1.0 / PI / self.gamma / (1.0 + z * z)
     }
 }
 

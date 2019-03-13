@@ -49,10 +49,10 @@ impl Distribution for GeneralisedPareto {
 }
 
 impl ContinuousDistribution for GeneralisedPareto {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = (x - self.mu) / self.sigma;
 
-        ((1.0 + self.zeta * z).powf(-1.0 / self.zeta - 1.0) / self.sigma).into()
+        (1.0 + self.zeta * z).powf(-1.0 / self.zeta - 1.0) / self.sigma
     }
 }
 

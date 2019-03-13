@@ -88,13 +88,12 @@ impl Distribution for Uniform<f64> {
 }
 
 impl ContinuousDistribution for Uniform<f64> {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         if x < self.a || x > self.b {
             0.0
         } else {
             self.prob
         }
-        .into()
     }
 }
 

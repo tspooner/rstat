@@ -67,12 +67,11 @@ impl Distribution for Gamma {
 }
 
 impl ContinuousDistribution for Gamma {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        (self.beta.powf(self.alpha) * x.powf(self.alpha - 1.0) * (-self.beta * x).exp()
-            / self.alpha.gamma())
-        .into()
+        self.beta.powf(self.alpha) * x.powf(self.alpha - 1.0) * (-self.beta * x).exp()
+            / self.alpha.gamma()
     }
 }
 

@@ -154,7 +154,7 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Alternatively, one may interpret the PDF, for infinitely small `dt`, as the following:
     /// `f(t)dt = P(t < X < t + dt)`.
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+    fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
         self.logpdf(x).exp().into()
     }
 
@@ -165,7 +165,7 @@ pub trait ContinuousDistribution: Distribution {
 
     batch_variant!(
         /// Evaluates the PDF element-wise for a batch `xs`.
-        => pdf, pdf_batch, <Self::Support as Space>::Value, Probability
+        => pdf, pdf_batch, <Self::Support as Space>::Value, f64
     );
     batch_variant!(
         /// Evaluates the log PDF element-wise for a batch `xs`.

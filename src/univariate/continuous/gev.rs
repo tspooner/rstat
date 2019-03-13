@@ -64,8 +64,8 @@ impl Distribution for GeneralisedExtremeValue {
 }
 
 impl ContinuousDistribution for GeneralisedExtremeValue {
-    fn pdf(&self, x: f64) -> Probability {
-        (self.t_func(x).powf(self.zeta + 1.0) * (-self.t_func(x)).exp() / self.sigma).into()
+    fn pdf(&self, x: f64) -> f64 {
+        self.t_func(x).powf(self.zeta + 1.0) * (-self.t_func(x)).exp() / self.sigma
     }
 }
 

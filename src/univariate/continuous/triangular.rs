@@ -73,7 +73,7 @@ impl Distribution for Triangular {
 }
 
 impl ContinuousDistribution for Triangular {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         if x <= self.a {
             0.0
         } else if x < self.c {
@@ -85,7 +85,6 @@ impl ContinuousDistribution for Triangular {
         } else {
             0.0
         }
-        .into()
     }
 }
 

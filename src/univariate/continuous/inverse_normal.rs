@@ -64,13 +64,13 @@ impl Distribution for InvNormal {
 }
 
 impl ContinuousDistribution for InvNormal {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = (self.lambda / PI_2 / x / x / x).sqrt();
 
         let diff = x - self.mu;
         let exponent = (-self.lambda * diff * diff) / 2.0 / self.mu / self.mu / x;
 
-        (z * exponent.exp()).into()
+        z * exponent.exp()
     }
 }
 

@@ -57,13 +57,13 @@ impl Distribution for StudentT {
 }
 
 impl ContinuousDistribution for StudentT {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
         let np1o2 = (self.nu + 1.0) / 2.0;
         let norm = np1o2.gamma() / (self.nu * PI).sqrt() / (self.nu / 2.0).gamma();
 
-        (norm * (1.0 + x * x / self.nu).powf(-np1o2)).into()
+        norm * (1.0 + x * x / self.nu).powf(-np1o2)
     }
 }
 

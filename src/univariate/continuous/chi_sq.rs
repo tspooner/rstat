@@ -52,14 +52,14 @@ impl Distribution for ChiSq {
 }
 
 impl ContinuousDistribution for ChiSq {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
         let k = self.k as f64;
         let ko2 = k / 2.0;
         let norm = 2.0f64.powf(ko2) * ko2.gamma();
 
-        (x.powf(ko2 - 1.0) * (-x / 2.0).exp() / norm).into()
+        x.powf(ko2 - 1.0) * (-x / 2.0).exp() / norm
     }
 }
 

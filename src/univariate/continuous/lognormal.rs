@@ -68,11 +68,11 @@ impl Distribution for LogNormal {
 }
 
 impl ContinuousDistribution for LogNormal {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = self.z(x);
         let norm = 1.0 / PI_2.sqrt() / self.sigma;
 
-        (norm * (-z * z / 2.0).exp() / x).into()
+        norm * (-z * z / 2.0).exp() / x
     }
 }
 

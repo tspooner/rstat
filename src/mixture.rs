@@ -78,16 +78,15 @@ where
     C::Support: Clone,
     <C::Support as Space>::Value: Clone,
 {
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
-        Probability::new_unchecked(self.components.iter()
+    fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
+        self.components.iter()
             .zip(self.dist.ps.iter())
             .filter_map(|(c, &p)| if p.non_zero() {
-                Some(f64::from(p * c.pdf(x.clone())))
+                Some(f64::from(p) * c.pdf(x.clone()))
             } else {
                 None
             })
             .sum()
-        )
     }
 }
 

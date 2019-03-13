@@ -52,10 +52,10 @@ impl Distribution for Rayleigh {
 }
 
 impl ContinuousDistribution for Rayleigh {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let sigma2 = self.sigma * self.sigma;
 
-        (x / sigma2 * (-x * x / sigma2 / 2.0).exp()).into()
+        x / sigma2 * (-x * x / sigma2 / 2.0).exp()
     }
 }
 

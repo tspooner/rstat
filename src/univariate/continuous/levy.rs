@@ -45,11 +45,11 @@ impl Distribution for Levy {
 }
 
 impl ContinuousDistribution for Levy {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let diff = x - self.mu;
         let c_over_2 = self.c / 2.0;
 
-        ((c_over_2 / PI).sqrt() * (-c_over_2 / diff).exp() / diff.powf(THREE_HALVES)).into()
+        (c_over_2 / PI).sqrt() * (-c_over_2 / diff).exp() / diff.powf(THREE_HALVES)
     }
 }
 

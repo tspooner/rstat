@@ -65,13 +65,13 @@ impl Distribution for Beta {
 }
 
 impl ContinuousDistribution for Beta {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
         let numerator = x.powf(self.alpha - 1.0) * (1.0 - x).powf(self.beta - 1.0);
         let denominator = self.alpha.beta(self.beta);
 
-        (numerator / denominator).into()
+        numerator / denominator
     }
 }
 

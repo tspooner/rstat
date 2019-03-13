@@ -45,12 +45,12 @@ impl Distribution for Degenerate<f64> {
 }
 
 impl ContinuousDistribution for Degenerate<f64> {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         if (x - self.k).abs() < 1e-7 {
             1.0
         } else {
             0.0
-        }.into()
+        }
     }
 }
 

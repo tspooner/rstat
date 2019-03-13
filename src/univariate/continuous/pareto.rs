@@ -60,13 +60,12 @@ impl Distribution for Pareto {
 }
 
 impl ContinuousDistribution for Pareto {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         if x < self.x_m {
             0.0
         } else {
             self.alpha * self.x_m.powf(self.alpha) / x.powf(self.alpha + 1.0)
         }
-        .into()
     }
 }
 

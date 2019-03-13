@@ -74,7 +74,7 @@ impl Distribution for Weibull {
 }
 
 impl ContinuousDistribution for Weibull {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         if x >= 0.0 {
             let xol = x / self.lambda;
 
@@ -82,7 +82,6 @@ impl ContinuousDistribution for Weibull {
         } else {
             0.0
         }
-        .into()
     }
 }
 

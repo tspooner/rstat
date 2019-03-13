@@ -49,8 +49,8 @@ impl Distribution for Cosine {
 }
 
 impl ContinuousDistribution for Cosine {
-    fn pdf(&self, x: f64) -> Probability {
-        (0.5 * self.hvc(x)).into()
+    fn pdf(&self, x: f64) -> f64 {
+        0.5 * self.hvc(x)
     }
 }
 

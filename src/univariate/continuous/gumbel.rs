@@ -50,10 +50,10 @@ impl Distribution for Gumbel {
 }
 
 impl ContinuousDistribution for Gumbel {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = self.z(x);
 
-        ((-z - (-z).exp()).exp() / self.beta).into()
+        (-z - (-z).exp()).exp() / self.beta
     }
 }
 

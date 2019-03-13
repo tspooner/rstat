@@ -47,12 +47,11 @@ impl Distribution for Erlang {
 }
 
 impl ContinuousDistribution for Erlang {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        (self.lambda.powi(self.k as i32) * x.powi(self.k as i32 - 1) * (-self.lambda * x).exp()
-            / (self.k as f64).factorial())
-        .into()
+        self.lambda.powi(self.k as i32) * x.powi(self.k as i32 - 1) * (-self.lambda * x).exp()
+            / (self.k as f64).factorial()
     }
 }
 

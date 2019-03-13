@@ -47,11 +47,11 @@ impl Distribution for Logistic {
 }
 
 impl ContinuousDistribution for Logistic {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let exp_term = (-self.z(x)).exp();
         let exp_term_p1 = 1.0 + exp_term;
 
-        (exp_term / self.s / exp_term_p1 / exp_term_p1).into()
+        exp_term / self.s / exp_term_p1 / exp_term_p1
     }
 }
 

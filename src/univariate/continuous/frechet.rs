@@ -57,11 +57,11 @@ impl Distribution for Frechet {
 }
 
 impl ContinuousDistribution for Frechet {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let z = self.z(x);
         let cdf = f64::from(self.cdf(x));
 
-        (self.alpha / self.s * z.powf(-1.0 - self.alpha) * cdf).into()
+        self.alpha / self.s * z.powf(-1.0 - self.alpha) * cdf
     }
 }
 

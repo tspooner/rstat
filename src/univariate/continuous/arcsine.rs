@@ -43,10 +43,10 @@ impl Distribution for Arcsine {
 }
 
 impl ContinuousDistribution for Arcsine {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         let xab = (x - self.a) * (self.b - x);
 
-        (ONE_OVER_PI / xab.sqrt()).into()
+        ONE_OVER_PI / xab.sqrt()
     }
 }
 

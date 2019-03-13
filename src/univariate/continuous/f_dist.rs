@@ -58,7 +58,7 @@ impl Distribution for FDist {
 }
 
 impl ContinuousDistribution for FDist {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
         let d1 = self.d1 as f64;
@@ -67,7 +67,7 @@ impl ContinuousDistribution for FDist {
         let numerator = ((d1 * x).powf(d1) * d2.powf(d2) / (d1 * x + d2).powf(d1 + d2)).sqrt();
         let denominator = x * (d1 / 2.0).beta(d2 / 2.0);
 
-        (numerator / denominator).into()
+        numerator / denominator
     }
 }
 

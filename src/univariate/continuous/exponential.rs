@@ -59,8 +59,8 @@ impl Distribution for Exponential {
 }
 
 impl ContinuousDistribution for Exponential {
-    fn pdf(&self, x: f64) -> Probability {
-        (self.lambda * (-self.lambda * x).exp()).into()
+    fn pdf(&self, x: f64) -> f64 {
+        self.lambda * (-self.lambda * x).exp()
     }
 }
 

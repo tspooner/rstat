@@ -46,13 +46,13 @@ impl Distribution for BetaPrime {
 }
 
 impl ContinuousDistribution for BetaPrime {
-    fn pdf(&self, x: f64) -> Probability {
+    fn pdf(&self, x: f64) -> f64 {
         use special_fun::FloatSpecial;
 
         let numerator = x.powf(self.alpha - 1.0) * (1.0 + x).powf(-self.alpha - self.beta);
         let denominator = self.alpha.beta(self.beta);
 
-        (numerator / denominator).into()
+        numerator / denominator
     }
 }
 
