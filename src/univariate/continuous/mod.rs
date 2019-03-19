@@ -11,7 +11,6 @@ import_all!(cauchy);
 import_all!(chi);
 import_all!(chi_sq);
 import_all!(cosine);
-import_all!(dirichlet);
 import_all!(erlang);
 import_all!(exponential);
 import_all!(f_dist);
