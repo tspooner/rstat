@@ -1,6 +1,7 @@
 extern crate rand;
 extern crate spaces;
 extern crate ndarray;
+extern crate ndarray_linalg;
 extern crate special_fun;
 
 mod consts;
