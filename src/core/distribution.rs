@@ -100,7 +100,11 @@ pub trait Distribution {
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> <Self::Support as Space>::Value;
 
-    fn sample_n<D, Sh, R>(&self, rng: &mut R, shape: Sh) -> Array<<Self::Support as Space>::Value, D>
+    fn sample_n<D, Sh, R>(
+        &self,
+        rng: &mut R,
+        shape: Sh
+    ) -> Array<<Self::Support as Space>::Value, D>
         where D: Dimension,
               Sh: ShapeBuilder<Dim=D>,
               R: Rng + ?Sized,
