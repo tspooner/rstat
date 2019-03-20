@@ -1,6 +1,6 @@
 use crate::{
     core::*,
-    discrete::Categorical,
+    univariate::discrete::Categorical,
 };
 use rand::Rng;
 use spaces::{Space, Enclose};
@@ -78,16 +78,15 @@ where
     C::Support: Clone,
     <C::Support as Space>::Value: Clone,
 {
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
-        Probability::new_unchecked(self.components.iter()
+    fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
+        self.components.iter()
             .zip(self.dist.ps.iter())
             .filter_map(|(c, &p)| if p.non_zero() {
-                Some(f64::from(p * c.pdf(x.clone())))
+                Some(f64::from(p) * c.pdf(x.clone()))
             } else {
                 None
             })
             .sum()
-        )
     }
 }
 
@@ -135,8 +134,8 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        continuous::{Normal, Uniform},
         core::UnivariateMoments,
+        univariate::continuous::{Normal, Uniform},
     };
     use super::Mixture;
 

@@ -1,7 +1,7 @@
 use crate::core::Probability;
 use ndarray::{Array, Dimension, ShapeBuilder};
 use rand::Rng;
-use spaces::{Space, Vector};
+use spaces::{Space, Vector, product::{PairSpace, LinearSpace}};
 
 pub struct Sampler<D, R> {
     pub(super) distribution: D,
@@ -42,6 +42,10 @@ macro_rules! batch_variant {
     }
 }
 
+pub type UnivariateDistribution<S> = Distribution<Support = S>;
+pub type BivariateDistribution<S1, S2> = Distribution<Support = PairSpace<S1, S2>>;
+pub type MultivariateDistribution<S> = Distribution<Support = LinearSpace<S>>;
+
 pub trait Distribution {
     type Support: Space;
 
@@ -52,7 +56,9 @@ pub trait Distribution {
     ///
     /// The CDF is defined as the probability that a random variable X takes on a value less than
     /// or equal to `x`: `F(x) = P(X <= x)`.
-    fn cdf(&self, x: <Self::Support as Space>::Value) -> Probability;
+    fn cdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+        unimplemented!()
+    }
 
     /// Evaluates the complementary cumulative distribution function at `x`.
     ///
@@ -94,7 +100,11 @@ pub trait Distribution {
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> <Self::Support as Space>::Value;
 
-    fn sample_n<D, Sh, R>(&self, rng: &mut R, shape: Sh) -> Array<<Self::Support as Space>::Value, D>
+    fn sample_n<D, Sh, R>(
+        &self,
+        rng: &mut R,
+        shape: Sh
+    ) -> Array<<Self::Support as Space>::Value, D>
         where D: Dimension,
               Sh: ShapeBuilder<Dim=D>,
               R: Rng + ?Sized,
@@ -150,7 +160,7 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Alternatively, one may interpret the PDF, for infinitely small `dt`, as the following:
     /// `f(t)dt = P(t < X < t + dt)`.
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+    fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
         self.logpdf(x).exp().into()
     }
 
@@ -161,7 +171,7 @@ pub trait ContinuousDistribution: Distribution {
 
     batch_variant!(
         /// Evaluates the PDF element-wise for a batch `xs`.
-        => pdf, pdf_batch, <Self::Support as Space>::Value, Probability
+        => pdf, pdf_batch, <Self::Support as Space>::Value, f64
     );
     batch_variant!(
         /// Evaluates the log PDF element-wise for a batch `xs`.
