@@ -11,7 +11,7 @@
 ## Installation
 ```toml
 [dependencies]
-rstat = "0.1"
+rstat = "0.2"
 ```
 
 ## Contributing
