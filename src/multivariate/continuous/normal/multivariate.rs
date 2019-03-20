@@ -112,7 +112,6 @@ impl fmt::Display for MultivariateNormal {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
     use crate::{Distribution, ContinuousDistribution};
