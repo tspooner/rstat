@@ -2,7 +2,7 @@
 name = "rstat"
 description = "Probability distributions and statistics in Rust with integrated fitting routines, convolution support and mixtures"
 
-version = "0.2.0"
+version = "0.3.0"
 authors = ["Tom Spooner <spooner10000@gmail.com>"]
 
 license = "MIT"
