@@ -1,7 +1,7 @@
 use crate::core::Distribution;
-use spaces::{Space, Vector};
+use spaces::Space;
 
 
 pub trait MLE: Distribution {
-    fn fit_mle(samples: Vector<<Self::Support as Space>::Value>) -> Self;
+    fn fit_mle(samples: Vec<<Self::Support as Space>::Value>) -> Self;
 }

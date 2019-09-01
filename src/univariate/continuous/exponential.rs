@@ -1,6 +1,7 @@
 use crate::core::*;
+use ndarray::Array2;
 use rand::Rng;
-use spaces::{continuous::PositiveReals, Matrix};
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -26,15 +27,15 @@ impl Default for Exponential {
     }
 }
 
-impl Into<rand::distributions::Exp> for Exponential {
-    fn into(self) -> rand::distributions::Exp {
-        rand::distributions::Exp::new(self.lambda)
+impl Into<rand_distr::Exp<f64>> for Exponential {
+    fn into(self) -> rand_distr::Exp<f64> {
+        rand_distr::Exp::new(self.lambda).unwrap()
     }
 }
 
-impl Into<rand::distributions::Exp> for &Exponential {
-    fn into(self) -> rand::distributions::Exp {
-        rand::distributions::Exp::new(self.lambda)
+impl Into<rand_distr::Exp<f64>> for &Exponential {
+    fn into(self) -> rand_distr::Exp<f64> {
+        rand_distr::Exp::new(self.lambda).unwrap()
     }
 }
 
@@ -50,9 +51,9 @@ impl Distribution for Exponential {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Exp as ExpSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: ExpSampler = self.into();
+        let sampler: rand_distr::Exp<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -109,8 +110,8 @@ impl Entropy for Exponential {
 }
 
 impl FisherInformation for Exponential {
-    fn fisher_information(&self) -> Matrix {
-        Matrix::from_elem((1, 1), self.lambda * self.lambda)
+    fn fisher_information(&self) -> Array2<f64> {
+        Array2::from_elem((1, 1), self.lambda * self.lambda)
     }
 }
 

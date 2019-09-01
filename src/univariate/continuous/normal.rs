@@ -2,8 +2,9 @@ use crate::{
     consts::{PI_2, PI_E_2},
     core::*,
 };
+use ndarray::Array2;
 use rand::Rng;
-use spaces::{continuous::Reals, Matrix, Vector};
+use spaces::real::Reals;
 use std::fmt;
 
 pub type Gaussian = Normal;
@@ -50,15 +51,15 @@ impl Default for Normal {
     }
 }
 
-impl Into<rand::distributions::Normal> for Normal {
-    fn into(self) -> rand::distributions::Normal {
-        rand::distributions::Normal::new(self.mu, self.sigma)
+impl Into<rand_distr::Normal<f64>> for Normal {
+    fn into(self) -> rand_distr::Normal<f64> {
+        rand_distr::Normal::new(self.mu, self.sigma).unwrap()
     }
 }
 
-impl Into<rand::distributions::Normal> for &Normal {
-    fn into(self) -> rand::distributions::Normal {
-        rand::distributions::Normal::new(self.mu, self.sigma)
+impl Into<rand_distr::Normal<f64>> for &Normal {
+    fn into(self) -> rand_distr::Normal<f64> {
+        rand_distr::Normal::new(self.mu, self.sigma).unwrap()
     }
 }
 
@@ -76,9 +77,9 @@ impl Distribution for Normal {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Distribution as DistSampler, Normal as NormalSampler};
+        use rand_distr::Distribution;
 
-        let sampler: NormalSampler = self.into();
+        let sampler: rand_distr::Normal<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -138,11 +139,11 @@ impl Entropy for Normal {
 }
 
 impl FisherInformation for Normal {
-    fn fisher_information(&self) -> Matrix {
+    fn fisher_information(&self) -> Array2<f64> {
         let precision = self.precision();
 
         unsafe {
-            Matrix::from_shape_vec_unchecked(
+            Array2::from_shape_vec_unchecked(
                 (2, 2),
                 vec![precision, 0.0, 0.0, precision * precision / 2.0],
             )
@@ -164,15 +165,15 @@ impl Convolution<Normal> for Normal {
 }
 
 impl MLE for Normal {
-    fn fit_mle(samples: Vector<f64>) -> Self {
-        let n = samples.len() as f64;
+    fn fit_mle(xs: Vec<f64>) -> Self {
+        let n = xs.len() as f64;
 
-        let sample_mean = samples.scalar_sum() / n;
+        let mean = xs.iter().fold(0.0, |acc, &x| acc + x) / n;
+        let var = xs.into_iter().map(|x| {
+            x - mean
+        }).fold(0.0, |acc, r| acc + r * r) / (n - 1.0);
 
-        let residuals = samples - sample_mean;
-        let sample_var = residuals.fold(0.0, |acc, v| acc + v * v) / n;
-
-        Normal::new(sample_mean, sample_var.sqrt())
+        Normal::new(mean, var.sqrt())
     }
 }
 

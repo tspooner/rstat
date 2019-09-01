@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand;
-use spaces::continuous::Interval;
+use spaces::real::Interval;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -30,15 +30,15 @@ impl Default for Beta {
     }
 }
 
-impl Into<rand::distributions::Beta> for Beta {
-    fn into(self) -> rand::distributions::Beta {
-        rand::distributions::Beta::new(self.alpha, self.beta)
+impl Into<rand_distr::Beta<f64>> for Beta {
+    fn into(self) -> rand_distr::Beta<f64> {
+        rand_distr::Beta::new(self.alpha, self.beta).unwrap()
     }
 }
 
-impl Into<rand::distributions::Beta> for &Beta {
-    fn into(self) -> rand::distributions::Beta {
-        rand::distributions::Beta::new(self.alpha, self.beta)
+impl Into<rand_distr::Beta<f64>> for &Beta {
+    fn into(self) -> rand_distr::Beta<f64> {
+        rand_distr::Beta::new(self.alpha, self.beta).unwrap()
     }
 }
 
@@ -56,9 +56,9 @@ impl Distribution for Beta {
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Beta as BetaSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: BetaSampler = self.into();
+        let sampler: rand_distr::Beta<f64> = self.into();
 
         sampler.sample(rng)
     }

@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::Reals;
+use spaces::real::Reals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -19,15 +19,15 @@ impl StudentT {
     }
 }
 
-impl Into<rand::distributions::StudentT> for StudentT {
-    fn into(self) -> rand::distributions::StudentT {
-        rand::distributions::StudentT::new(self.nu)
+impl Into<rand_distr::StudentT<f64>> for StudentT {
+    fn into(self) -> rand_distr::StudentT<f64> {
+        rand_distr::StudentT::new(self.nu).unwrap()
     }
 }
 
-impl Into<rand::distributions::StudentT> for &StudentT {
-    fn into(self) -> rand::distributions::StudentT {
-        rand::distributions::StudentT::new(self.nu)
+impl Into<rand_distr::StudentT<f64>> for &StudentT {
+    fn into(self) -> rand_distr::StudentT<f64> {
+        rand_distr::StudentT::new(self.nu).unwrap()
     }
 }
 
@@ -48,9 +48,9 @@ impl Distribution for StudentT {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{StudentT as STSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: STSampler = self.into();
+        let sampler: rand_distr::StudentT<f64> = self.into();
 
         sampler.sample(rng)
     }

@@ -1,9 +1,6 @@
-use crate::{
-    core::*,
-    univariate::discrete::Categorical,
-};
+use crate::{core::*, univariate::discrete::Categorical};
 use rand::Rng;
-use spaces::{Space, Enclose};
+use spaces::{Space, Union};
 
 #[derive(Debug, Clone)]
 pub struct Mixture<C: Distribution> {
@@ -15,7 +12,7 @@ pub struct Mixture<C: Distribution> {
 
 impl<C: Distribution> Mixture<C>
 where
-    C::Support: Enclose,
+    C::Support: Union,
 {
     pub fn new<T: Into<Categorical>>(prior: T, components: Vec<C>) -> Mixture<C> {
         let prior: Categorical = prior.into();
@@ -41,8 +38,7 @@ where
     }
 
     fn compute_support(components: &[C]) -> C::Support {
-        components.iter().skip(1)
-            .fold(components[0].support(), |acc, c| acc.enclose(&c.support()))
+        components.iter().skip(1).fold(components[0].support(), |acc, c| acc.union(&c.support()))
     }
 }
 
@@ -76,7 +72,6 @@ where
 impl<C: ContinuousDistribution> ContinuousDistribution for Mixture<C>
 where
     C::Support: Clone,
-    <C::Support as Space>::Value: Clone,
 {
     fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
         self.components.iter()

@@ -1,11 +1,11 @@
 use std::{error::Error, fmt, ops::{Add, Sub, Mul, Div, Not}};
 
-#[derive(Debug, Clone)]
-pub enum ProbabilityError {
-    InvalidProbability,
-}
-
 pub type ProbabilityResult<T> = Result<T, ProbabilityError>;
+
+#[derive(Clone, Copy, Debug)]
+pub enum ProbabilityError {
+    InvalidProbability(f64),
+}
 
 impl ProbabilityError {
     #[inline(always)]
@@ -13,7 +13,7 @@ impl ProbabilityError {
         if p >= 0.0 && p <= 1.0 {
             Ok(p)
         } else {
-            Err(ProbabilityError::InvalidProbability)
+            Err(ProbabilityError::InvalidProbability(p))
         }
     }
 }
@@ -21,16 +21,16 @@ impl ProbabilityError {
 impl fmt::Display for ProbabilityError {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         match *self {
-            ProbabilityError::InvalidProbability => f.write_str("InvalidProbability"),
+            ProbabilityError::InvalidProbability(p) =>
+                f.write_str(&format!("InvalidProbability({})", p)),
         }
     }
 }
 
-
 impl Error for ProbabilityError {
     fn description(&self) -> &str {
         match *self {
-            ProbabilityError::InvalidProbability =>
+            ProbabilityError::InvalidProbability(_) =>
                 "Probabilities must lie in the range [0.0, 1.0].",
         }
     }

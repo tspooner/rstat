@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -36,15 +36,15 @@ impl Default for Weibull {
     }
 }
 
-impl Into<rand::distributions::Weibull> for Weibull {
-    fn into(self) -> rand::distributions::Weibull {
-        rand::distributions::Weibull::new(self.lambda, self.k)
+impl Into<rand_distr::Weibull<f64>> for Weibull {
+    fn into(self) -> rand_distr::Weibull<f64> {
+        rand_distr::Weibull::new(self.lambda, self.k).unwrap()
     }
 }
 
-impl Into<rand::distributions::Weibull> for &Weibull {
-    fn into(self) -> rand::distributions::Weibull {
-        rand::distributions::Weibull::new(self.lambda, self.k)
+impl Into<rand_distr::Weibull<f64>> for &Weibull {
+    fn into(self) -> rand_distr::Weibull<f64> {
+        rand_distr::Weibull::new(self.lambda, self.k).unwrap()
     }
 }
 
@@ -65,9 +65,9 @@ impl Distribution for Weibull {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Weibull as WeibullSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: WeibullSampler = self.into();
+        let sampler: rand_distr::Weibull<f64> = self.into();
 
         sampler.sample(rng)
     }

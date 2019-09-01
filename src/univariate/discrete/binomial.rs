@@ -3,8 +3,9 @@ use crate::{
     core::*,
     univariate::discrete::Bernoulli,
 };
+use ndarray::Array2;
 use rand;
-use spaces::{Matrix, discrete::Ordinal};
+use spaces::discrete::Ordinal;
 use std::fmt;
 use super::choose;
 
@@ -28,15 +29,15 @@ impl Binomial {
     }
 }
 
-impl Into<rand::distributions::Binomial> for Binomial {
-    fn into(self) -> rand::distributions::Binomial {
-        rand::distributions::Binomial::new(self.n as u64, f64::from(self.p))
+impl Into<rand_distr::Binomial> for Binomial {
+    fn into(self) -> rand_distr::Binomial {
+        rand_distr::Binomial::new(self.n as u64, f64::from(self.p)).unwrap()
     }
 }
 
-impl Into<rand::distributions::Binomial> for &Binomial {
-    fn into(self) -> rand::distributions::Binomial {
-        rand::distributions::Binomial::new(self.n as u64, f64::from(self.p))
+impl Into<rand_distr::Binomial> for &Binomial {
+    fn into(self) -> rand_distr::Binomial {
+        rand_distr::Binomial::new(self.n as u64, f64::from(self.p)).unwrap()
     }
 }
 
@@ -55,9 +56,9 @@ impl Distribution for Binomial {
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> usize {
-        use rand::distributions::{Binomial as BinomialSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: BinomialSampler = self.into();
+        let sampler: rand_distr::Binomial = self.into();
 
         sampler.sample(rng) as usize
     }
@@ -118,8 +119,8 @@ impl Entropy for Binomial {
 }
 
 impl FisherInformation for Binomial {
-    fn fisher_information(&self) -> Matrix {
-        Matrix::from_elem((1, 1), self.n as f64 / f64::from(self.p * self.q))
+    fn fisher_information(&self) -> Array2<f64> {
+        Array2::from_elem((1, 1), self.n as f64 / f64::from(self.p * self.q))
     }
 }
 

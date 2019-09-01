@@ -1,7 +1,7 @@
 use crate::core::Probability;
-use ndarray::{Array, Dimension, ShapeBuilder};
+use ndarray::{Array, Array1, Dimension, ShapeBuilder};
 use rand::Rng;
-use spaces::{Space, Vector, product::{PairSpace, LinearSpace}};
+use spaces::Space;
 
 pub struct Sampler<D, R> {
     pub(super) distribution: D,
@@ -36,15 +36,13 @@ macro_rules! ln_variant {
 macro_rules! batch_variant {
     ($(#[$attr:meta])* => $name:ident, $name_batch:ident, $x:ty, $res:ty) => {
         $(#[$attr])*
-        fn $name_batch(&self, xs: Vector<$x>) -> Vector<$res> {
+        fn $name_batch(&self, xs: Array1<$x>) -> Array1<$res> {
             xs.mapv(|x| self.$name(x))
         }
     }
 }
 
-pub type UnivariateDistribution<S> = Distribution<Support = S>;
-pub type BivariateDistribution<S1, S2> = Distribution<Support = PairSpace<S1, S2>>;
-pub type MultivariateDistribution<S> = Distribution<Support = LinearSpace<S>>;
+pub type Sample<D> = <<D as Distribution>::Support as Space>::Value;
 
 pub trait Distribution {
     type Support: Space;
@@ -56,7 +54,7 @@ pub trait Distribution {
     ///
     /// The CDF is defined as the probability that a random variable X takes on a value less than
     /// or equal to `x`: `F(x) = P(X <= x)`.
-    fn cdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+    fn cdf(&self, x: Sample<Self>) -> Probability {
         unimplemented!()
     }
 
@@ -64,47 +62,47 @@ pub trait Distribution {
     ///
     /// The complementary CDF is defined as the probability that a random variable X takes on a
     /// value strictly greater than `x`: `P(X > x) = 1 - F(x)`, where `F(.)` is the CDF.
-    fn ccdf(&self, x: <Self::Support as Space>::Value) -> Probability {
+    fn ccdf(&self, x: Sample<Self>) -> Probability {
         !self.cdf(x)
     }
 
     ln_variant!(
         /// Evaluates the log CDF at `x`: `ln F(x)`.
-        => cdf, logcdf, <Self::Support as Space>::Value
+        => cdf, logcdf, Sample<Self>
     );
 
     ln_variant!(
         /// Evaluates the log complementary CDF at `x`: `ln (1 - F(x))`.
-        => ccdf, logccdf, <Self::Support as Space>::Value
+        => ccdf, logccdf, Sample<Self>
     );
 
     batch_variant!(
         /// Evaluates the CDF element-wise for a batch `xs`.
-        => cdf, cdf_batch, <Self::Support as Space>::Value, Probability
+        => cdf, cdf_batch, Sample<Self>, Probability
     );
 
     batch_variant!(
         /// Evaluates the complementary CDF element-wise for a batch `xs`.
-        => ccdf, ccdf_batch, <Self::Support as Space>::Value, Probability
+        => ccdf, ccdf_batch, Sample<Self>, Probability
     );
 
     batch_variant!(
         /// Evaluates the log CDF element-wise for a batch `xs`.
-        => logcdf, logcdf_batch, <Self::Support as Space>::Value, f64
+        => logcdf, logcdf_batch, Sample<Self>, f64
     );
 
     batch_variant!(
         /// Evaluates the log complementary CDF element-wise for a batch `xs`.
-        => logccdf, logccdf_batch, <Self::Support as Space>::Value, f64
+        => logccdf, logccdf_batch, Sample<Self>, f64
     );
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> <Self::Support as Space>::Value;
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Sample<Self>;
 
-    fn sample_n<D, Sh, R>(
-        &self,
-        rng: &mut R,
-        shape: Sh
-    ) -> Array<<Self::Support as Space>::Value, D>
+    fn sample_n<R: Rng + ?Sized>(&self, rng: &mut R, n: usize) -> Vec<Sample<Self>> {
+        (0..n).into_iter().map(move |_| self.sample(rng)).collect()
+    }
+
+    fn sample_shape<D, Sh, R>(&self, rng: &mut R, shape: Sh) -> Array<Sample<Self>, D>
         where D: Dimension,
               Sh: ShapeBuilder<Dim=D>,
               R: Rng + ?Sized,
@@ -129,23 +127,23 @@ pub trait DiscreteDistribution: Distribution {
     /// The PMF is defined as the probability that a random variable `X` takes a value exactly
     /// equal to `x`: `f(x) = P(X = x) = P({s in S : X(s) = x})`. We require that all sum of
     /// probabilities over all possible outcomes sums to 1.
-    fn pmf(&self, x: <Self::Support as Space>::Value) -> Probability {
+    fn pmf(&self, x: Sample<Self>) -> Probability {
         self.logpmf(x).exp().into()
     }
 
     ln_variant!(
         /// Evaluates the log PMF at `x`.
-        => pmf, logpmf, <Self::Support as Space>::Value
+        => pmf, logpmf, Sample<Self>
     );
 
     batch_variant!(
         /// Evaluates the PMF element-wise for a batch `xs`.
-        => pmf, pmf_batch, <Self::Support as Space>::Value, Probability
+        => pmf, pmf_batch, Sample<Self>, Probability
     );
 
     batch_variant!(
         /// Evaluates the log PMF element-wise for a batch `xs`.
-        => logpmf, logpmf_batch, <Self::Support as Space>::Value, f64
+        => logpmf, logpmf_batch, Sample<Self>, f64
     );
 }
 
@@ -160,25 +158,22 @@ pub trait ContinuousDistribution: Distribution {
     ///
     /// Alternatively, one may interpret the PDF, for infinitely small `dt`, as the following:
     /// `f(t)dt = P(t < X < t + dt)`.
-    fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
+    fn pdf(&self, x: Sample<Self>) -> f64 {
         self.logpdf(x).exp().into()
     }
 
     ln_variant!(
         /// Evaluates the log PDF at `x`.
-        => pdf, logpdf, <Self::Support as Space>::Value
+        => pdf, logpdf, Sample<Self>
     );
 
     batch_variant!(
         /// Evaluates the PDF element-wise for a batch `xs`.
-        => pdf, pdf_batch, <Self::Support as Space>::Value, f64
-    );
-    batch_variant!(
-        /// Evaluates the log PDF element-wise for a batch `xs`.
-        => logpdf, logpdf_batch, <Self::Support as Space>::Value, f64
+        => pdf, pdf_batch, Sample<Self>, f64
     );
 
-    fn loglikelihood(&self, xs: Vector<<Self::Support as Space>::Value>) -> f64 {
-        self.logpdf_batch(xs).scalar_sum()
-    }
+    batch_variant!(
+        /// Evaluates the log PDF element-wise for a batch `xs`.
+        => logpdf, logpdf_batch, Sample<Self>, f64
+    );
 }

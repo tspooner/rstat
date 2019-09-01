@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::Interval;
+use spaces::real::Interval;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -31,15 +31,15 @@ impl Triangular {
     }
 }
 
-impl Into<rand::distributions::Triangular> for Triangular {
-    fn into(self) -> rand::distributions::Triangular {
-        rand::distributions::Triangular::new(self.a, self.b, self.c)
+impl Into<rand_distr::Triangular<f64>> for Triangular {
+    fn into(self) -> rand_distr::Triangular<f64> {
+        rand_distr::Triangular::new(self.a, self.b, self.c).unwrap()
     }
 }
 
-impl Into<rand::distributions::Triangular> for &Triangular {
-    fn into(self) -> rand::distributions::Triangular {
-        rand::distributions::Triangular::new(self.a, self.b, self.c)
+impl Into<rand_distr::Triangular<f64>> for &Triangular {
+    fn into(self) -> rand_distr::Triangular<f64> {
+        rand_distr::Triangular::new(self.a, self.b, self.c).unwrap()
     }
 }
 
@@ -64,9 +64,9 @@ impl Distribution for Triangular {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Triangular as TriangularSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: TriangularSampler = self.into();
+        let sampler: rand_distr::Triangular<f64> = self.into();
 
         sampler.sample(rng)
     }

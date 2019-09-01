@@ -1,6 +1,6 @@
 use crate::core::*;
 use rand::Rng;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -18,15 +18,15 @@ impl FDist {
     }
 }
 
-impl Into<rand::distributions::FisherF> for FDist {
-    fn into(self) -> rand::distributions::FisherF {
-        rand::distributions::FisherF::new(self.d1 as f64, self.d2 as f64)
+impl Into<rand_distr::FisherF<f64>> for FDist {
+    fn into(self) -> rand_distr::FisherF<f64> {
+        rand_distr::FisherF::new(self.d1 as f64, self.d2 as f64).unwrap()
     }
 }
 
-impl Into<rand::distributions::FisherF> for &FDist {
-    fn into(self) -> rand::distributions::FisherF {
-        rand::distributions::FisherF::new(self.d1 as f64, self.d2 as f64)
+impl Into<rand_distr::FisherF<f64>> for &FDist {
+    fn into(self) -> rand_distr::FisherF<f64> {
+        rand_distr::FisherF::new(self.d1 as f64, self.d2 as f64).unwrap()
     }
 }
 
@@ -49,9 +49,9 @@ impl Distribution for FDist {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{FisherF as FisherFSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: FisherFSampler = self.into();
+        let sampler: rand_distr::FisherF<f64> = self.into();
 
         sampler.sample(rng)
     }

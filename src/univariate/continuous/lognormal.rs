@@ -3,8 +3,9 @@ use crate::{
     core::*,
     univariate::continuous::Normal,
 };
+use ndarray::Array2;
 use rand::Rng;
-use spaces::{continuous::PositiveReals, Matrix};
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -26,15 +27,15 @@ impl Default for LogNormal {
     }
 }
 
-impl Into<rand::distributions::LogNormal> for LogNormal {
-    fn into(self) -> rand::distributions::LogNormal {
-        rand::distributions::LogNormal::new(self.0.mu, self.0.sigma)
+impl Into<rand_distr::LogNormal<f64>> for LogNormal {
+    fn into(self) -> rand_distr::LogNormal<f64> {
+        rand_distr::LogNormal::new(self.0.mu, self.0.sigma).unwrap()
     }
 }
 
-impl Into<rand::distributions::LogNormal> for &LogNormal {
-    fn into(self) -> rand::distributions::LogNormal {
-        rand::distributions::LogNormal::new(self.0.mu, self.0.sigma)
+impl Into<rand_distr::LogNormal<f64>> for &LogNormal {
+    fn into(self) -> rand_distr::LogNormal<f64> {
+        rand_distr::LogNormal::new(self.0.mu, self.0.sigma).unwrap()
     }
 }
 
@@ -46,9 +47,9 @@ impl Distribution for LogNormal {
     fn cdf(&self, x: f64) -> Probability { self.0.cdf(x.ln()) }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{LogNormal as LNSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: LNSampler = self.into();
+        let sampler: rand_distr::LogNormal<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -105,11 +106,11 @@ impl Entropy for LogNormal {
 }
 
 impl FisherInformation for LogNormal {
-    fn fisher_information(&self) -> Matrix {
+    fn fisher_information(&self) -> Array2<f64> {
         let one_over_sigma2 = 1.0 / self.0.sigma / self.0.sigma;
 
         unsafe {
-            Matrix::from_shape_vec_unchecked(
+            Array2::from_shape_vec_unchecked(
                 (2, 2),
                 vec![
                     one_over_sigma2,

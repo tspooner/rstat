@@ -4,7 +4,7 @@ use crate::{
 };
 use rand::Rng;
 use spaces::{
-    continuous::Interval as RealInterval,
+    real::Interval as RealInterval,
     discrete::Interval as DiscreteInterval,
 };
 use std::fmt;
@@ -17,21 +17,21 @@ pub struct Uniform<T> {
     prob: f64,
 }
 
-impl<T> Into<rand::distributions::Uniform<T>> for Uniform<T>
+impl<T> Into<rand_distr::Uniform<T>> for Uniform<T>
 where
-    T: rand::distributions::uniform::SampleUniform,
+    T: rand_distr::uniform::SampleUniform,
 {
-    fn into(self) -> rand::distributions::Uniform<T> {
-        rand::distributions::Uniform::new(self.a, self.b)
+    fn into(self) -> rand_distr::Uniform<T> {
+        rand_distr::Uniform::new(self.a, self.b)
     }
 }
 
-impl<T: Clone> Into<rand::distributions::Uniform<T>> for &Uniform<T>
+impl<T: Clone> Into<rand_distr::Uniform<T>> for &Uniform<T>
 where
-    T: rand::distributions::uniform::SampleUniform,
+    T: rand_distr::uniform::SampleUniform,
 {
-    fn into(self) -> rand::distributions::Uniform<T> {
-        rand::distributions::Uniform::new(self.a.clone(), self.b.clone())
+    fn into(self) -> rand_distr::Uniform<T> {
+        rand_distr::Uniform::new(self.a.clone(), self.b.clone())
     }
 }
 
@@ -79,9 +79,9 @@ impl Distribution for Uniform<f64> {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: UniformSampler<f64> = self.into();
+        let sampler: rand_distr::Uniform<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -177,9 +177,9 @@ impl Distribution for Uniform<i64> {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> i64 {
-        use rand::distributions::{Uniform as UniformSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: UniformSampler<i64> = self.into();
+        let sampler: rand_distr::Uniform<i64> = self.into();
 
         sampler.sample(rng)
     }

@@ -1,6 +1,6 @@
 use crate::core::*;
 use rand::Rng;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]

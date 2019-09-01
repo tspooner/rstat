@@ -1,6 +1,7 @@
 use crate::core::*;
+use ndarray::Array2;
 use rand;
-use spaces::{Vector, Matrix, discrete::Binary};
+use spaces::discrete::Binary;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -24,15 +25,15 @@ impl Bernoulli {
     }
 }
 
-impl Into<rand::distributions::Bernoulli> for Bernoulli {
-    fn into(self) -> rand::distributions::Bernoulli {
-        rand::distributions::Bernoulli::new(f64::from(self.p))
+impl Into<rand_distr::Bernoulli> for Bernoulli {
+    fn into(self) -> rand_distr::Bernoulli {
+        rand_distr::Bernoulli::new(f64::from(self.p)).unwrap()
     }
 }
 
-impl Into<rand::distributions::Bernoulli> for &Bernoulli {
-    fn into(self) -> rand::distributions::Bernoulli {
-        rand::distributions::Bernoulli::new(f64::from(self.p))
+impl Into<rand_distr::Bernoulli> for &Bernoulli {
+    fn into(self) -> rand_distr::Bernoulli {
+        rand_distr::Bernoulli::new(f64::from(self.p)).unwrap()
     }
 }
 
@@ -124,16 +125,16 @@ impl Entropy for Bernoulli {
 }
 
 impl FisherInformation for Bernoulli {
-    fn fisher_information(&self) -> Matrix {
-        Matrix::from_elem((1, 1), 1.0 / self.variance)
+    fn fisher_information(&self) -> Array2<f64> {
+        Array2::from_elem((1, 1), 1.0 / self.variance)
     }
 }
 
 impl MLE for Bernoulli {
-    fn fit_mle(samples: Vector<bool>) -> Self {
-        let n = samples.len() as f64;
+    fn fit_mle(xs: Vec<bool>) -> Self {
+        let n = xs.len() as f64;
 
-        Bernoulli::new(samples.fold(0, |acc, v| acc + *v as u64) as f64 / n)
+        Bernoulli::new(xs.into_iter().fold(0, |acc, x| acc + x as u64) as f64 / n)
     }
 }
 

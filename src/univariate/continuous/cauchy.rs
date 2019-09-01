@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::Reals;
+use spaces::real::Reals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -36,15 +36,15 @@ impl Default for Cauchy {
     }
 }
 
-impl Into<rand::distributions::Cauchy> for Cauchy {
-    fn into(self) -> rand::distributions::Cauchy {
-        rand::distributions::Cauchy::new(self.x0, self.gamma)
+impl Into<rand_distr::Cauchy<f64>> for Cauchy {
+    fn into(self) -> rand_distr::Cauchy<f64> {
+        rand_distr::Cauchy::new(self.x0, self.gamma).unwrap()
     }
 }
 
-impl Into<rand::distributions::Cauchy> for &Cauchy {
-    fn into(self) -> rand::distributions::Cauchy {
-        rand::distributions::Cauchy::new(self.x0, self.gamma)
+impl Into<rand_distr::Cauchy<f64>> for &Cauchy {
+    fn into(self) -> rand_distr::Cauchy<f64> {
+        rand_distr::Cauchy::new(self.x0, self.gamma).unwrap()
     }
 }
 
@@ -60,9 +60,9 @@ impl Distribution for Cauchy {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Cauchy as CauchySampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: CauchySampler = self.into();
+        let sampler: rand_distr::Cauchy<f64> = self.into();
 
         sampler.sample(rng)
     }

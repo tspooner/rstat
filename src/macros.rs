@@ -14,6 +14,14 @@ macro_rules! import_all {
     };
 }
 
+macro_rules! assert_gt {
+    ($upper:ident > $lower:ident) => {
+        if $lower >= $upper {
+            panic!("$lower must strictly smaller than $upper.")
+        }
+    };
+}
+
 macro_rules! assert_positive_real {
     ($var:expr) => {
         if $var <= 0.0f64 {
@@ -24,8 +32,8 @@ macro_rules! assert_positive_real {
 
 macro_rules! assert_bounded {
     ($lb:expr; $var:expr; $ub:expr) => {
-        if $lb <= $var && $var <= $ub {
-            panic!("$var must be a positive, finite real number.")
+        if $var < $lb || $var > $ub {
+            panic!("$var must lie in the range [$lb, $ub].")
         }
     };
 }
@@ -56,8 +64,12 @@ macro_rules! assert_dim {
 
 macro_rules! assert_square {
     ($var:expr) => {
-        if !$var.is_square() {
-            panic!("$var must be a square matrix.")
+        let n_rows = $var.len();
+
+        for row in $var.iter() {
+            if row.len() != n_rows {
+                panic!("$var must be a square matrix.")
+            }
         }
     };
 }

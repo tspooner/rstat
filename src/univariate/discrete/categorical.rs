@@ -1,20 +1,20 @@
 use crate::core::*;
 use rand::Rng;
-use spaces::{Vector, discrete::Ordinal};
+use spaces::discrete::Ordinal;
 use std::fmt;
 
 pub type Multinoulli = Categorical;
 
 #[derive(Debug, Clone)]
 pub struct Categorical {
-    pub ps: Vector<Probability>,
+    pub ps: Vec<Probability>,
 }
 
 impl Categorical {
     pub fn new<P: Into<Probability>>(ps: Vec<P>) -> Categorical {
-        let ps = Vector::from_vec(Probability::normalised(ps));
-
-        Categorical { ps }
+        Categorical {
+            ps: Probability::normalised(ps)
+        }
     }
 
     pub fn equiprobable(n: usize) -> Categorical {
@@ -82,6 +82,6 @@ impl Modes for Categorical {
 
 impl fmt::Display for Categorical {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Cat({})", self.ps)
+        write!(f, "Cat({:?})", self.ps)
     }
 }

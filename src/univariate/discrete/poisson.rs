@@ -2,8 +2,9 @@ use crate::{
     consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
     core::*,
 };
+use ndarray::Array2;
 use rand::Rng;
-use spaces::{Vector, Matrix, discrete::Naturals};
+use spaces::discrete::Naturals;
 use std::fmt;
 use super::factorial;
 
@@ -22,15 +23,15 @@ impl Poisson {
     }
 }
 
-impl Into<rand::distributions::Poisson> for Poisson {
-    fn into(self) -> rand::distributions::Poisson {
-        rand::distributions::Poisson::new(self.lambda)
+impl Into<rand_distr::Poisson<f64>> for Poisson {
+    fn into(self) -> rand_distr::Poisson<f64> {
+        rand_distr::Poisson::new(self.lambda).unwrap()
     }
 }
 
-impl Into<rand::distributions::Poisson> for &Poisson {
-    fn into(self) -> rand::distributions::Poisson {
-        rand::distributions::Poisson::new(self.lambda)
+impl Into<rand_distr::Poisson<f64>> for &Poisson {
+    fn into(self) -> rand_distr::Poisson<f64> {
+        rand_distr::Poisson::new(self.lambda).unwrap()
     }
 }
 
@@ -44,9 +45,9 @@ impl Distribution for Poisson {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
-        use rand::distributions::{Poisson as PoissonSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: PoissonSampler = self.into();
+        let sampler: rand_distr::Poisson<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -94,8 +95,8 @@ impl Entropy for Poisson {
 }
 
 impl FisherInformation for Poisson {
-    fn fisher_information(&self) -> Matrix {
-        Matrix::from_elem((1, 1), self.lambda)
+    fn fisher_information(&self) -> Array2<f64> {
+        Array2::from_elem((1, 1), self.lambda)
     }
 }
 
@@ -110,10 +111,10 @@ impl Convolution<Poisson> for Poisson {
 }
 
 impl MLE for Poisson {
-    fn fit_mle(samples: Vector<u64>) -> Self {
-        let n = samples.len() as f64;
+    fn fit_mle(xs: Vec<u64>) -> Self {
+        let n = xs.len() as f64;
 
-        Poisson::new(samples.scalar_sum() as f64 / n)
+        Poisson::new(xs.into_iter().fold(0.0, |acc, x| acc + x as f64) as f64 / n)
     }
 }
 

@@ -1,19 +1,18 @@
 use crate::core::*;
+use ndarray::{Array1, Array2};
 use rand::Rng;
-use spaces::{Vector, Matrix, discrete::Ordinal, product::LinearSpace};
+use spaces::{ProductSpace, discrete::Ordinal};
 use std::fmt;
 
 #[derive(Debug, Clone)]
 pub struct Multinomial {
     pub n: usize,
-    pub ps: Vector<Probability>,
+    pub ps: Vec<Probability>,
 }
 
 impl Multinomial {
     pub fn new<P: Into<Probability>>(n: usize, ps: Vec<P>) -> Multinomial {
-        let ps = Vector::from_vec(Probability::normalised(ps));
-
-        Multinomial { n, ps }
+        Multinomial { n, ps: Probability::normalised(ps) }
     }
 
     pub fn equiprobable(n: usize, k: usize) -> Multinomial {
@@ -31,30 +30,30 @@ impl Multinomial {
 }
 
 impl Distribution for Multinomial {
-    type Support = LinearSpace<Ordinal>;
+    type Support = ProductSpace<Ordinal>;
 
-    fn support(&self) -> LinearSpace<Ordinal> {
-        LinearSpace::new(vec![Ordinal::new(self.n); self.ps.len()])
+    fn support(&self) -> ProductSpace<Ordinal> {
+        ProductSpace::new(vec![Ordinal::new(self.n); self.ps.len()])
     }
 
-    fn cdf(&self, _: Vector<usize>) -> Probability {
+    fn cdf(&self, _: Vec<usize>) -> Probability {
         unimplemented!()
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vector<usize> {
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<usize> {
         unimplemented!()
     }
 }
 
 impl DiscreteDistribution for Multinomial {
-    fn pmf(&self, xs: Vector<usize>) -> Probability {
+    fn pmf(&self, xs: Vec<usize>) -> Probability {
         match xs.iter().fold(0, |acc, x| acc + *x) {
             0 => Probability::zero(),
             _ => Probability::new(self.logpmf(xs).exp()).unwrap(),
         }
     }
 
-    fn logpmf(&self, xs: Vector<usize>) -> f64 {
+    fn logpmf(&self, xs: Vec<usize>) -> f64 {
         assert_len!(xs => self.ps.len(); K);
 
         if xs.iter().fold(0, |acc, v| acc + *v) == self.n {
@@ -80,21 +79,21 @@ impl DiscreteDistribution for Multinomial {
 }
 
 impl MultivariateMoments for Multinomial {
-    fn mean(&self) -> Vector<f64> {
-        self.ps.map(|&p| f64::from(p) * self.n as f64)
+    fn mean(&self) -> Array1<f64> {
+        self.ps.iter().map(|&p| f64::from(p) * self.n as f64).collect()
     }
 
-    fn variance(&self) -> Vector<f64> {
-        self.ps.map(|&p| {
+    fn variance(&self) -> Array1<f64> {
+        self.ps.iter().map(|&p| {
             f64::from(p * !p) * self.n as f64
-        })
+        }).collect()
     }
 
-    fn covariance(&self) -> Matrix<f64> {
+    fn covariance(&self) -> Array2<f64> {
         let n = self.n as f64;
         let d = self.ps.len();
 
-        Matrix::from_shape_fn((d, d), |(i, j)| {
+        Array2::from_shape_fn((d, d), |(i, j)| {
             if i == j {
                 let p = self.ps[i];
 
@@ -105,10 +104,10 @@ impl MultivariateMoments for Multinomial {
         })
     }
 
-    fn correlation(&self) -> Matrix<f64> {
+    fn correlation(&self) -> Array2<f64> {
         let d = self.ps.len();
 
-        Matrix::from_shape_fn((d, d), |(i, j)| {
+        Array2::from_shape_fn((d, d), |(i, j)| {
             let pi = f64::from(self.ps[i]);
             let pj = f64::from(self.ps[j]);
 
@@ -119,6 +118,6 @@ impl MultivariateMoments for Multinomial {
 
 impl fmt::Display for Multinomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Mult({}; {})", self.n, self.ps)
+        write!(f, "Mult({}; {:?})", self.n, self.ps)
     }
 }

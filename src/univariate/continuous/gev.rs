@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::Interval;
+use spaces::real::Interval;
 use special_fun::FloatSpecial;
 use std::{f64::INFINITY, fmt};
 

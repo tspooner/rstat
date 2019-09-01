@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 
 const TWO_PI_MINUS_3: f64 = 2.0 * (PI - 3.0);

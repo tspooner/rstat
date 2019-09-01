@@ -1,6 +1,6 @@
 use crate::core::*;
 use rand;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
@@ -14,15 +14,15 @@ impl ChiSq {
     }
 }
 
-impl Into<rand::distributions::ChiSquared> for ChiSq {
-    fn into(self) -> rand::distributions::ChiSquared {
-        rand::distributions::ChiSquared::new(self.k as f64)
+impl Into<rand_distr::ChiSquared<f64>> for ChiSq {
+    fn into(self) -> rand_distr::ChiSquared<f64> {
+        rand_distr::ChiSquared::new(self.k as f64).unwrap()
     }
 }
 
-impl Into<rand::distributions::ChiSquared> for &ChiSq {
-    fn into(self) -> rand::distributions::ChiSquared {
-        rand::distributions::ChiSquared::new(self.k as f64)
+impl Into<rand_distr::ChiSquared<f64>> for &ChiSq {
+    fn into(self) -> rand_distr::ChiSquared<f64> {
+        rand_distr::ChiSquared::new(self.k as f64).unwrap()
     }
 }
 
@@ -43,9 +43,9 @@ impl Distribution for ChiSq {
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{ChiSquared, Distribution};
+        use rand_distr::Distribution;
 
-        let sampler: ChiSquared = self.into();
+        let sampler: rand_distr::ChiSquared<f64> = self.into();
 
         sampler.sample(rng)
     }

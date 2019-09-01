@@ -1,7 +1,7 @@
 use crate::core::*;
 use rand::Rng;
 use spaces::{
-    continuous::Reals,
+    real::Reals,
     discrete::Integers,
 };
 use std::fmt;

@@ -3,7 +3,7 @@ use crate::{
     core::*,
 };
 use rand::Rng;
-use spaces::continuous::Reals;
+use spaces::real::Reals;
 use std::fmt;
 
 #[derive(Debug, Clone, Copy)]

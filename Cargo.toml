@@ -16,11 +16,13 @@ documentation = "https://docs.rs/rstat"
 edition = "2018"
 
 [dependencies]
-rand = "0.6"
-spaces = "4.3"
+rand = "0.7"
+rand_distr = "0.2"
+
+spaces = "5.0"
 ndarray = "0.12"
-ndarray-linalg = "0.10"
-special-fun = "0.1"
+ndarray-linalg = "0.11"
+special-fun = "0.2"
 
 [dev-dependencies]
-blas-src = { version = "0.2", default-features = false, features = ["openblas"] }
+ndarray-linalg = { version = "0.11", features = ["openblas"] }

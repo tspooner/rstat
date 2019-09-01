@@ -1,6 +1,6 @@
 use crate::core::*;
 use rand::Rng;
-use spaces::continuous::PositiveReals;
+use spaces::real::PositiveReals;
 use std::fmt;
 use super::Exponential;
 
@@ -32,15 +32,15 @@ impl Default for Gamma {
     }
 }
 
-impl Into<rand::distributions::Gamma> for Gamma {
-    fn into(self) -> rand::distributions::Gamma {
-        rand::distributions::Gamma::new(self.alpha, self.beta)
+impl Into<rand_distr::Gamma<f64>> for Gamma {
+    fn into(self) -> rand_distr::Gamma<f64> {
+        rand_distr::Gamma::new(self.alpha, self.beta).unwrap()
     }
 }
 
-impl Into<rand::distributions::Gamma> for &Gamma {
-    fn into(self) -> rand::distributions::Gamma {
-        rand::distributions::Gamma::new(self.alpha, self.beta)
+impl Into<rand_distr::Gamma<f64>> for &Gamma {
+    fn into(self) -> rand_distr::Gamma<f64> {
+        rand_distr::Gamma::new(self.alpha, self.beta).unwrap()
     }
 }
 
@@ -58,9 +58,9 @@ impl Distribution for Gamma {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Gamma as GammaSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: GammaSampler = self.into();
+        let sampler: rand_distr::Gamma<f64> = self.into();
 
         sampler.sample(rng)
     }

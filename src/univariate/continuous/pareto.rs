@@ -1,6 +1,7 @@
 use crate::core::*;
+use ndarray::Array2;
 use rand::Rng;
-use spaces::{continuous::Interval, Matrix};
+use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
 
 #[derive(Debug, Clone, Copy)]
@@ -27,15 +28,15 @@ impl Default for Pareto {
     }
 }
 
-impl Into<rand::distributions::Pareto> for Pareto {
-    fn into(self) -> rand::distributions::Pareto {
-        rand::distributions::Pareto::new(self.x_m, self.alpha)
+impl Into<rand_distr::Pareto<f64>> for Pareto {
+    fn into(self) -> rand_distr::Pareto<f64> {
+        rand_distr::Pareto::new(self.x_m, self.alpha).unwrap()
     }
 }
 
-impl Into<rand::distributions::Pareto> for &Pareto {
-    fn into(self) -> rand::distributions::Pareto {
-        rand::distributions::Pareto::new(self.x_m, self.alpha)
+impl Into<rand_distr::Pareto<f64>> for &Pareto {
+    fn into(self) -> rand_distr::Pareto<f64> {
+        rand_distr::Pareto::new(self.x_m, self.alpha).unwrap()
     }
 }
 
@@ -51,9 +52,9 @@ impl Distribution for Pareto {
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand::distributions::{Pareto as ParetoSampler, Distribution as DistSampler};
+        use rand_distr::Distribution;
 
-        let sampler: ParetoSampler = self.into();
+        let sampler: rand_distr::Pareto<f64> = self.into();
 
         sampler.sample(rng)
     }
@@ -134,11 +135,11 @@ impl Entropy for Pareto {
 }
 
 impl FisherInformation for Pareto {
-    fn fisher_information(&self) -> Matrix {
+    fn fisher_information(&self) -> Array2<f64> {
         let off_diag = -1.0 / self.x_m;
 
         unsafe {
-            Matrix::from_shape_vec_unchecked(
+            Array2::from_shape_vec_unchecked(
                 (2, 2),
                 vec![
                     self.alpha / self.x_m / self.x_m,
