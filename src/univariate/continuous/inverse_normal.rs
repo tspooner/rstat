@@ -1,6 +1,6 @@
 use crate::{
     consts::{PI_2, PI_E_2},
-    core::*,
+    prelude::*,
 };
 use rand::Rng;
 use spaces::real::PositiveReals;

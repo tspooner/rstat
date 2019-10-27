@@ -1,6 +1,7 @@
 use crate::{
+    Convolution, ConvolutionError, ConvolutionResult,
     consts::PI_E,
-    core::*,
+    prelude::*,
     univariate::discrete::Bernoulli,
 };
 use ndarray::Array2;

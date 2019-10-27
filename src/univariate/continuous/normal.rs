@@ -1,6 +1,7 @@
 use crate::{
+    MLE, Convolution, ConvolutionResult,
     consts::{PI_2, PI_E_2},
-    core::*,
+    prelude::*,
 };
 use ndarray::Array2;
 use rand::Rng;

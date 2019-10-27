@@ -2,7 +2,7 @@
 // TODO: Normal-inverse Gaussian distribution
 // TODO: VonMises distribution
 
-pub use crate::core::ContinuousDistribution;
+pub use crate::ContinuousDistribution;
 
 import_all!(arcsine);
 import_all!(beta);

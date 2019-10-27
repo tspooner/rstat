@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::{MLE, prelude::*};
 use ndarray::Array2;
 use rand;
 use spaces::discrete::Binary;

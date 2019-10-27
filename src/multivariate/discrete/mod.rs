@@ -1,3 +1,3 @@
-pub use crate::core::DiscreteDistribution;
+pub use crate::DiscreteDistribution;
 
 import_all!(multinomial);

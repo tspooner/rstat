@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::prelude::*;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;

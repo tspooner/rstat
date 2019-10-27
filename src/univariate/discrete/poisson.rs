@@ -1,6 +1,7 @@
 use crate::{
+    MLE, Convolution, ConvolutionResult,
     consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
-    core::*,
+    prelude::*,
 };
 use ndarray::Array2;
 use rand::Rng;

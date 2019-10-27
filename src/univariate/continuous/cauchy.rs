@@ -1,6 +1,7 @@
 use crate::{
+    Convolution, ConvolutionResult,
     consts::{ONE_OVER_PI, PI},
-    core::*,
+    prelude::*,
 };
 use rand::Rng;
 use spaces::real::Reals;

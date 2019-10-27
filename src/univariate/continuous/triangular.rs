@@ -1,6 +1,6 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
-    core::*,
+    prelude::*,
 };
 use rand::Rng;
 use spaces::real::Interval;

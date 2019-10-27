@@ -8,11 +8,14 @@ extern crate special_fun;
 mod consts;
 mod macros;
 
-pub mod core;
+import_all!(probability);
+import_all!(distribution);
+import_all!(statistics);
+import_all!(convolution);
+import_all!(fitting);
+
+pub mod prelude;
 pub mod univariate;
 pub mod multivariate;
 
-import_all!(mixture);
-
-pub use self::core::Probability;
-pub use self::core::distribution::*;
+// import_all!(mixture);
