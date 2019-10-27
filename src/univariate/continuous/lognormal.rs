@@ -1,6 +1,6 @@
 use crate::{
     consts::PI_2,
-    core::*,
+    prelude::*,
     univariate::continuous::Normal,
 };
 use ndarray::Array2;

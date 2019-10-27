@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::prelude::*;
 use rand::Rng;
 use spaces::{
     real::Reals,
@@ -167,7 +167,6 @@ impl Modes for Degenerate<i64> {
     }
 }
 
-// Generalised:
 impl<T> Entropy for Degenerate<T> {
     fn entropy(&self) -> f64 {
         0.0

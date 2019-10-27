@@ -1,6 +1,6 @@
 use crate::{
     consts::PI_2,
-    core::*,
+    prelude::*,
 };
 use ndarray::{array, Array1, Array2};
 use rand::Rng;

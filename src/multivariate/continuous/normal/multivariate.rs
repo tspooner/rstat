@@ -1,6 +1,6 @@
 use crate::{
     consts::PI_2,
-    core::*,
+    prelude::*,
 };
 use ndarray::{Array1, Array2};
 use ndarray_linalg::{Determinant, solve::Inverse, cholesky::{Cholesky, UPLO}};

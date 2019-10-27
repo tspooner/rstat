@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::prelude::*;
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{ProductSpace, discrete::Ordinal};

@@ -1,5 +1,5 @@
 use crate::{
-    core::*,
+    prelude::*,
     multivariate::continuous::MultivariateNormal,
 };
 use rand::Rng;

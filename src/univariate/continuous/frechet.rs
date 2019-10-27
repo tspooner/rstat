@@ -1,4 +1,4 @@
-use crate::core::*;
+use crate::prelude::*;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;

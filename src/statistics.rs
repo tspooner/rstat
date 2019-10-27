@@ -1,7 +1,6 @@
-use crate::core::{Probability, Distribution};
+use crate::{Probability, Distribution};
 use spaces::Space;
 use ndarray::{Array1, Array2};
-
 
 pub trait UnivariateMoments: Distribution {
     /// Computes the expected value of the distribution.

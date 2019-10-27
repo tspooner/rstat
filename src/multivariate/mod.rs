@@ -1,4 +1,4 @@
-pub use crate::core::MultivariateMoments;
+pub use crate::MultivariateMoments;
 
 pub mod discrete;
 pub mod continuous;

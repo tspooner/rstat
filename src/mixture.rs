@@ -1,4 +1,4 @@
-use crate::{core::*, univariate::discrete::Categorical};
+use crate::{prelude::*, univariate::discrete::Categorical};
 use rand::Rng;
 use spaces::{Space, Union};
 

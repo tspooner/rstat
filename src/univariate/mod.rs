@@ -1,4 +1,4 @@
-pub use crate::core::UnivariateMoments;
+pub use crate::UnivariateMoments;
 
 pub mod discrete;
 pub mod continuous;

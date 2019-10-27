@@ -1,7 +1,4 @@
-use crate::{
-    consts::{NINE_FIFTHS, SIX_FIFTHS},
-    core::*,
-};
+use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*};
 use rand::Rng;
 use spaces::{
     real::Interval as RealInterval,

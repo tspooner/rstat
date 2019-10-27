@@ -1,6 +1,5 @@
-use crate::core::Distribution;
+use crate::Distribution;
 use std::{error::Error, fmt};
-
 
 #[derive(Debug, Clone)]
 pub enum ConvolutionError {

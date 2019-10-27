@@ -1,4 +1,7 @@
-use crate::core::*;
+use crate::{
+    Convolution, ConvolutionError, ConvolutionResult,
+    prelude::*,
+};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;

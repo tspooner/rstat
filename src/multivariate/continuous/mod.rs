@@ -1,4 +1,4 @@
-pub use crate::core::ContinuousDistribution;
+pub use crate::ContinuousDistribution;
 
 import_all!(normal);
 import_all!(lognormal);
