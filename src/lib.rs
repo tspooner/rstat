@@ -18,4 +18,4 @@ pub mod prelude;
 pub mod univariate;
 pub mod multivariate;
 
-// import_all!(mixture);
+import_all!(mixture);
