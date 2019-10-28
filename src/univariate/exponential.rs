@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -10,9 +10,12 @@ pub struct Exponential {
 }
 
 impl Exponential {
-    pub fn new(lambda: f64) -> Exponential {
-        assert_positive_real!(lambda);
+    pub fn new(lambda: f64) -> Result<Exponential> {
+        ValidationError::assert_positive_real(lambda)
+            .map(|lambda| Exponential::new_unchecked(lambda))
+    }
 
+    pub fn new_unchecked(lambda: f64) -> Exponential {
         Exponential { lambda }
     }
 
@@ -47,7 +50,7 @@ impl Distribution for Exponential {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        (1.0 - (-self.lambda * x).exp()).into()
+        Probability::new_unchecked(1.0 - (-self.lambda * x).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {

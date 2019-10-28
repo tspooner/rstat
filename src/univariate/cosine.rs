@@ -1,6 +1,7 @@
 use crate::{
     consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -13,9 +14,12 @@ pub struct Cosine {
 }
 
 impl Cosine {
-    pub fn new(mu: f64, s: f64) -> Cosine {
-        assert_positive_real!(s);
+    pub fn new(mu: f64, s: f64) -> Result<Cosine> {
+        ValidationError::assert_positive_real(s)
+            .map(|s| Cosine::new_unchecked(mu, s))
+    }
 
+    pub fn new_unchecked(mu: f64, s: f64) -> Cosine {
         Cosine { mu, s }
     }
 
@@ -40,7 +44,7 @@ impl Distribution for Cosine {
     fn cdf(&self, x: f64) -> Probability {
         let z = self.z(x);
 
-        (0.5 * (1.0 + z + ONE_OVER_PI * (z * PI).sin())).into()
+        Probability::new_unchecked(0.5 * (1.0 + z + ONE_OVER_PI * (z * PI).sin()))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

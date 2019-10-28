@@ -1,6 +1,7 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -13,10 +14,14 @@ pub struct Weibull {
 }
 
 impl Weibull {
-    pub fn new(lambda: f64, k: f64) -> Weibull {
-        assert_positive_real!(lambda);
-        assert_positive_real!(k);
+    pub fn new(lambda: f64, k: f64) -> Result<Weibull> {
+        let lambda = ValidationError::assert_positive_real(lambda)?;
+        let k = ValidationError::assert_positive_real(k)?;
 
+        Ok(Weibull::new_unchecked(lambda, k))
+    }
+
+    pub fn new_unchecked(lambda: f64, k: f64) -> Weibull {
         Weibull { lambda, k }
     }
 
@@ -57,11 +62,10 @@ impl Distribution for Weibull {
 
     fn cdf(&self, x: f64) -> Probability {
         if x >= 0.0 {
-            1.0 - (-(x / self.lambda).powf(self.k)).exp()
+            Probability::new_unchecked(1.0 - (-(x / self.lambda).powf(self.k)).exp())
         } else {
-            0.0
+            Probability::zero()
         }
-        .into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {

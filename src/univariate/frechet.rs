@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -11,15 +11,15 @@ pub struct Frechet {
 }
 
 impl Frechet {
-    pub fn new(alpha: f64, s: f64, m: f64) -> Frechet {
-        assert_positive_real!(alpha);
-        assert_positive_real!(s);
+    pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let s = ValidationError::assert_positive_real(s)?;
 
-        Frechet { alpha, s, m }
+        Ok(Frechet::new_unchecked(alpha, s, m))
     }
 
-    pub fn default(alpha: f64) -> Frechet {
-        Frechet::new(alpha, 1.0, 0.0)
+    pub fn new_unchecked(alpha: f64, s: f64, m: f64) -> Frechet {
+        Frechet { alpha, s, m }
     }
 
     #[inline(always)]
@@ -48,7 +48,7 @@ impl Distribution for Frechet {
     fn cdf(&self, x: f64) -> Probability {
         let z = self.z(x);
 
-        (-(z.powf(-self.alpha))).exp().into()
+        Probability::new_unchecked((-(z.powf(-self.alpha))).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

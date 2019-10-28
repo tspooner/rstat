@@ -1,6 +1,7 @@
 use crate::{
     consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -13,9 +14,12 @@ pub struct Logistic {
 }
 
 impl Logistic {
-    pub fn new(mu: f64, s: f64) -> Logistic {
-        assert_positive_real!(s);
+    pub fn new(mu: f64, s: f64) -> Result<Logistic> {
+        ValidationError::assert_positive_real(s)
+            .map(|s| Logistic::new_unchecked(mu, s))
+    }
 
+    pub fn new_unchecked(mu: f64, s: f64) -> Logistic {
         Logistic { mu, s }
     }
 
@@ -38,7 +42,7 @@ impl Distribution for Logistic {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        (1.0 / (1.0 + (-self.z(x)).exp())).into()
+        Probability::new_unchecked(1.0 / (1.0 + (-self.z(x)).exp()))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

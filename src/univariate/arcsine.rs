@@ -1,6 +1,7 @@
 use crate::{
     consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -13,14 +14,16 @@ pub struct Arcsine {
 }
 
 impl Arcsine {
-    pub fn new(a: f64, b: f64) -> Arcsine {
-        Arcsine { a, b }
+    pub fn new(a: f64, b: f64) -> Result<Arcsine> {
+        ValidationError::assert_lte(a, b).map(|(a, b)| Arcsine::new_unchecked(a, b))
     }
+
+    pub fn new_unchecked(a: f64, b: f64) -> Arcsine { Arcsine { a, b } }
 }
 
 impl Default for Arcsine {
     fn default() -> Arcsine {
-        Arcsine { a: 0.0, b: 1.0 }
+        Arcsine::new_unchecked(0.0, 1.0)
     }
 }
 
@@ -34,7 +37,7 @@ impl Distribution for Arcsine {
     fn cdf(&self, x: f64) -> Probability {
         let xab = (x - self.a) / (self.b - self.a);
 
-        (TWO_OVER_PI * xab.sqrt().asin()).into()
+        Probability::new_unchecked(TWO_OVER_PI * xab.sqrt().asin())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

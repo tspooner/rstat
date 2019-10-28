@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -10,10 +10,14 @@ pub struct FDist {
 }
 
 impl FDist {
-    pub fn new(d1: usize, d2: usize) -> FDist {
-        assert_natural!(d1);
-        assert_natural!(d2);
+    pub fn new(d1: usize, d2: usize) -> Result<FDist> {
+        let d1 = ValidationError::assert_natural(d1)?;
+        let d2 = ValidationError::assert_natural(d2)?;
 
+        Ok(FDist::new_unchecked(d1, d2))
+    }
+
+    pub fn new_unchecked(d1: usize, d2: usize) -> FDist {
         FDist { d1, d2 }
     }
 }
@@ -45,7 +49,7 @@ impl Distribution for FDist {
 
         let x = d1 * x / (d1 * x + d2);
 
-        x.betainc(d1 / 2.0, d2 / 2.0).into()
+        Probability::new_unchecked(x.betainc(d1 / 2.0, d2 / 2.0))
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {

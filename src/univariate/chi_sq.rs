@@ -1,6 +1,7 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand;
 use spaces::real::PositiveReals;
@@ -12,7 +13,12 @@ pub struct ChiSq {
 }
 
 impl ChiSq {
-    pub fn new(k: usize) -> ChiSq {
+    pub fn new(k: usize) -> Result<ChiSq> {
+        ValidationError::assert_gte(k, 1)
+            .map(|(k, _)| ChiSq::new_unchecked(k))
+    }
+
+    pub fn new_unchecked(k: usize) -> ChiSq {
         ChiSq { k }
     }
 }
@@ -42,7 +48,7 @@ impl Distribution for ChiSq {
         let k = self.k as f64;
         let ko2 = k / 2.0;
 
-        (ko2.gammainc(x / 2.0) / ko2.gamma()).into()
+        Probability::new_unchecked(ko2.gammainc(x / 2.0) / ko2.gamma())
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -120,7 +126,7 @@ impl Convolution<ChiSq> for ChiSq {
 
     fn convolve_pair(a: ChiSq, b: ChiSq) -> ConvolutionResult<ChiSq> {
         if a.k == b.k {
-            Ok(ChiSq::new(a.k + b.k))
+            Ok(ChiSq::new_unchecked(a.k + b.k))
         } else {
             Err(ConvolutionError::MixedParameters)
         }

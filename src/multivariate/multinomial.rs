@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{ProductSpace, discrete::Ordinal};
@@ -11,14 +11,26 @@ pub struct Multinomial {
 }
 
 impl Multinomial {
-    pub fn new<P: Into<Probability>>(n: usize, ps: Vec<P>) -> Multinomial {
-        Multinomial { n, ps: Probability::normalised(ps) }
+    pub fn new<P: std::convert::TryInto<Probability>>(n: usize, ps: Vec<P>) -> Result<Multinomial>
+    where
+        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+    {
+        ps.into_iter()
+            .map(|p| p.try_into().map_err(|e| e.into()))
+            .collect::<Result<Vec<Probability>>>()
+            .map(Probability::normalised)
+            .map(|ps| Multinomial::new_unchecked(n, ps))
+    }
+
+
+    pub fn new_unchecked(n: usize, ps: Vec<Probability>) -> Multinomial {
+        Multinomial { n, ps, }
     }
 
     pub fn equiprobable(n: usize, k: usize) -> Multinomial {
-        let p = 1.0 / k as f64;
+        let p = Probability::new_unchecked(1.0 / k as f64);
 
-        Multinomial::new(n, vec![p; k])
+        Multinomial::new_unchecked(n, vec![p; k])
     }
 }
 

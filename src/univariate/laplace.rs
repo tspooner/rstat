@@ -1,6 +1,7 @@
 use crate::{
     consts::E,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -13,9 +14,12 @@ pub struct Laplace {
 }
 
 impl Laplace {
-    pub fn new(mu: f64, b: f64) -> Laplace {
-        assert_positive_real!(b);
+    pub fn new(mu: f64, b: f64) -> Result<Laplace> {
+        ValidationError::assert_positive_real(b)
+            .map(|b| Laplace::new_unchecked(mu, b))
+    }
 
+    pub fn new_unchecked(mu: f64, b: f64) -> Laplace {
         Laplace { mu, b }
     }
 }
@@ -34,7 +38,7 @@ impl Distribution for Laplace {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        ((-((x - self.mu).abs() / self.b).abs()).exp() / 2.0 / self.b).into()
+        Probability::new_unchecked((-((x - self.mu).abs() / self.b).abs()).exp() / 2.0 / self.b)
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

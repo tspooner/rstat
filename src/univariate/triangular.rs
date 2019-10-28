@@ -1,6 +1,7 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -14,19 +15,18 @@ pub struct Triangular {
 }
 
 impl Triangular {
-    pub fn new(a: f64, b: f64, c: f64) -> Triangular {
-        if b <= a {
-            panic!("b must be strictly greater than a.")
-        }
+    pub fn new(a: f64, b: f64, c: f64) -> Result<Triangular> {
+        let (a, b) = ValidationError::assert_lte(a, b)?;
+        let (b, c) = ValidationError::assert_lte(b, c)?;
 
-        if c < a || c > b {
-            panic!("c must lie in the interval [a, b].")
-        }
+        Ok(Triangular::new_unchecked(a, b, c))
+    }
 
+    pub fn new_unchecked(a: f64, b: f64, c: f64) -> Triangular {
         Triangular { a, b, c }
     }
 
-    pub fn symmetric(a: f64, b: f64) -> Triangular {
+    pub fn symmetric(a: f64, b: f64) -> Result<Triangular> {
         Triangular::new(a, b, (a + b) / 2.0)
     }
 }
@@ -52,15 +52,18 @@ impl Distribution for Triangular {
 
     fn cdf(&self, x: f64) -> Probability {
         if x <= self.a {
-            0.0
+            Probability::zero()
         } else if x <= self.c {
-            (x - self.a) * (x - self.a) / (self.b - self.a) / (self.c - self.a)
+            Probability::new_unchecked(
+                (x - self.a) * (x - self.a) / (self.b - self.a) / (self.c - self.a)
+            )
         } else if x <= self.b {
-            1.0 - (self.b - x) * (self.b - x) / (self.b - self.a) / (self.b - self.c)
+            Probability::new_unchecked(
+                1.0 - (self.b - x) * (self.b - x) / (self.b - self.a) / (self.b - self.c)
+            )
         } else {
-            1.0
+            Probability::one()
         }
-        .into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {

@@ -2,6 +2,7 @@ use crate::{
     consts::PI_2,
     prelude::*,
     univariate::Normal,
+    validation::{Result, ValidationError},
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -12,8 +13,12 @@ use std::fmt;
 pub struct LogNormal(Normal);
 
 impl LogNormal {
-    pub fn new(mu: f64, sigma: f64) -> LogNormal {
-        LogNormal(Normal::new(mu, sigma))
+    pub fn new(mu: f64, sigma: f64) -> Result<LogNormal> {
+        Normal::new(mu, sigma).map(LogNormal)
+    }
+
+    pub fn new_unchecked(mu: f64, sigma: f64) -> LogNormal {
+        LogNormal(Normal::new_unchecked(mu, sigma))
     }
 
     fn z(&self, x: f64) -> f64 {

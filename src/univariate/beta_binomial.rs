@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use special_fun::FloatSpecial;
@@ -17,10 +17,14 @@ pub struct BetaBinomial {
 }
 
 impl BetaBinomial {
-    pub fn new(n: usize, alpha: f64, beta: f64) -> BetaBinomial {
-        assert_positive_real!(alpha);
-        assert_positive_real!(beta);
+    pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let beta = ValidationError::assert_positive_real(beta)?;
 
+        Ok(BetaBinomial::new_unchecked(n, alpha, beta))
+    }
+
+    pub fn new_unchecked(n: usize, alpha: f64, beta: f64) -> BetaBinomial {
         BetaBinomial {
             n,
 
@@ -48,10 +52,10 @@ impl Distribution for BetaBinomial {
 
     fn cdf(&self, k: usize) -> Probability {
         if k >= self.n {
-            1.0
+            Probability::one()
         } else {
             unimplemented!("Need an implmentation of the 3F2 generalised hypergeometric function.")
-        }.into()
+        }
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> usize {
@@ -61,7 +65,7 @@ impl Distribution for BetaBinomial {
 
 impl DiscreteDistribution for BetaBinomial {
     fn pmf(&self, k: usize) -> Probability {
-        self.pmf_raw(k).into()
+        Probability::new_unchecked(self.pmf_raw(k))
     }
 }
 

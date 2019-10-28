@@ -1,6 +1,7 @@
 use crate::{
     consts::{PI_2, PI_E_2},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -18,15 +19,15 @@ pub struct InvNormal {
 }
 
 impl InvNormal {
-    pub fn new(mu: f64, lambda: f64) -> InvNormal {
-        assert_positive_real!(mu);
-        assert_positive_real!(lambda);
+    pub fn new(mu: f64, lambda: f64) -> Result<InvNormal> {
+        let mu = ValidationError::assert_positive_real(mu)?;
+        let lambda = ValidationError::assert_positive_real(lambda)?;
 
-        InvNormal {
-            mu,
-            lambda,
-            sgd: Gaussian::standard(),
-        }
+        Ok(InvNormal::new_unchecked(mu, lambda))
+    }
+
+    pub fn new_unchecked(mu: f64, lambda: f64) -> InvNormal {
+        InvNormal { mu, lambda, sgd: Gaussian::standard() }
     }
 }
 
@@ -55,7 +56,7 @@ impl Distribution for InvNormal {
         let term2 = (2.0 * self.lambda / self.mu).exp() *
             f64::from(self.sgd.cdf(-lox_sqrt * (xom + 1.0)));
 
-        (term1 + term2).into()
+        Probability::new_unchecked(term1 + term2)
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

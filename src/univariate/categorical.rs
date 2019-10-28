@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use std::fmt;
@@ -11,24 +11,27 @@ pub struct Categorical {
 }
 
 impl Categorical {
-    pub fn new<P: Into<Probability>>(ps: Vec<P>) -> Categorical {
-        Categorical {
-            ps: Probability::normalised(ps)
-        }
+    pub fn new<P: std::convert::TryInto<Probability>>(ps: Vec<P>) -> Result<Categorical>
+    where
+        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+    {
+        ps.into_iter()
+            .map(|p| p.try_into().map_err(|e| e.into()))
+            .collect::<Result<Vec<Probability>>>()
+            .map(Probability::normalised)
+            .map(Categorical::new_unchecked)
+    }
+
+    pub fn new_unchecked(ps: Vec<Probability>) -> Categorical {
+        Categorical { ps, }
     }
 
     pub fn equiprobable(n: usize) -> Categorical {
-        Categorical::new(vec![1.0 / n as f64; n])
+        Categorical::new_unchecked(vec![Probability::new_unchecked(1.0 / n as f64); n])
     }
 
     pub fn n_categories(&self) -> usize {
         self.ps.len()
-    }
-}
-
-impl<P: Into<Probability>> From<Vec<P>> for Categorical {
-    fn from(ps: Vec<P>) -> Categorical {
-        Categorical::new(ps)
     }
 }
 

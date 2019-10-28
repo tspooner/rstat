@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -10,14 +10,18 @@ pub struct InvGamma {
 }
 
 impl InvGamma {
-    pub fn new(alpha: f64, beta: f64) -> InvGamma {
-        assert_positive_real!(alpha);
-        assert_positive_real!(beta);
+    pub fn new(alpha: f64, beta: f64) -> Result<InvGamma> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let beta = ValidationError::assert_positive_real(beta)?;
 
+        Ok(InvGamma::new_unchecked(alpha, beta))
+    }
+
+    pub fn new_unchecked(alpha: f64, beta: f64) -> InvGamma {
         InvGamma { alpha, beta }
     }
 
-    pub fn with_scale(k: f64, theta: f64) -> InvGamma {
+    pub fn with_scale(k: f64, theta: f64) -> Result<InvGamma> {
         InvGamma::new(k, 1.0 / theta)
     }
 }
@@ -41,7 +45,7 @@ impl Distribution for InvGamma {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (self.alpha.gammainc(self.beta / x) / self.alpha.gamma()).into()
+        Probability::new_unchecked(self.alpha.gammainc(self.beta / x) / self.alpha.gamma())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

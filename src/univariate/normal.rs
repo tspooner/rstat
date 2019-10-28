@@ -3,6 +3,7 @@ use crate::{
     consts::{PI_2, PI_E_2},
     fitting::MLE,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -18,9 +19,12 @@ pub struct Normal {
 }
 
 impl Normal {
-    pub fn new(mu: f64, sigma: f64) -> Normal {
-        assert_positive_real!(sigma);
+    pub fn new(mu: f64, sigma: f64) -> Result<Normal> {
+        ValidationError::assert_positive_real(sigma)
+            .map(|sigma| Normal::new_unchecked(mu, sigma))
+    }
 
+    pub fn new_unchecked(mu: f64, sigma: f64) -> Normal {
         Normal { mu, sigma }
     }
 
@@ -75,7 +79,7 @@ impl Distribution for Normal {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (0.5 + (self.z(x) / 2.0f64.sqrt()).erf() / 2.0).into()
+        Probability::new_unchecked(0.5 + (self.z(x) / 2.0f64.sqrt()).erf() / 2.0)
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -162,7 +166,7 @@ impl Convolution<Normal> for Normal {
         let new_mu = a.mu + b.mu;
         let new_var = (a.variance() + b.variance()).sqrt();
 
-        Ok(Normal::new(new_mu, new_var))
+        Ok(Normal::new_unchecked(new_mu, new_var))
     }
 }
 
@@ -175,7 +179,7 @@ impl MLE for Normal {
             x - mean
         }).fold(0.0, |acc, r| acc + r * r) / (n - 1.0);
 
-        Normal::new(mean, var.sqrt())
+        Normal::new_unchecked(mean, var.sqrt())
     }
 }
 

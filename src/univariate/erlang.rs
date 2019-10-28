@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -10,10 +10,14 @@ pub struct Erlang {
 }
 
 impl Erlang {
-    pub fn new(k: usize, lambda: f64) -> Erlang {
-        assert_natural!(k);
-        assert_positive_real!(lambda);
+    pub fn new(k: usize, lambda: f64) -> Result<Erlang> {
+        let k = ValidationError::assert_gte(k, 1).map(|(k, _)| k)?;
+        let lambda = ValidationError::assert_positive_real(lambda)?;
 
+        Ok(Erlang::new_unchecked(k, lambda))
+    }
+
+    pub fn new_unchecked(k: usize, lambda: f64) -> Erlang {
         Erlang { k, lambda }
     }
 
@@ -38,7 +42,9 @@ impl Distribution for Erlang {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        ((self.k as f64).gammainc(self.lambda * x) / (self.k as f64).factorial()).into()
+        Probability::new_unchecked(
+            (self.k as f64).gammainc(self.lambda * x) / (self.k as f64).factorial()
+        )
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

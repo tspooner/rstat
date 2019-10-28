@@ -1,6 +1,7 @@
 use crate::{
     consts::{PI2, PI3, TWELVE_FIFTHS, TWENTY_SEVEN_FIFTHS},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -13,9 +14,12 @@ pub struct Gumbel {
 }
 
 impl Gumbel {
-    pub fn new(mu: f64, beta: f64) -> Gumbel {
-        assert_positive_real!(beta);
+    pub fn new(mu: f64, beta: f64) -> Result<Gumbel> {
+        ValidationError::assert_positive_real(beta)
+            .map(|beta| Gumbel::new_unchecked(mu, beta))
+    }
 
+    pub fn new_unchecked(mu: f64, beta: f64) -> Gumbel {
         Gumbel { mu, beta }
     }
 
@@ -41,7 +45,7 @@ impl Distribution for Gumbel {
     fn cdf(&self, x: f64) -> Probability {
         let z = self.z(x);
 
-        (-(-z).exp()).exp().into()
+        Probability::new_unchecked((-(-z).exp()).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

@@ -2,6 +2,7 @@ use crate::{
     Convolution, ConvolutionResult,
     consts::{ONE_OVER_PI, PI},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -14,7 +15,12 @@ pub struct Cauchy {
 }
 
 impl Cauchy {
-    pub fn new(x0: f64, gamma: f64) -> Cauchy {
+    pub fn new(x0: f64, gamma: f64) -> Result<Cauchy> {
+        ValidationError::assert_positive_real(gamma)
+            .map(|gamma| Cauchy::new_unchecked(x0, gamma))
+    }
+
+    pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {
         Cauchy { x0, gamma }
     }
 
@@ -57,7 +63,7 @@ impl Distribution for Cauchy {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        (ONE_OVER_PI * self.z(x).atan() + 0.5).into()
+        Probability::new_unchecked(ONE_OVER_PI * self.z(x).atan() + 0.5)
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -105,7 +111,7 @@ impl Convolution<Cauchy> for Cauchy {
     }
 
     fn convolve_pair(a: Cauchy, b: Cauchy) -> ConvolutionResult<Cauchy> {
-        Ok(Cauchy::new(a.x0 + b.x0, a.gamma + b.gamma))
+        Ok(Cauchy::new_unchecked(a.x0 + b.x0, a.gamma + b.gamma))
     }
 }
 

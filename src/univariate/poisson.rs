@@ -3,6 +3,7 @@ use crate::{
     consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
     fitting::MLE,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -16,11 +17,12 @@ pub struct Poisson {
 }
 
 impl Poisson {
-    pub fn new(lambda: f64) -> Poisson {
-        if lambda <= 0.0 {
-            panic!("The rate (lambda) of a Poisson distribution must be a positive real value.")
-        }
+    pub fn new(lambda: f64) -> Result<Poisson> {
+        ValidationError::assert_positive_real(lambda)
+            .map(Poisson::new_unchecked)
+    }
 
+    pub fn new_unchecked(lambda: f64) -> Poisson {
         Poisson { lambda }
     }
 }
@@ -57,7 +59,9 @@ impl Distribution for Poisson {
 
 impl DiscreteDistribution for Poisson {
     fn pmf(&self, k: u64) -> Probability {
-        (self.lambda.powi(k as i32) * (-self.lambda).exp() / factorial(k) as f64).into()
+        let p = self.lambda.powi(k as i32) * (-self.lambda).exp() / factorial(k) as f64;
+
+        Probability::new_unchecked(p)
     }
 }
 
@@ -108,7 +112,7 @@ impl Convolution<Poisson> for Poisson {
     }
 
     fn convolve_pair(a: Poisson, b: Poisson) -> ConvolutionResult<Poisson> {
-        Ok(Poisson::new(a.lambda + b.lambda))
+        Ok(Poisson::new_unchecked(a.lambda + b.lambda))
     }
 }
 
@@ -116,7 +120,7 @@ impl MLE for Poisson {
     fn fit_mle(xs: Vec<u64>) -> Self {
         let n = xs.len() as f64;
 
-        Poisson::new(xs.into_iter().fold(0.0, |acc, x| acc + x as f64) as f64 / n)
+        Poisson::new_unchecked(xs.into_iter().fold(0.0, |acc, x| acc + x as f64) as f64 / n)
     }
 }
 

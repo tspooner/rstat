@@ -1,6 +1,7 @@
 use crate::{
     consts::{PI, PI_16, THREE_HALVES},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -13,9 +14,12 @@ pub struct Levy {
 }
 
 impl Levy {
-    pub fn new(mu: f64, c: f64) -> Levy {
-        assert_positive_real!(c);
+    pub fn new(mu: f64, c: f64) -> Result<Levy> {
+        ValidationError::assert_positive_real(c)
+            .map(|c| Levy::new_unchecked(mu, c))
+    }
 
+    pub fn new_unchecked(mu: f64, c: f64) -> Levy {
         Levy { mu, c }
     }
 }
@@ -36,7 +40,7 @@ impl Distribution for Levy {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (self.c / 2.0 / (x - self.mu)).erfc().into()
+        Probability::new_unchecked((self.c / 2.0 / (x - self.mu)).erfc())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

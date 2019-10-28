@@ -1,6 +1,7 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -12,7 +13,12 @@ pub struct Chi {
 }
 
 impl Chi {
-    pub fn new(k: usize) -> Chi {
+    pub fn new(k: usize) -> Result<Chi> {
+        ValidationError::assert_gte(k, 1)
+            .map(|(k, _)| Chi::new_unchecked(k))
+    }
+
+    pub fn new_unchecked(k: usize) -> Chi {
         Chi { k }
     }
 }
@@ -27,7 +33,7 @@ impl Distribution for Chi {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (self.k as f64 / 2.0).gammainc(x * x / 2.0).into()
+        Probability::new_unchecked((self.k as f64 / 2.0).gammainc(x * x / 2.0))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

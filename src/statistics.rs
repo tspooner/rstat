@@ -71,7 +71,7 @@ pub trait Quantiles: Distribution {
     }
 
     /// Computes the lower quartile of the distribution, `Q(0.25)`.
-    fn lower_quartile(&self) -> f64 { self.quantile(0.25.into()) }
+    fn lower_quartile(&self) -> f64 { self.quantile(Probability::new_unchecked(0.25)) }
 
     /// Computes the median value of the distribution, `Q(0.5)`.
     ///
@@ -81,7 +81,7 @@ pub trait Quantiles: Distribution {
     fn median(&self) -> f64 { self.quantile(Probability::half()) }
 
     /// Computes the upper quartile of the distribution, `Q(0.75)`.
-    fn upper_quartile(&self) -> f64 { self.quantile(0.75.into()) }
+    fn upper_quartile(&self) -> f64 { self.quantile(Probability::new_unchecked(0.75)) }
 
     /// Computes the interquartile range (IQR) of the distribution, `Q(0.75) - Q(0.25)`.
     fn iqr(&self) -> f64 { self.upper_quartile() - self.lower_quartile() }

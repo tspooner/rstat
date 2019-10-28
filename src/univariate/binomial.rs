@@ -3,6 +3,7 @@ use crate::{
     consts::PI_E,
     prelude::*,
     univariate::Bernoulli,
+    validation::{Result, ValidationError},
 };
 use ndarray::Array2;
 use rand;
@@ -20,9 +21,14 @@ pub struct Binomial {
 }
 
 impl Binomial {
-    pub fn new<P: Into<Probability>>(n: usize, p: P) -> Binomial {
-        let p: Probability = p.into();
+    pub fn new<P: std::convert::TryInto<Probability>>(n: usize, p: P) -> Result<Binomial>
+    where
+        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+    {
+        p.try_into().map(|p| Binomial::new_unchecked(n, p)).map_err(|e| e.into())
+    }
 
+    pub fn new_unchecked(n: usize, p: Probability) -> Binomial {
         Binomial {
             n, p,
             q: !p,
@@ -53,7 +59,7 @@ impl Distribution for Binomial {
         let a = (self.n - k) as f64;
         let b = (k + 1) as f64;
 
-        f64::from(self.q).betainc(a, b).into()
+        Probability::new_unchecked(f64::from(self.q).betainc(a, b))
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> usize {
@@ -73,7 +79,7 @@ impl DiscreteDistribution for Binomial {
         let prob_failures = self.q.powi((self.n - k) as i32);
         let prob = f64::from(prob_successes * prob_failures);
 
-        (bc * prob).into()
+        Probability::new_unchecked(bc * prob)
     }
 }
 
@@ -128,7 +134,7 @@ impl FisherInformation for Binomial {
 impl Convolution<Bernoulli> for Binomial {
     fn convolve(self, rv: Bernoulli) -> ConvolutionResult<Binomial> {
         if self.p == rv.p {
-            Ok(Binomial::new(self.n + 1, self.p))
+            Ok(Binomial::new_unchecked(self.n + 1, self.p))
         } else {
             Err(ConvolutionError::MixedParameters)
         }
@@ -136,7 +142,7 @@ impl Convolution<Bernoulli> for Binomial {
 
     fn convolve_pair(a: Bernoulli, b: Bernoulli) -> ConvolutionResult<Binomial> {
         if a.p == b.p {
-            Ok(Binomial::new(2, a.p))
+            Ok(Binomial::new_unchecked(2, a.p))
         } else {
             Err(ConvolutionError::MixedParameters)
         }
@@ -150,7 +156,7 @@ impl Convolution<Binomial> for Binomial {
 
     fn convolve_pair(a: Binomial, b: Binomial) -> ConvolutionResult<Binomial> {
         if a.p == b.p {
-            Ok(Binomial::new(a.n + b.n, a.p))
+            Ok(Binomial::new_unchecked(a.n + b.n, a.p))
         } else {
             Err(ConvolutionError::MixedParameters)
         }

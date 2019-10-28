@@ -1,6 +1,7 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -14,14 +15,18 @@ pub struct Gamma {
 }
 
 impl Gamma {
-    pub fn new(alpha: f64, beta: f64) -> Gamma {
-        assert_positive_real!(alpha);
-        assert_positive_real!(beta);
+    pub fn new(alpha: f64, beta: f64) -> Result<Gamma> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let beta = ValidationError::assert_positive_real(beta)?;
 
+        Ok(Gamma::new_unchecked(alpha, beta))
+    }
+
+    pub fn new_unchecked(alpha: f64, beta: f64) -> Gamma {
         Gamma { alpha, beta }
     }
 
-    pub fn with_scale(k: f64, theta: f64) -> Gamma {
+    pub fn with_scale(k: f64, theta: f64) -> Result<Gamma> {
         Gamma::new(k, 1.0 / theta)
     }
 }
@@ -57,7 +62,7 @@ impl Distribution for Gamma {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (self.alpha.gammainc(self.beta * x) / self.alpha.gamma()).into()
+        Probability::new_unchecked(self.alpha.gammainc(self.beta * x) / self.alpha.gamma())
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -123,7 +128,7 @@ impl Convolution<Gamma> for Gamma {
 
     fn convolve_pair(a: Gamma, b: Gamma) -> ConvolutionResult<Gamma> {
         if a.beta == b.beta {
-            Ok(Gamma::new(a.alpha + b.alpha, a.beta))
+            Ok(Gamma::new_unchecked(a.alpha + b.alpha, a.beta))
         } else {
             Err(ConvolutionError::MixedParameters)
         }
@@ -133,7 +138,7 @@ impl Convolution<Gamma> for Gamma {
 impl Convolution<Exponential> for Gamma {
     fn convolve(self, rv: Exponential) -> ConvolutionResult<Gamma> {
         if rv.lambda == self.beta {
-            Ok(Gamma::new(self.alpha + 1.0, self.beta))
+            Ok(Gamma::new_unchecked(self.alpha + 1.0, self.beta))
         } else {
             Err(ConvolutionError::MixedParameters)
         }
@@ -141,7 +146,7 @@ impl Convolution<Exponential> for Gamma {
 
     fn convolve_pair(a: Exponential, b: Exponential) -> ConvolutionResult<Gamma> {
         if a.lambda == b.lambda {
-            Ok(Gamma::new(2.0, a.lambda))
+            Ok(Gamma::new_unchecked(2.0, a.lambda))
         } else {
             Err(ConvolutionError::MixedParameters)
         }

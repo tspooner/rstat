@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::{Interval, ProductSpace};
 use std::fmt;
@@ -13,20 +13,19 @@ pub struct Dirichlet {
 }
 
 impl Dirichlet {
-    pub fn new(alphas: Vec<f64>) -> Dirichlet {
+    pub fn new(alphas: Vec<f64>) -> Result<Dirichlet> {
+        ValidationError::assert_min_len(&alphas, 2)
+            .and(ValidationError::assert_normalised(alphas.iter()))?;
+
+        for a in alphas.iter() {
+            ValidationError::assert_positive_real(*a)?;
+        }
+
+        Ok(Dirichlet::new_unchecked(alphas))
+    }
+
+    pub fn new_unchecked(alphas: Vec<f64>) -> Dirichlet {
         use special_fun::FloatSpecial;
-
-        if alphas.len() < 2 {
-            panic!("A Dirichlet distribution requires at least 2 concentration parameters.")
-        }
-
-        if !alphas.iter().all(|v| v > &0.0) {
-            panic!("Concentration parameters must all be positive real.")
-        }
-
-        if (alphas.iter().fold(0.0, |acc, a| acc + a) - 1.0f64).abs() > 1e-7 {
-            panic!("Concentration parameters must sum to 1.")
-        }
 
         let alphas = Array1::from(alphas);
         let alpha0 = alphas.scalar_sum();

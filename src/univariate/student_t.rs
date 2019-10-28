@@ -1,6 +1,7 @@
 use crate::{
     consts::PI,
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -12,9 +13,12 @@ pub struct StudentT {
 }
 
 impl StudentT {
-    pub fn new(nu: f64) -> StudentT {
-        assert_positive_real!(nu);
+    pub fn new(nu: f64) -> Result<StudentT> {
+        ValidationError::assert_positive_real(nu)
+            .map(StudentT::new_unchecked)
+    }
 
+    pub fn new_unchecked(nu: f64) -> StudentT {
         StudentT { nu }
     }
 }
@@ -44,7 +48,9 @@ impl Distribution for StudentT {
         let np1o2 = (self.nu + 1.0) / 2.0;
         let hyp2f1 = 0.5f64.hyp2f1(np1o2, 3.0 / 2.0, -x * x / self.nu);
 
-        (0.5 + x * np1o2.gamma() * hyp2f1 / (self.nu * PI).sqrt() * (self.nu / 2.0).gamma()).into()
+        Probability::new_unchecked(
+            0.5 + x * np1o2.gamma() * hyp2f1 / (self.nu * PI).sqrt() * (self.nu / 2.0).gamma()
+        )
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {

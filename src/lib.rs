@@ -1,3 +1,7 @@
+//! Probability distributions and statistics in Rust with integrated fitting routines, convolution
+//! support and mixtures.
+// #![warn(missing_docs)]
+
 extern crate rand;
 extern crate rand_distr;
 extern crate spaces;
@@ -19,6 +23,8 @@ pub use self::convolution::*;
 
 pub mod fitting;
 pub mod statistics;
+pub mod validation;
+
 pub mod univariate;
 pub mod multivariate;
 

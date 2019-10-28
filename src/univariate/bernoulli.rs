@@ -1,4 +1,4 @@
-use crate::{fitting::MLE, prelude::*};
+use crate::{MLE, prelude::*, validation::{Result, ValidationError}};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
@@ -12,9 +12,14 @@ pub struct Bernoulli {
 }
 
 impl Bernoulli {
-    pub fn new<P: Into<Probability>>(p: P) -> Bernoulli {
-        let p = p.into();
+    pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Bernoulli>
+    where
+        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+    {
+        p.try_into().map(Bernoulli::new_unchecked).map_err(|e| e.into())
+    }
 
+    pub fn new_unchecked(p: Probability) -> Bernoulli {
         Bernoulli {
             p: p,
             q: !p,
@@ -42,11 +47,7 @@ impl Distribution for Bernoulli {
     fn support(&self) -> Binary { Binary }
 
     fn cdf(&self, k: bool) -> Probability {
-        if k {
-            1.0.into()
-        } else {
-            0.0.into()
-        }
+        if k { Probability::one() } else { Probability::zero() }
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
@@ -132,8 +133,11 @@ impl FisherInformation for Bernoulli {
 impl MLE for Bernoulli {
     fn fit_mle(xs: Vec<bool>) -> Self {
         let n = xs.len() as f64;
+        let p = Probability::new_unchecked(
+            xs.into_iter().fold(0, |acc, x| acc + x as u64) as f64 / n
+        );
 
-        Bernoulli::new(xs.into_iter().fold(0, |acc, x| acc + x as u64) as f64 / n)
+        Bernoulli::new_unchecked(p)
     }
 }
 

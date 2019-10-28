@@ -126,7 +126,7 @@ pub trait DiscreteDistribution: Distribution {
     /// equal to `x`: `f(x) = P(X = x) = P({s in S : X(s) = x})`. We require that all sum of
     /// probabilities over all possible outcomes sums to 1.
     fn pmf(&self, x: Sample<Self>) -> Probability {
-        self.logpmf(x).exp().into()
+        Probability::new_unchecked(self.logpmf(x).exp())
     }
 
     ln_variant!(

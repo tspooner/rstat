@@ -1,6 +1,7 @@
 use crate::{
     consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -20,9 +21,12 @@ pub struct Rayleigh {
 }
 
 impl Rayleigh {
-    pub fn new(sigma: f64) -> Rayleigh {
-        assert_positive_real!(sigma);
+    pub fn new(sigma: f64) -> Result<Rayleigh> {
+        ValidationError::assert_positive_real(sigma)
+            .map(Rayleigh::new_unchecked)
+    }
 
+    pub fn new_unchecked(sigma: f64) -> Rayleigh {
         Rayleigh { sigma }
     }
 }
@@ -43,7 +47,7 @@ impl Distribution for Rayleigh {
     fn cdf(&self, x: f64) -> Probability {
         let sigma2 = self.sigma * self.sigma;
 
-        (1.0 - (-x * x / sigma2 / 2.0).exp()).into()
+        Probability::new_unchecked(1.0 - (-x * x / sigma2 / 2.0).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

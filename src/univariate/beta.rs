@@ -1,6 +1,7 @@
 use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
     prelude::*,
+    validation::{Result, ValidationError},
 };
 use rand;
 use spaces::real::Interval;
@@ -13,12 +14,14 @@ pub struct Beta {
 }
 
 impl Beta {
-    pub fn new(alpha: f64, beta: f64) -> Beta {
-        assert_positive_real!(alpha);
-        assert_positive_real!(beta);
+    pub fn new(alpha: f64, beta: f64) -> Result<Beta> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let beta = ValidationError::assert_positive_real(beta)?;
 
-        Beta { alpha, beta }
+        Ok(Beta::new_unchecked(alpha, beta))
     }
+
+    pub fn new_unchecked(alpha: f64, beta: f64) -> Beta { Beta { alpha, beta } }
 }
 
 impl Default for Beta {
@@ -52,7 +55,7 @@ impl Distribution for Beta {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        x.betainc(self.alpha, self.beta).into()
+        Probability::new_unchecked(x.betainc(self.alpha, self.beta))
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {

@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::discrete::NonNegativeIntegers;
 use std::fmt;
@@ -11,13 +11,15 @@ pub struct Geometric {
 }
 
 impl Geometric {
-    pub fn new<P: Into<Probability>>(p: P) -> Geometric {
-        let p: Probability = p.into();
+    pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Geometric>
+    where
+        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+    {
+        p.try_into().map(Geometric::new_unchecked).map_err(|e| e.into())
+    }
 
-        Geometric {
-            p,
-            q: !p,
-        }
+    pub fn new_unchecked(p: Probability) -> Geometric {
+        Geometric { p, q: !p, }
     }
 }
 
@@ -27,7 +29,7 @@ impl Distribution for Geometric {
     fn support(&self) -> NonNegativeIntegers { NonNegativeIntegers }
 
     fn cdf(&self, k: u64) -> Probability {
-        (1.0 - f64::from(self.q).powi(k as i32 + 1)).into()
+        Probability::new_unchecked(1.0 - f64::from(self.q).powi(k as i32 + 1))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 {

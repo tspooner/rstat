@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -10,10 +10,14 @@ pub struct BetaPrime {
 }
 
 impl BetaPrime {
-    pub fn new(alpha: f64, beta: f64) -> BetaPrime {
-        assert_positive_real!(alpha);
-        assert_positive_real!(beta);
+    pub fn new(alpha: f64, beta: f64) -> Result<BetaPrime> {
+        let alpha = ValidationError::assert_positive_real(alpha)?;
+        let beta = ValidationError::assert_positive_real(beta)?;
 
+        Ok(BetaPrime::new_unchecked(alpha, beta))
+    }
+
+    pub fn new_unchecked(alpha: f64, beta: f64) -> BetaPrime {
         BetaPrime { alpha, beta }
     }
 }
@@ -37,7 +41,7 @@ impl Distribution for BetaPrime {
     fn cdf(&self, x: f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        (x / (1.0 + x)).betainc(self.alpha, self.beta).into()
+        Probability::new_unchecked((x / (1.0 + x)).betainc(self.alpha, self.beta))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {

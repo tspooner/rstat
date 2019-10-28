@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::{prelude::*, validation::{Result, ValidationError}};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Interval;
@@ -11,10 +11,14 @@ pub struct Pareto {
 }
 
 impl Pareto {
-    pub fn new(x_m: f64, alpha: f64) -> Pareto {
-        assert_positive_real!(x_m);
-        assert_positive_real!(alpha);
+    pub fn new(x_m: f64, alpha: f64) -> Result<Pareto> {
+        let x_m = ValidationError::assert_positive_real(x_m)?;
+        let alpha = ValidationError::assert_positive_real(alpha)?;
 
+        Ok(Pareto::new_unchecked(x_m, alpha))
+    }
+
+    pub fn new_unchecked(x_m: f64, alpha: f64) -> Pareto {
         Pareto { x_m, alpha }
     }
 }
@@ -48,7 +52,7 @@ impl Distribution for Pareto {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        (1.0 - (self.x_m / x).powf(self.alpha)).into()
+        Probability::new_unchecked(1.0 - (self.x_m / x).powf(self.alpha))
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
