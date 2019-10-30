@@ -14,6 +14,7 @@ import_all!(cosine);
 import_all!(erlang);
 import_all!(exponential);
 import_all!(f_dist);
+import_all!(folded_normal);
 import_all!(frechet);
 import_all!(gamma);
 import_all!(gev);
