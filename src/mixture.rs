@@ -129,7 +129,7 @@ where
 #[cfg(test)]
 mod tests {
     use crate::{
-        core::UnivariateMoments,
+        UnivariateMoments,
         univariate::continuous::{Normal, Uniform},
     };
     use super::Mixture;
