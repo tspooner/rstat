@@ -22,6 +22,7 @@ import_all!(gpd);
 import_all!(gumbel);
 import_all!(inverse_gamma);
 import_all!(inverse_normal);
+import_all!(kumaraswamy);
 import_all!(laplace);
 import_all!(levy);
 import_all!(logistic);
