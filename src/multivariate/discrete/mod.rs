@@ -1,3 +1,4 @@
 pub use crate::DiscreteDistribution;
 
-import_all!(multinomial);
+mod multinomial;
+pub use self::multinomial::*;

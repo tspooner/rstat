@@ -128,10 +128,7 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{
-        UnivariateMoments,
-        univariate::continuous::{Normal, Uniform},
-    };
+    use crate::{prelude::*, univariate::continuous::{Normal, Uniform}};
     use super::Mixture;
 
     #[test]

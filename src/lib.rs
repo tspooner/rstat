@@ -2,20 +2,26 @@ extern crate rand;
 extern crate rand_distr;
 extern crate spaces;
 extern crate ndarray;
-extern crate ndarray_linalg;
 extern crate special_fun;
 
 mod consts;
 mod macros;
 
-import_all!(probability);
-import_all!(distribution);
-import_all!(statistics);
-import_all!(convolution);
-import_all!(fitting);
+mod probability;
+pub use self::probability::*;
+
+mod distribution;
+pub use self::distribution::*;
+
+mod convolution;
+pub use self::convolution::*;
 
 pub mod prelude;
+
+pub mod fitting;
+pub mod statistics;
 pub mod univariate;
 pub mod multivariate;
 
-import_all!(mixture);
+mod mixture;
+pub use self::mixture::Mixture;

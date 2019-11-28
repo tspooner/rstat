@@ -7,13 +7,6 @@ macro_rules! clip {
     }};
 }
 
-macro_rules! import_all {
-    ($module:ident) => {
-        pub(crate) mod $module;
-        pub use self::$module::*;
-    };
-}
-
 macro_rules! assert_gt {
     ($upper:ident > $lower:ident) => {
         if $lower >= $upper {

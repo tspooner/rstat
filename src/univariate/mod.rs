@@ -1,7 +1,10 @@
-pub use crate::UnivariateMoments;
+pub use crate::statistics::UnivariateMoments as Moments;
 
 pub mod discrete;
 pub mod continuous;
 
-import_all!(uniform);
-import_all!(degenerate);
+mod uniform;
+pub use self::uniform::*;
+
+mod degenerate;
+pub use self::degenerate::*;

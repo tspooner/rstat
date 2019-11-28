@@ -1,9 +1,7 @@
 use crate::{
-    MLE, Convolution, ConvolutionResult,
-    consts::{PI_2, PI_E_2, TWO_OVER_PI},
+    consts::{PI_2, TWO_OVER_PI},
     prelude::*,
 };
-use ndarray::Array2;
 use rand::Rng;
 use spaces::real::NonNegativeReals;
 use std::fmt;

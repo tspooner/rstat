@@ -1,3 +1,5 @@
+extern crate ndarray_linalg;
+
 use crate::{
     consts::PI_2,
     prelude::*,
@@ -64,7 +66,7 @@ impl MultivariateNormal {
 
     #[inline]
     pub fn z(&self, x: Vec<f64>) -> f64 {
-        let x = Array1::from_vec(x);
+        let x = Array1::from(x);
         let diff = x - &self.mu;
 
         diff.dot(&self.sigma_inv).dot(&diff)
@@ -117,14 +119,12 @@ impl fmt::Display for MultivariateNormal {
 
 #[cfg(test)]
 mod tests {
-    use crate::{Distribution, ContinuousDistribution};
-    use rand::{Rng, thread_rng};
+    use crate::ContinuousDistribution;
     use super::MultivariateNormal;
 
     #[test]
     fn test_pdf() {
         let m = MultivariateNormal::standard(5);
-        let mut rng = thread_rng();
         let prob = m.pdf(vec![0.0; 5]);
 
         assert!((prob - 0.010105326013811646).abs() < 1e-7);

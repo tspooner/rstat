@@ -4,34 +4,91 @@
 
 pub use crate::ContinuousDistribution;
 
-import_all!(arcsine);
-import_all!(beta);
-import_all!(beta_prime);
-import_all!(cauchy);
-import_all!(chi);
-import_all!(chi_sq);
-import_all!(cosine);
-import_all!(erlang);
-import_all!(exponential);
-import_all!(f_dist);
-import_all!(folded_normal);
-import_all!(frechet);
-import_all!(gamma);
-import_all!(gev);
-import_all!(gpd);
-import_all!(gumbel);
-import_all!(inverse_gamma);
-import_all!(inverse_normal);
-import_all!(kumaraswamy);
-import_all!(laplace);
-import_all!(levy);
-import_all!(logistic);
-import_all!(lognormal);
-import_all!(normal);
-import_all!(pareto);
-import_all!(rayleigh);
-import_all!(student_t);
-import_all!(triangular);
-import_all!(weibull);
+mod arcsine;
+pub use self::arcsine::*;
+
+mod beta;
+pub use self::beta::*;
+
+mod beta_prime;
+pub use self::beta_prime::*;
+
+mod cauchy;
+pub use self::cauchy::*;
+
+mod chi;
+pub use self::chi::*;
+
+mod chi_sq;
+pub use self::chi_sq::*;
+
+mod cosine;
+pub use self::cosine::*;
+
+mod erlang;
+pub use self::erlang::*;
+
+mod exponential;
+pub use self::exponential::*;
+
+mod f_dist;
+pub use self::f_dist::*;
+
+mod folded_normal;
+pub use self::folded_normal::*;
+
+mod frechet;
+pub use self::frechet::*;
+
+mod gamma;
+pub use self::gamma::*;
+
+mod gev;
+pub use self::gev::*;
+
+mod gpd;
+pub use self::gpd::*;
+
+mod gumbel;
+pub use self::gumbel::*;
+
+mod inverse_gamma;
+pub use self::inverse_gamma::*;
+
+mod inverse_normal;
+pub use self::inverse_normal::*;
+
+mod kumaraswamy;
+pub use self::kumaraswamy::*;
+
+mod laplace;
+pub use self::laplace::*;
+
+mod levy;
+pub use self::levy::*;
+
+mod logistic;
+pub use self::logistic::*;
+
+mod lognormal;
+pub use self::lognormal::*;
+
+mod normal;
+pub use self::normal::*;
+
+mod pareto;
+pub use self::pareto::*;
+
+mod rayleigh;
+pub use self::rayleigh::*;
+
+mod student_t;
+pub use self::student_t::*;
+
+mod triangular;
+pub use self::triangular::*;
+
+mod weibull;
+pub use self::weibull::*;
 
 pub type Uniform = super::Uniform<f64>;

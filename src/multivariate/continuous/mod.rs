@@ -1,5 +1,10 @@
 pub use crate::ContinuousDistribution;
 
-import_all!(normal);
-import_all!(lognormal);
-import_all!(dirichlet);
+mod normal;
+pub use self::normal::*;
+
+mod lognormal;
+pub use self::lognormal::*;
+
+mod dirichlet;
+pub use self::dirichlet::*;

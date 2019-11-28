@@ -1,6 +1,5 @@
-use crate::{MLE, prelude::*};
+use crate::{fitting::MLE, prelude::*};
 use ndarray::Array2;
-use rand;
 use spaces::discrete::Binary;
 use std::fmt;
 

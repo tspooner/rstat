@@ -28,7 +28,7 @@ impl Dirichlet {
             panic!("Concentration parameters must sum to 1.")
         }
 
-        let alphas = Array1::from_vec(alphas);
+        let alphas = Array1::from(alphas);
         let alpha0 = alphas.scalar_sum();
 
         Dirichlet {
