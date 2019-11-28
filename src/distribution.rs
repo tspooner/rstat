@@ -54,9 +54,7 @@ pub trait Distribution {
     ///
     /// The CDF is defined as the probability that a random variable X takes on a value less than
     /// or equal to `x`: `F(x) = P(X <= x)`.
-    fn cdf(&self, x: Sample<Self>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, x: Sample<Self>) -> Probability;
 
     /// Evaluates the complementary cumulative distribution function at `x`.
     ///

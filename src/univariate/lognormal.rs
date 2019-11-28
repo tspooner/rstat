@@ -1,7 +1,7 @@
 use crate::{
     consts::PI_2,
     prelude::*,
-    univariate::continuous::Normal,
+    univariate::Normal,
 };
 use ndarray::Array2;
 use rand::Rng;

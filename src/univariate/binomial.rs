@@ -2,7 +2,7 @@ use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     consts::PI_E,
     prelude::*,
-    univariate::discrete::Bernoulli,
+    univariate::Bernoulli,
 };
 use ndarray::Array2;
 use rand;

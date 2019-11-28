@@ -1,4 +1,4 @@
-use crate::{prelude::*, univariate::discrete::Categorical};
+use crate::{prelude::*, univariate::Categorical};
 use rand::Rng;
 use spaces::{Space, Union};
 
@@ -128,15 +128,15 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{prelude::*, univariate::continuous::{Normal, Uniform}};
+    use crate::{prelude::*, univariate::{Normal, Uniform}};
     use super::Mixture;
 
     #[test]
     fn test_uniform_pair_mixture() {
-        let uniform = Uniform::new(0.0, 2.0);
+        let uniform = Uniform::<f64>::new(0.0, 2.0);
         let mixture = Mixture::homogeneous(vec![
-            Uniform::new(0.0, 1.0),
-            Uniform::new(1.0, 2.0),
+            Uniform::<f64>::new(0.0, 1.0),
+            Uniform::<f64>::new(1.0, 2.0),
         ]);
 
         assert!((uniform.mean() - mixture.mean()).abs() < 1e-7);

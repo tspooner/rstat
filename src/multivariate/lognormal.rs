@@ -1,6 +1,6 @@
 use crate::{
     prelude::*,
-    multivariate::continuous::MultivariateNormal,
+    multivariate::MultivariateNormal,
 };
 use rand::Rng;
 use spaces::{ProductSpace, real::Reals};
@@ -35,6 +35,10 @@ impl Distribution for MultivariateLogNormal {
 
     fn support(&self) -> ProductSpace<Reals> {
         self.0.support()
+    }
+
+    fn cdf(&self, x: Vec<f64>) -> Probability {
+        unimplemented!()
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {

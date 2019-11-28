@@ -80,6 +80,10 @@ impl Distribution for MultivariateNormal {
         ProductSpace::new(vec![Reals; self.mu.len()])
     }
 
+    fn cdf(&self, x: Vec<f64>) -> Probability {
+        unimplemented!()
+    }
+
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         let z = Array1::from_shape_fn((self.mu.len(),), |_| rng.sample(RandSN));
         let az = self.sigma_cholesky.dot(&z);
