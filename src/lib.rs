@@ -6,6 +6,7 @@ extern crate special_fun;
 
 mod consts;
 mod macros;
+mod prelude;
 
 mod probability;
 pub use self::probability::*;
@@ -15,8 +16,6 @@ pub use self::distribution::*;
 
 mod convolution;
 pub use self::convolution::*;
-
-pub mod prelude;
 
 pub mod fitting;
 pub mod statistics;
