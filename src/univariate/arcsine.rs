@@ -1,7 +1,7 @@
 use crate::{
     consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -15,7 +15,7 @@ pub struct Arcsine {
 
 impl Arcsine {
     pub fn new(a: f64, b: f64) -> Result<Arcsine> {
-        ValidationError::assert_lte(a, b).map(|(a, b)| Arcsine::new_unchecked(a, b))
+        Validator.require_lte(a, b).map(|_| Arcsine::new_unchecked(a, b))
     }
 
     pub fn new_unchecked(a: f64, b: f64) -> Arcsine { Arcsine { a, b } }

@@ -2,7 +2,7 @@ use crate::{
     Convolution, ConvolutionResult,
     consts::{ONE_OVER_PI, PI},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -16,8 +16,7 @@ pub struct Cauchy {
 
 impl Cauchy {
     pub fn new(x0: f64, gamma: f64) -> Result<Cauchy> {
-        ValidationError::assert_positive_real(gamma)
-            .map(|gamma| Cauchy::new_unchecked(x0, gamma))
+        Validator.require_positive_real(gamma).map(|_| Cauchy::new_unchecked(x0, gamma))
     }
 
     pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {

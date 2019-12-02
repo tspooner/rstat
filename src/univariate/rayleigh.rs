@@ -1,7 +1,7 @@
 use crate::{
     consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -22,8 +22,9 @@ pub struct Rayleigh {
 
 impl Rayleigh {
     pub fn new(sigma: f64) -> Result<Rayleigh> {
-        ValidationError::assert_positive_real(sigma)
-            .map(Rayleigh::new_unchecked)
+        Validator
+            .require_positive_real(sigma)
+            .map(|_| Rayleigh::new_unchecked(sigma))
     }
 
     pub fn new_unchecked(sigma: f64) -> Rayleigh {

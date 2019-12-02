@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -11,10 +11,10 @@ pub struct FDist {
 
 impl FDist {
     pub fn new(d1: usize, d2: usize) -> Result<FDist> {
-        let d1 = ValidationError::assert_natural(d1)?;
-        let d2 = ValidationError::assert_natural(d2)?;
-
-        Ok(FDist::new_unchecked(d1, d2))
+        Validator
+            .require_natural(d1)?
+            .require_natural(d2)
+            .map(|_| FDist::new_unchecked(d1, d2))
     }
 
     pub fn new_unchecked(d1: usize, d2: usize) -> FDist {

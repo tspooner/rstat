@@ -1,4 +1,4 @@
-use crate::{MLE, prelude::*, validation::{Result, ValidationError}};
+use crate::{fitting::MLE, prelude::*, validation::{Result, UnsatisfiedConstraint}};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
@@ -14,7 +14,7 @@ pub struct Bernoulli {
 impl Bernoulli {
     pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Bernoulli>
     where
-        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
     {
         p.try_into().map(Bernoulli::new_unchecked).map_err(|e| e.into())
     }

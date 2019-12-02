@@ -1,7 +1,7 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -16,10 +16,10 @@ pub struct Gamma {
 
 impl Gamma {
     pub fn new(alpha: f64, beta: f64) -> Result<Gamma> {
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-        let beta = ValidationError::assert_positive_real(beta)?;
-
-        Ok(Gamma::new_unchecked(alpha, beta))
+        Validator
+            .require_positive_real(alpha)?
+            .require_positive_real(beta)
+            .map(|_| Gamma::new_unchecked(alpha, beta))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> Gamma {

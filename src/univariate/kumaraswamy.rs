@@ -44,7 +44,7 @@ impl Distribution for Kumaraswamy {
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        (1.0 - (1.0 - x.powf(self.a)).powf(self.b)).into()
+        Probability::new_unchecked(1.0 - (1.0 - x.powf(self.a)).powf(self.b))
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {

@@ -1,7 +1,7 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -16,10 +16,10 @@ pub struct Triangular {
 
 impl Triangular {
     pub fn new(a: f64, b: f64, c: f64) -> Result<Triangular> {
-        let (a, b) = ValidationError::assert_lte(a, b)?;
-        let (b, c) = ValidationError::assert_lte(b, c)?;
-
-        Ok(Triangular::new_unchecked(a, b, c))
+        Validator
+            .require_lte(a, b)?
+            .require_lte(b, c)
+            .map(|_| Triangular::new_unchecked(a, b, c))
     }
 
     pub fn new_unchecked(a: f64, b: f64, c: f64) -> Triangular {

@@ -3,7 +3,7 @@ use crate::{
     consts::{PI_2, PI_E_2},
     fitting::MLE,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -20,8 +20,9 @@ pub struct Normal {
 
 impl Normal {
     pub fn new(mu: f64, sigma: f64) -> Result<Normal> {
-        ValidationError::assert_positive_real(sigma)
-            .map(|sigma| Normal::new_unchecked(mu, sigma))
+        Validator
+            .require_positive_real(sigma)
+            .map(|_| Normal::new_unchecked(mu, sigma))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> Normal {

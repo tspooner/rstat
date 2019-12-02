@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{UnsatisfiedConstraint}};
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{ProductSpace, discrete::Ordinal};
@@ -11,13 +11,14 @@ pub struct Multinomial {
 }
 
 impl Multinomial {
-    pub fn new<P: std::convert::TryInto<Probability>>(n: usize, ps: Vec<P>) -> Result<Multinomial>
+    pub fn new<P: std::convert::TryInto<Probability>>(n: usize, ps: Vec<P>)
+        -> Result<Multinomial, UnsatisfiedConstraint>
     where
-        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
     {
         ps.into_iter()
             .map(|p| p.try_into().map_err(|e| e.into()))
-            .collect::<Result<Vec<Probability>>>()
+            .collect::<Result<Vec<Probability>, UnsatisfiedConstraint>>()
             .map(Probability::normalised)
             .map(|ps| Multinomial::new_unchecked(n, ps))
     }

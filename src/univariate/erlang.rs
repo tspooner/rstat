@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -11,10 +11,10 @@ pub struct Erlang {
 
 impl Erlang {
     pub fn new(k: usize, lambda: f64) -> Result<Erlang> {
-        let k = ValidationError::assert_gte(k, 1).map(|(k, _)| k)?;
-        let lambda = ValidationError::assert_positive_real(lambda)?;
-
-        Ok(Erlang::new_unchecked(k, lambda))
+        Validator
+            .require_gte(k, 1)?
+            .require_positive_real(lambda)
+            .map(|_| Erlang::new_unchecked(k, lambda))
     }
 
     pub fn new_unchecked(k: usize, lambda: f64) -> Erlang {

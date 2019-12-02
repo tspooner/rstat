@@ -2,7 +2,7 @@ use crate::{
     consts::PI_2,
     prelude::*,
     univariate::Normal,
-    validation::{Result, ValidationError},
+    validation::Result,
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -19,10 +19,6 @@ impl LogNormal {
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> LogNormal {
         LogNormal(Normal::new_unchecked(mu, sigma))
-    }
-
-    fn z(&self, x: f64) -> f64 {
-        self.0.z(x.ln())
     }
 }
 

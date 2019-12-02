@@ -69,7 +69,7 @@ impl Probability {
     }
 
     pub fn normalised(probs: Vec<Probability>) -> Vec<Probability> {
-        let mut z: f64 = probs.iter().fold(0.0, |acc, p| acc + p.0);
+        let z: f64 = probs.iter().fold(0.0, |acc, p| acc + p.0);
 
         probs.into_iter().map(|p| {
             Probability(p.0 / z)

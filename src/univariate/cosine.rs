@@ -1,7 +1,7 @@
 use crate::{
     consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -15,8 +15,9 @@ pub struct Cosine {
 
 impl Cosine {
     pub fn new(mu: f64, s: f64) -> Result<Cosine> {
-        ValidationError::assert_positive_real(s)
-            .map(|s| Cosine::new_unchecked(mu, s))
+        Validator
+            .require_positive_real(s)
+            .map(|_| Cosine::new_unchecked(mu, s))
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Cosine {

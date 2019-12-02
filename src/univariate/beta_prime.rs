@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -11,10 +11,10 @@ pub struct BetaPrime {
 
 impl BetaPrime {
     pub fn new(alpha: f64, beta: f64) -> Result<BetaPrime> {
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-        let beta = ValidationError::assert_positive_real(beta)?;
-
-        Ok(BetaPrime::new_unchecked(alpha, beta))
+        Validator
+            .require_positive_real(alpha)?
+            .require_positive_real(beta)
+            .map(|_| BetaPrime::new_unchecked(alpha, beta))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> BetaPrime {

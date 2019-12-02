@@ -128,12 +128,12 @@ where
 
 #[cfg(test)]
 mod tests {
-    use crate::{prelude::*, univariate::{Normal, Uniform}};
+    use crate::{prelude::*, univariate::{Normal, Uniform, Categorical}, validation::Result};
     use super::Mixture;
 
     #[test]
-    fn test_uniform_pair_mixture() {
-        let uniform = Uniform::<f64>::new(0.0, 2.0);
+    fn test_uniform_pair_mixture() -> Result<()> {
+        let uniform = Uniform::<f64>::new(0.0, 2.0)?;
         let mixture = Mixture::homogeneous(vec![
             Uniform::<f64>::new(0.0, 1.0)?,
             Uniform::<f64>::new(1.0, 2.0)?,
@@ -146,7 +146,7 @@ mod tests {
     }
 
     #[test]
-    fn test_gmm() -> Result<(), ValidationError> {
+    fn test_gmm() -> Result<()> {
         let gmm = Mixture::new(
             Categorical::new(vec![0.2, 0.5, 0.3])?,
             vec![Normal::new(-2.0, 1.2)?, Normal::new(0.0, 1.0)?, Normal::new(3.0, 2.5)?],

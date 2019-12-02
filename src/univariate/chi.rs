@@ -1,7 +1,7 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -14,8 +14,7 @@ pub struct Chi {
 
 impl Chi {
     pub fn new(k: usize) -> Result<Chi> {
-        ValidationError::assert_gte(k, 1)
-            .map(|(k, _)| Chi::new_unchecked(k))
+        Validator.require_gte(k, 1).map(|_| Chi::new_unchecked(k))
     }
 
     pub fn new_unchecked(k: usize) -> Chi {

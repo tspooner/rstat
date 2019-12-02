@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use special_fun::FloatSpecial;
@@ -18,10 +18,10 @@ pub struct BetaBinomial {
 
 impl BetaBinomial {
     pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial> {
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-        let beta = ValidationError::assert_positive_real(beta)?;
-
-        Ok(BetaBinomial::new_unchecked(n, alpha, beta))
+        Validator
+            .require_positive_real(alpha)?
+            .require_positive_real(beta)
+            .map(|_| BetaBinomial::new_unchecked(n, alpha, beta))
     }
 
     pub fn new_unchecked(n: usize, alpha: f64, beta: f64) -> BetaBinomial {

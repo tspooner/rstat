@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Result, UnsatisfiedConstraint}};
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use std::fmt;
@@ -13,7 +13,7 @@ pub struct Categorical {
 impl Categorical {
     pub fn new<P: std::convert::TryInto<Probability>>(ps: Vec<P>) -> Result<Categorical>
     where
-        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
     {
         ps.into_iter()
             .map(|p| p.try_into().map_err(|e| e.into()))

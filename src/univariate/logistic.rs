@@ -1,7 +1,7 @@
 use crate::{
     consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -15,8 +15,9 @@ pub struct Logistic {
 
 impl Logistic {
     pub fn new(mu: f64, s: f64) -> Result<Logistic> {
-        ValidationError::assert_positive_real(s)
-            .map(|s| Logistic::new_unchecked(mu, s))
+        Validator
+            .require_positive_real(s)
+            .map(|_| Logistic::new_unchecked(mu, s))
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Logistic {

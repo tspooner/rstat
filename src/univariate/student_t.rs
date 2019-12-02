@@ -1,7 +1,7 @@
 use crate::{
     consts::PI,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -14,8 +14,9 @@ pub struct StudentT {
 
 impl StudentT {
     pub fn new(nu: f64) -> Result<StudentT> {
-        ValidationError::assert_positive_real(nu)
-            .map(StudentT::new_unchecked)
+        Validator
+            .require_positive_real(nu)
+            .map(|_| StudentT::new_unchecked(nu))
     }
 
     pub fn new_unchecked(nu: f64) -> StudentT {

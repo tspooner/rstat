@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -12,10 +12,10 @@ pub struct Frechet {
 
 impl Frechet {
     pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet> {
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-        let s = ValidationError::assert_positive_real(s)?;
-
-        Ok(Frechet::new_unchecked(alpha, s, m))
+        Validator
+            .require_positive_real(alpha)?
+            .require_positive_real(s)
+            .map(|_| Frechet::new_unchecked(alpha, s, m))
     }
 
     pub fn new_unchecked(alpha: f64, s: f64, m: f64) -> Frechet {

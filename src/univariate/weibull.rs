@@ -1,7 +1,7 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -15,10 +15,10 @@ pub struct Weibull {
 
 impl Weibull {
     pub fn new(lambda: f64, k: f64) -> Result<Weibull> {
-        let lambda = ValidationError::assert_positive_real(lambda)?;
-        let k = ValidationError::assert_positive_real(k)?;
-
-        Ok(Weibull::new_unchecked(lambda, k))
+        Validator
+            .require_positive_real(lambda)?
+            .require_positive_real(k)
+            .map(|_| Weibull::new_unchecked(lambda, k))
     }
 
     pub fn new_unchecked(lambda: f64, k: f64) -> Weibull {

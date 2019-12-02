@@ -3,7 +3,7 @@ use crate::{
     consts::PI_E,
     prelude::*,
     univariate::Bernoulli,
-    validation::{Result, ValidationError},
+    validation::{Result, UnsatisfiedConstraint},
 };
 use ndarray::Array2;
 use rand;
@@ -11,7 +11,6 @@ use spaces::discrete::Ordinal;
 use std::fmt;
 use super::choose;
 
-// TODO XXX: Replace usize with u64 after the new version of `spaces`
 #[derive(Debug, Clone, Copy)]
 pub struct Binomial {
     pub n: usize,
@@ -23,7 +22,7 @@ pub struct Binomial {
 impl Binomial {
     pub fn new<P: std::convert::TryInto<Probability>>(n: usize, p: P) -> Result<Binomial>
     where
-        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
     {
         p.try_into().map(|p| Binomial::new_unchecked(n, p)).map_err(|e| e.into())
     }

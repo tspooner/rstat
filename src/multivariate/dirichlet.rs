@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::{Interval, ProductSpace};
 use std::fmt;
@@ -14,11 +14,12 @@ pub struct Dirichlet {
 
 impl Dirichlet {
     pub fn new(alphas: Vec<f64>) -> Result<Dirichlet> {
-        ValidationError::assert_min_len(&alphas, 2)
-            .and(ValidationError::assert_normalised(alphas.iter()))?;
+        Validator
+            .require_min_len(&alphas, 2)?
+            .require_normalised(alphas.iter())?;
 
         for a in alphas.iter() {
-            ValidationError::assert_positive_real(*a)?;
+            Validator.require_positive_real(*a)?;
         }
 
         Ok(Dirichlet::new_unchecked(alphas))

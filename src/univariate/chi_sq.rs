@@ -1,7 +1,7 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand;
 use spaces::real::PositiveReals;
@@ -14,8 +14,9 @@ pub struct ChiSq {
 
 impl ChiSq {
     pub fn new(k: usize) -> Result<ChiSq> {
-        ValidationError::assert_gte(k, 1)
-            .map(|(k, _)| ChiSq::new_unchecked(k))
+        Validator
+            .require_gte(k, 1)
+            .map(|_| ChiSq::new_unchecked(k))
     }
 
     pub fn new_unchecked(k: usize) -> ChiSq {

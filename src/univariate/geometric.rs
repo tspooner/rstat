@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Result, UnsatisfiedConstraint}};
 use rand::Rng;
 use spaces::discrete::NonNegativeIntegers;
 use std::fmt;
@@ -13,7 +13,7 @@ pub struct Geometric {
 impl Geometric {
     pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Geometric>
     where
-        <P as std::convert::TryInto<Probability>>::Error: Into<ValidationError>,
+        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
     {
         p.try_into().map(Geometric::new_unchecked).map_err(|e| e.into())
     }

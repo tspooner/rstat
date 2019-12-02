@@ -1,7 +1,7 @@
 use crate::{
     consts::{PI_2, PI_E_2},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -20,10 +20,10 @@ pub struct InvNormal {
 
 impl InvNormal {
     pub fn new(mu: f64, lambda: f64) -> Result<InvNormal> {
-        let mu = ValidationError::assert_positive_real(mu)?;
-        let lambda = ValidationError::assert_positive_real(lambda)?;
-
-        Ok(InvNormal::new_unchecked(mu, lambda))
+        Validator
+            .require_positive_real(mu)?
+            .require_positive_real(lambda)
+            .map(|_| InvNormal::new_unchecked(mu, lambda))
     }
 
     pub fn new_unchecked(mu: f64, lambda: f64) -> InvNormal {

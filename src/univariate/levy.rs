@@ -1,7 +1,7 @@
 use crate::{
     consts::{PI, PI_16, THREE_HALVES},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -15,8 +15,9 @@ pub struct Levy {
 
 impl Levy {
     pub fn new(mu: f64, c: f64) -> Result<Levy> {
-        ValidationError::assert_positive_real(c)
-            .map(|c| Levy::new_unchecked(mu, c))
+        Validator
+            .require_positive_real(c)
+            .map(|_| Levy::new_unchecked(mu, c))
     }
 
     pub fn new_unchecked(mu: f64, c: f64) -> Levy {

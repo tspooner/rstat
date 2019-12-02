@@ -1,185 +1,143 @@
-use ndarray::{Array1, Array2};
-use std::{error::Error, fmt, iter::Sum, result::Result as StdResult};
+use ndarray::Array2;
+use std::{iter::Sum, result::Result as StdResult};
 
-#[derive(Debug, Clone, Copy)]
-pub enum Numeric {
-    Negative,
-    NegativeReal,
+mod constraints;
+pub use constraints::*;
 
-    Positive,
-    PositiveReal,
-
-    Natural,
-
-    LTE,
-    GTE,
-}
-
-#[derive(Debug, Clone, Copy)]
-pub enum Tensor {
-    OfLength(usize),
-    MinLength(usize),
-
-    NDimensional(usize),
-
-    Square,
-
-    SumsTo,
-    Normalised,
-}
+pub type Result<T> = StdResult<T, UnsatisfiedConstraint>;
 
 #[derive(Clone, Copy, Debug)]
-pub enum ValidationError {
-    Numeric(Numeric),
-    Tensor(Tensor),
-    Probability(crate::probability::ProbabilityError),
-}
+pub struct Validator;
 
-pub type Result<T> = StdResult<T, ValidationError>;
+impl Validator {
+    pub fn build<T>(self, f: impl Fn() -> T) -> T { f() }
 
-impl ValidationError {
-    pub fn assert_positive(x: f64) -> Result<f64> {
+    pub fn require(self, f: impl Fn() -> bool) -> Result<Self> {
+        if f() { Ok(self) } else { Err(UnsatisfiedConstraint::Generic) }
+    }
+
+    // TODO: This should be generic over all types implementing PartialOrd.
+    pub fn require_positive(self, x: f64) -> Result<Self> {
         if x < 0.0 {
-            Err(ValidationError::Numeric(Numeric::Positive))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Positive))
         } else {
-            Ok(x)
+            Ok(self)
         }
     }
 
-    pub fn assert_positive_real(x: f64) -> Result<f64> {
+    pub fn require_positive_real(self, x: f64) -> Result<Self> {
         if x <= 0.0 {
-            Err(ValidationError::Numeric(Numeric::PositiveReal))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::PositiveReal))
         } else {
-            Ok(x)
+            Ok(self)
         }
     }
 
-    pub fn assert_negative(x: f64) -> Result<f64> {
+    // TODO: This should be generic over all types implementing PartialOrd.
+    pub fn require_negative(self, x: f64) -> Result<Self> {
         if x > 0.0 {
-            Err(ValidationError::Numeric(Numeric::Negative))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Negative))
         } else {
-            Ok(x)
+            Ok(self)
         }
     }
 
-    pub fn assert_negative_real(x: f64) -> Result<f64> {
-        if x > 0.0 {
-            Err(ValidationError::Numeric(Numeric::NegativeReal))
+    pub fn require_negative_real(self, x: f64) -> Result<Self> {
+        if x >= 0.0 {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::NegativeReal))
         } else {
-            Ok(x)
+            Ok(self)
         }
     }
 
-    pub fn assert_natural(x: usize) -> Result<usize> {
+    // TODO: This should be generic over all integer types.
+    pub fn require_natural(self, x: usize) -> Result<Self> {
+        // Only need to test that it's not zero as usize cannot be negative.
         if x == 0 {
-            Err(ValidationError::Numeric(Numeric::Natural))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Natural))
         } else {
-            Ok(x)
+            Ok(self)
         }
     }
 
-    pub fn assert_lte<T: PartialOrd>(a: T, b: T) -> Result<(T, T)> {
+    pub fn require_lte<T: PartialOrd>(self, a: T, b: T) -> Result<Self> {
         if a <= b {
-            Ok((a, b))
+            Ok(self)
         } else {
-            Err(ValidationError::Numeric(Numeric::LTE))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LTE))
         }
     }
 
-    pub fn assert_gte<T: PartialOrd>(a: T, b: T) -> Result<(T, T)> {
+    pub fn require_gte<T: PartialOrd>(self, a: T, b: T) -> Result<Self> {
         if a >= b {
-            Ok((a, b))
+            Ok(self)
         } else {
-            Err(ValidationError::Numeric(Numeric::GTE))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GTE))
         }
     }
 }
 
-impl ValidationError {
-    pub fn assert_len<T>(tensor: &[T], len: usize) -> Result<&[T]> {
-        if tensor.len() != len {
-            Err(ValidationError::Tensor(Tensor::OfLength(len)))
+impl Validator {
+    pub fn require_len<T>(self, tensor: &[T], len: usize) -> Result<Self> {
+        if tensor.len() == len {
+            Ok(self)
         } else {
-            Ok(tensor)
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::Length(len)))
         }
     }
 
-    pub fn assert_min_len<T>(tensor: &[T], len: usize) -> Result<&[T]> {
-        if tensor.len() < len {
-            Err(ValidationError::Tensor(Tensor::MinLength(len)))
+    pub fn require_min_len<T>(self, tensor: &[T], len: usize) -> Result<Self> {
+        if tensor.len() >= len {
+            Ok(self)
         } else {
-            Ok(tensor)
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::MinLength(len)))
         }
     }
 
-    pub fn assert_ndim<T, D>(
+    pub fn require_ndim<T, D>(
+        self,
         tensor: &ndarray::Array<T, D>,
         ndim: usize
-    ) -> Result<&ndarray::Array<T, D>>
+    ) -> Result<Self>
     where
         D: ndarray::Dimension
     {
-        if tensor.ndim() != ndim {
-            Err(ValidationError::Tensor(Tensor::NDimensional(ndim)))
+        if tensor.ndim() == ndim {
+            Ok(self)
         } else {
-            Ok(tensor)
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::NDimensional(ndim)))
         }
     }
 
-    pub fn assert_square<T>(tensor: &Array2<T>) -> Result<&Array2<T>> {
+    pub fn require_square<T>(self, tensor: &Array2<T>) -> Result<Self> {
         if tensor.is_square() {
-            Ok(tensor)
+            Ok(self)
         } else {
-            Err(ValidationError::Tensor(Tensor::Square))
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::Square))
         }
     }
 
-    pub fn assert_sum<'a, T>(tensor: impl Iterator<Item = &'a T>, total: T) -> Result<()>
+    pub fn require_sum<'a, T>(self, tensor: impl Iterator<Item = &'a T>, total: T)
+        -> Result<Self>
     where
         T: 'a + Sum<&'a T> + PartialEq,
     {
         let sum: T = tensor.sum();
 
         if sum == total {
-            Ok(())
+            Ok(self)
         } else {
-            Err(ValidationError::Tensor(Tensor::SumsTo))
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::SumsTo))
         }
     }
 
-    pub fn assert_normalised<'a>(tensor: impl Iterator<Item = &'a f64>) -> Result<()> {
+    pub fn require_normalised<'a>(self, tensor: impl Iterator<Item = &'a f64>) -> Result<Self> {
         let sum: f64 = tensor.sum();
 
         if (sum - 1.0f64).abs() < 1e-7 {
-            Ok(())
+            Ok(self)
         } else {
-            Err(ValidationError::Tensor(Tensor::Normalised))
-        }
-    }
-}
-
-impl From<crate::probability::ProbabilityError> for ValidationError {
-    fn from(err: crate::probability::ProbabilityError) -> ValidationError {
-        ValidationError::Probability(err)
-    }
-}
-
-impl fmt::Display for ValidationError {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        match *self {
-            ValidationError::Numeric(_) => f.write_str("Numeric"),
-            ValidationError::Tensor(_) => f.write_str("Tensor"),
-            ValidationError::Probability(err) => err.fmt(f),
-        }
-    }
-}
-
-impl Error for ValidationError {
-    fn description(&self) -> &str {
-        match self {
-            ValidationError::Numeric(_) => unimplemented!(),
-            ValidationError::Tensor(_) => unimplemented!(),
-            ValidationError::Probability(err) => err.description(),
+            Err(UnsatisfiedConstraint::Tensor(TensorConstraint::Normalised))
         }
     }
 }

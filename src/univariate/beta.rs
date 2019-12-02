@@ -1,7 +1,7 @@
 use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand;
 use spaces::real::Interval;
@@ -15,10 +15,10 @@ pub struct Beta {
 
 impl Beta {
     pub fn new(alpha: f64, beta: f64) -> Result<Beta> {
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-        let beta = ValidationError::assert_positive_real(beta)?;
-
-        Ok(Beta::new_unchecked(alpha, beta))
+        Validator
+            .require_positive_real(alpha)?
+            .require_positive_real(beta)
+            .map(|_| Beta::new_unchecked(alpha, beta))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> Beta { Beta { alpha, beta } }

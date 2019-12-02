@@ -1,7 +1,7 @@
 use crate::{
     consts::E,
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Reals;
@@ -15,8 +15,9 @@ pub struct Laplace {
 
 impl Laplace {
     pub fn new(mu: f64, b: f64) -> Result<Laplace> {
-        ValidationError::assert_positive_real(b)
-            .map(|b| Laplace::new_unchecked(mu, b))
+        Validator
+            .require_positive_real(b)
+            .map(|_| Laplace::new_unchecked(mu, b))
     }
 
     pub fn new_unchecked(mu: f64, b: f64) -> Laplace {

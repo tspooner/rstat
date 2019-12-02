@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, ValidationError}};
+use crate::{prelude::*, validation::{Validator, Result}};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Interval;
@@ -12,10 +12,10 @@ pub struct Pareto {
 
 impl Pareto {
     pub fn new(x_m: f64, alpha: f64) -> Result<Pareto> {
-        let x_m = ValidationError::assert_positive_real(x_m)?;
-        let alpha = ValidationError::assert_positive_real(alpha)?;
-
-        Ok(Pareto::new_unchecked(x_m, alpha))
+        Validator
+            .require_positive_real(x_m)?
+            .require_positive_real(alpha)
+            .map(|_| Pareto::new_unchecked(x_m, alpha))
     }
 
     pub fn new_unchecked(x_m: f64, alpha: f64) -> Pareto {

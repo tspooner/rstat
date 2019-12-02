@@ -1,4 +1,4 @@
-use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*, validation::{Result, ValidationError}};
+use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::{
     real::Interval as RealInterval,
@@ -35,16 +35,13 @@ where
 // Continuous:
 impl Uniform<f64> {
     pub fn new(a: f64, b: f64) -> Result<Uniform<f64>> {
-        ValidationError::assert_lte(a, b)
-            .map(|(a, b)| Uniform::new_unchecked(a, b))
-    }
-
-    pub fn new_unchecked(a: f64, b: f64) -> Uniform<f64> {
-        Uniform {
-            a,
-            b,
-            prob: 1.0 / (b - a),
-        }
+        Validator
+            .require_lte(a, b)
+            .map(|_| Uniform {
+                a,
+                b,
+                prob: 1.0 / (b - a),
+            })
     }
 }
 
@@ -142,12 +139,14 @@ impl fmt::Display for Uniform<f64> {
 
 // Discrete:
 impl Uniform<i64> {
-    pub fn new(a: i64, b: i64) -> Uniform<i64> {
-        if b <= a {
-            panic!("b must be strictly greater than a.")
-        }
-
-        Uniform { a, b, prob: 1.0 / (b - a + 1) as f64 }
+    pub fn new(a: i64, b: i64) -> Result<Uniform<i64>> {
+        Validator
+            .require_lte(a, b)
+            .map(|_| Uniform {
+                a,
+                b,
+                prob: 1.0 / (b - a + 1) as f64
+            })
     }
 
     #[inline]

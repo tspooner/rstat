@@ -1,7 +1,7 @@
 use crate::{
     consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS},
     prelude::*,
-    validation::{Result, ValidationError},
+    validation::{Validator, Result},
 };
 use rand::Rng;
 use spaces::real::Interval;
@@ -17,8 +17,9 @@ pub struct GeneralisedExtremeValue {
 
 impl GeneralisedExtremeValue {
     pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedExtremeValue> {
-        ValidationError::assert_positive_real(sigma)
-            .map(|sigma| GeneralisedExtremeValue::new_unchecked(mu, sigma, zeta))
+        Validator
+            .require_positive_real(sigma)
+            .map(|_| GeneralisedExtremeValue::new_unchecked(mu, sigma, zeta))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64, zeta: f64) -> GeneralisedExtremeValue {
