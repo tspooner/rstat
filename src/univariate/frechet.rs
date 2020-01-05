@@ -2,6 +2,7 @@ use crate::{prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
+use super::Uniform;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Frechet {
@@ -51,8 +52,10 @@ impl Distribution for Frechet {
         Probability::new_unchecked((-(z.powf(-self.alpha))).exp())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        let u = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
+
+        self.m + self.s * (-u.ln()).powf(1.0 / self.alpha)
     }
 }
 
