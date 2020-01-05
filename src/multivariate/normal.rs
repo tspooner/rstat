@@ -11,10 +11,10 @@ use rand_distr::StandardNormal as RandSN;
 use spaces::{ProductSpace, real::Reals};
 use std::fmt;
 
-pub type MultivariateGaussian = MultivariateNormal;
+pub type Gaussian = Normal;
 
 #[derive(Debug, Clone)]
-pub struct MultivariateNormal {
+pub struct Normal {
     pub mu: Array1<f64>,
     pub sigma: Array2<f64>,
 
@@ -23,9 +23,9 @@ pub struct MultivariateNormal {
     sigma_cholesky: Array2<f64>,
 }
 
-impl MultivariateNormal {
-    fn new_unchecked(mu: Array1<f64>, sigma: Array2<f64>) -> MultivariateNormal {
-        MultivariateNormal {
+impl Normal {
+    pub fn new_unchecked(mu: Array1<f64>, sigma: Array2<f64>) -> Normal {
+        Normal {
             mu,
             sigma_det: sigma.det()
                 .expect("Covariance matrix must have a well-defined determinant."),
@@ -37,7 +37,7 @@ impl MultivariateNormal {
         }
     }
 
-    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> MultivariateNormal {
+    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> Normal {
         assert!(sigma.is_square());
 
         sigma.iter().for_each(|&v| assert_positive_real!(v));
@@ -45,7 +45,7 @@ impl MultivariateNormal {
         Self::new_unchecked(mu, sigma)
     }
 
-    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> MultivariateNormal {
+    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Normal {
         assert_positive_real!(sigma);
 
         let mut sigma_mat = Array2::eye(mu.len());
@@ -54,11 +54,11 @@ impl MultivariateNormal {
         Self::new_unchecked(mu, sigma_mat)
     }
 
-    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> MultivariateNormal {
+    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Normal {
         Self::isotropic(Array1::from_elem((n,), mu), sigma)
     }
 
-    pub fn standard(n: usize) -> MultivariateNormal {
+    pub fn standard(n: usize) -> Normal {
         Self::homogeneous(n, 0.0, 1.0)
     }
 
@@ -73,7 +73,7 @@ impl MultivariateNormal {
     }
 }
 
-impl Distribution for MultivariateNormal {
+impl Distribution for Normal {
     type Support = ProductSpace<Reals>;
 
     fn support(&self) -> ProductSpace<Reals> {
@@ -92,7 +92,7 @@ impl Distribution for MultivariateNormal {
     }
 }
 
-impl ContinuousDistribution for MultivariateNormal {
+impl ContinuousDistribution for Normal {
     fn pdf(&self, x: Vec<f64>) -> f64 {
         let z = self.z(x);
         let norm = (PI_2.powi(self.mu.len() as i32) * self.sigma_det).sqrt();
@@ -101,7 +101,7 @@ impl ContinuousDistribution for MultivariateNormal {
     }
 }
 
-impl MultivariateMoments for MultivariateNormal {
+impl MultivariateMoments for Normal {
     fn mean(&self) -> Array1<f64> {
         self.mu.clone()
     }
@@ -115,7 +115,7 @@ impl MultivariateMoments for MultivariateNormal {
     }
 }
 
-impl fmt::Display for MultivariateNormal {
+impl fmt::Display for Normal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "N({}, {})", self.mean(), self.covariance())
     }
@@ -124,11 +124,11 @@ impl fmt::Display for MultivariateNormal {
 #[cfg(test)]
 mod tests {
     use crate::ContinuousDistribution;
-    use super::MultivariateNormal;
+    use super::Normal;
 
     #[test]
     fn test_pdf() {
-        let m = MultivariateNormal::standard(5);
+        let m = Normal::standard(5);
         let prob = m.pdf(vec![0.0; 5]);
 
         assert!((prob - 0.010105326013811646).abs() < 1e-7);

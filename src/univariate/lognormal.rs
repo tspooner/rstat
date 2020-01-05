@@ -126,6 +126,6 @@ impl FisherInformation for LogNormal {
 
 impl fmt::Display for LogNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Lognormal({}, {})", self.0.mu, self.variance())
+        write!(f, "LogNormal({}, {})", self.0.mu, self.variance())
     }
 }
