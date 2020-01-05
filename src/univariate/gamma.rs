@@ -17,8 +17,8 @@ pub struct Gamma {
 impl Gamma {
     pub fn new(alpha: f64, beta: f64) -> Result<Gamma> {
         Validator
-            .require_positive_real(alpha)?
-            .require_positive_real(beta)
+            .require_non_negative(alpha)?
+            .require_non_negative(beta)
             .map(|_| Gamma::new_unchecked(alpha, beta))
     }
 

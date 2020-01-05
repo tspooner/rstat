@@ -16,7 +16,7 @@ pub struct Levy {
 impl Levy {
     pub fn new(mu: f64, c: f64) -> Result<Levy> {
         Validator
-            .require_positive_real(c)
+            .require_non_negative(c)
             .map(|_| Levy::new_unchecked(mu, c))
     }
 

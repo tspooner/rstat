@@ -23,7 +23,7 @@ pub struct Rayleigh {
 impl Rayleigh {
     pub fn new(sigma: f64) -> Result<Rayleigh> {
         Validator
-            .require_positive_real(sigma)
+            .require_non_negative(sigma)
             .map(|_| Rayleigh::new_unchecked(sigma))
     }
 

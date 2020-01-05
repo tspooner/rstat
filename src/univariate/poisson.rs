@@ -18,7 +18,7 @@ pub struct Poisson {
 
 impl Poisson {
     pub fn new(lambda: f64) -> Result<Poisson> {
-        Validator.require_positive_real(lambda).map(|_| Poisson::new_unchecked(lambda))
+        Validator.require_non_negative(lambda).map(|_| Poisson::new_unchecked(lambda))
     }
 
     pub fn new_unchecked(lambda: f64) -> Poisson {

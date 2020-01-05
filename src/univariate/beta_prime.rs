@@ -12,8 +12,8 @@ pub struct BetaPrime {
 impl BetaPrime {
     pub fn new(alpha: f64, beta: f64) -> Result<BetaPrime> {
         Validator
-            .require_positive_real(alpha)?
-            .require_positive_real(beta)
+            .require_non_negative(alpha)?
+            .require_non_negative(beta)
             .map(|_| BetaPrime::new_unchecked(alpha, beta))
     }
 

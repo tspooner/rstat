@@ -1,5 +1,6 @@
 use ndarray::Array2;
 use std::{iter::{Sum, FromIterator}, result::Result as StdResult};
+use num_traits::{Zero, PrimInt};
 
 mod constraints;
 pub use constraints::*;
@@ -16,47 +17,52 @@ impl Validator {
         if f() { Ok(self) } else { Err(UnsatisfiedConstraint::Generic) }
     }
 
-    // TODO: This should be generic over all types implementing PartialOrd.
-    pub fn require_positive(self, x: f64) -> Result<Self> {
-        if x < 0.0 {
+    pub fn require_positive<T: Zero + PartialOrd>(self, x: T) -> Result<Self> {
+        if x <= T::zero() {
             Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Positive))
         } else {
             Ok(self)
         }
     }
 
-    pub fn require_positive_real(self, x: f64) -> Result<Self> {
-        if x <= 0.0 {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::PositiveReal))
+    pub fn require_non_negative<T: Zero + PartialOrd>(self, x: T) -> Result<Self> {
+        if x < T::zero() {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::NonNegative))
         } else {
             Ok(self)
         }
     }
 
-    // TODO: This should be generic over all types implementing PartialOrd.
-    pub fn require_negative(self, x: f64) -> Result<Self> {
-        if x > 0.0 {
+    pub fn require_negative<T: Zero + PartialOrd>(self, x: T) -> Result<Self> {
+        if x >= T::zero() {
             Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Negative))
         } else {
             Ok(self)
         }
     }
 
-    pub fn require_negative_real(self, x: f64) -> Result<Self> {
-        if x >= 0.0 {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::NegativeReal))
+    pub fn require_non_positive<T: Zero + PartialOrd>(self, x: T) -> Result<Self> {
+        if x > T::zero() {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::NonPositive))
         } else {
             Ok(self)
         }
     }
 
-    // TODO: This should be generic over all integer types.
-    pub fn require_natural(self, x: usize) -> Result<Self> {
+    pub fn require_natural<T: PrimInt>(self, x: T) -> Result<Self> {
         // Only need to test that it's not zero as usize cannot be negative.
-        if x == 0 {
+        if x <= T::zero() {
             Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Natural))
         } else {
             Ok(self)
+        }
+    }
+
+    pub fn require_lt<T: PartialOrd>(self, a: T, b: T) -> Result<Self> {
+        if a < b {
+            Ok(self)
+        } else {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LT))
         }
     }
 
@@ -65,6 +71,14 @@ impl Validator {
             Ok(self)
         } else {
             Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LTE))
+        }
+    }
+
+    pub fn require_gt<T: PartialOrd>(self, a: T, b: T) -> Result<Self> {
+        if a > b {
+            Ok(self)
+        } else {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GT))
         }
     }
 

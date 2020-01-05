@@ -17,7 +17,7 @@ pub struct GeneralisedPareto {
 impl GeneralisedPareto {
     pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedPareto> {
         Validator
-            .require_positive_real(sigma)
+            .require_non_negative(sigma)
             .map(|_| GeneralisedPareto::new_unchecked(mu, sigma, zeta))
     }
 

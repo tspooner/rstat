@@ -16,8 +16,8 @@ pub struct Weibull {
 impl Weibull {
     pub fn new(lambda: f64, k: f64) -> Result<Weibull> {
         Validator
-            .require_positive_real(lambda)?
-            .require_positive_real(k)
+            .require_non_negative(lambda)?
+            .require_non_negative(k)
             .map(|_| Weibull::new_unchecked(lambda, k))
     }
 

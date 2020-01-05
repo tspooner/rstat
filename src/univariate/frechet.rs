@@ -14,8 +14,8 @@ pub struct Frechet {
 impl Frechet {
     pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet> {
         Validator
-            .require_positive_real(alpha)?
-            .require_positive_real(s)
+            .require_non_negative(alpha)?
+            .require_non_negative(s)
             .map(|_| Frechet::new_unchecked(alpha, s, m))
     }
 

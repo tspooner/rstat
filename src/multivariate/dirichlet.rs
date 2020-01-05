@@ -20,7 +20,7 @@ impl Dirichlet {
             .and_then(|v| {
                 alphas
                     .iter()
-                    .map(|&x| v.require_positive_real(x))
+                    .map(|&x| v.require_non_negative(x))
                     .collect::<Result<Validator>>()
                     .map(|_| Dirichlet::new_unchecked(alphas))
             })

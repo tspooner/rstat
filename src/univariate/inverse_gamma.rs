@@ -12,8 +12,8 @@ pub struct InvGamma {
 impl InvGamma {
     pub fn new(alpha: f64, beta: f64) -> Result<InvGamma> {
         Validator
-            .require_positive_real(alpha)?
-            .require_positive_real(beta)
+            .require_non_negative(alpha)?
+            .require_non_negative(beta)
             .map(|_| InvGamma::new_unchecked(alpha, beta))
     }
 

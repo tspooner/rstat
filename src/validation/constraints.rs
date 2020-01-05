@@ -1,14 +1,17 @@
 #[derive(Debug, Clone, Copy)]
 pub enum NumericConstraint {
     Negative,
-    NegativeReal,
+    NonPositive,
 
     Positive,
-    PositiveReal,
+    NonNegative,
 
     Natural,
 
+    LT,
     LTE,
+
+    GT,
     GTE,
 }
 

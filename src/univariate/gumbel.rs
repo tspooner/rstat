@@ -16,7 +16,7 @@ pub struct Gumbel {
 impl Gumbel {
     pub fn new(mu: f64, beta: f64) -> Result<Gumbel> {
         Validator
-            .require_positive_real(beta)
+            .require_non_negative(beta)
             .map(|_| Gumbel::new_unchecked(mu, beta))
     }
 

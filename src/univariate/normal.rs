@@ -21,7 +21,7 @@ pub struct Normal {
 impl Normal {
     pub fn new(mu: f64, sigma: f64) -> Result<Normal> {
         Validator
-            .require_positive_real(sigma)
+            .require_non_negative(sigma)
             .map(|_| Normal::new_unchecked(mu, sigma))
     }
 

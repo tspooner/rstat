@@ -16,7 +16,7 @@ pub struct Cauchy {
 
 impl Cauchy {
     pub fn new(x0: f64, gamma: f64) -> Result<Cauchy> {
-        Validator.require_positive_real(gamma).map(|_| Cauchy::new_unchecked(x0, gamma))
+        Validator.require_non_negative(gamma).map(|_| Cauchy::new_unchecked(x0, gamma))
     }
 
     pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {

@@ -19,8 +19,8 @@ pub struct BetaBinomial {
 impl BetaBinomial {
     pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial> {
         Validator
-            .require_positive_real(alpha)?
-            .require_positive_real(beta)
+            .require_non_negative(alpha)?
+            .require_non_negative(beta)
             .map(|_| BetaBinomial::new_unchecked(n, alpha, beta))
     }
 

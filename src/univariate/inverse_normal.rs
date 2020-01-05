@@ -21,8 +21,8 @@ pub struct InvNormal {
 impl InvNormal {
     pub fn new(mu: f64, lambda: f64) -> Result<InvNormal> {
         Validator
-            .require_positive_real(mu)?
-            .require_positive_real(lambda)
+            .require_non_negative(mu)?
+            .require_non_negative(lambda)
             .map(|_| InvNormal::new_unchecked(mu, lambda))
     }
 

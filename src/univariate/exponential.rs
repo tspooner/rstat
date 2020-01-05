@@ -12,7 +12,7 @@ pub struct Exponential {
 impl Exponential {
     pub fn new(lambda: f64) -> Result<Exponential> {
         Validator
-            .require_positive_real(lambda)
+            .require_non_negative(lambda)
             .map(|_| Exponential::new_unchecked(lambda))
     }
 

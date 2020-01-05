@@ -16,7 +16,7 @@ pub struct Logistic {
 impl Logistic {
     pub fn new(mu: f64, s: f64) -> Result<Logistic> {
         Validator
-            .require_positive_real(s)
+            .require_non_negative(s)
             .map(|_| Logistic::new_unchecked(mu, s))
     }
 

@@ -15,7 +15,7 @@ pub struct StudentT {
 impl StudentT {
     pub fn new(nu: f64) -> Result<StudentT> {
         Validator
-            .require_positive_real(nu)
+            .require_non_negative(nu)
             .map(|_| StudentT::new_unchecked(nu))
     }
 

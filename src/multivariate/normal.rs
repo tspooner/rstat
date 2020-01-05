@@ -31,7 +31,7 @@ impl Normal {
             .and_then(|v| {
                 sigma
                     .iter()
-                    .map(|&x| v.require_positive_real(x))
+                    .map(|&x| v.require_non_negative(x))
                     .collect::<Result<Validator>>()
                     .map(|_| Normal::new_unchecked(mu, sigma))
             })
@@ -52,7 +52,7 @@ impl Normal {
 
     pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Result<Normal> {
         Validator
-            .require_positive_real(sigma)
+            .require_non_negative(sigma)
             .map(|_| {
                 let mut sigma_mat = Array2::eye(mu.len());
                 sigma_mat.diag_mut().fill(sigma);

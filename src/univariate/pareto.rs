@@ -13,8 +13,8 @@ pub struct Pareto {
 impl Pareto {
     pub fn new(x_m: f64, alpha: f64) -> Result<Pareto> {
         Validator
-            .require_positive_real(x_m)?
-            .require_positive_real(alpha)
+            .require_non_negative(x_m)?
+            .require_non_negative(alpha)
             .map(|_| Pareto::new_unchecked(x_m, alpha))
     }
 
