@@ -37,11 +37,14 @@ impl Uniform<f64> {
     pub fn new(a: f64, b: f64) -> Result<Uniform<f64>> {
         Validator
             .require_lte(a, b)
-            .map(|_| Uniform {
-                a,
-                b,
-                prob: 1.0 / (b - a),
-            })
+            .map(|_| Self::new_unchecked(a, b))
+    }
+
+    pub fn new_unchecked(a: f64, b: f64) -> Uniform<f64> {
+        Uniform {
+            a, b,
+            prob: 1.0 / (b - a),
+        }
     }
 }
 
@@ -142,11 +145,14 @@ impl Uniform<i64> {
     pub fn new(a: i64, b: i64) -> Result<Uniform<i64>> {
         Validator
             .require_lte(a, b)
-            .map(|_| Uniform {
-                a,
-                b,
-                prob: 1.0 / (b - a + 1) as f64
-            })
+            .map(|_| Self::new_unchecked(a, b))
+    }
+
+    pub fn new_unchecked(a: i64, b: i64) -> Uniform<i64> {
+        Uniform {
+            a, b,
+            prob: 1.0 / (b - a + 1) as f64
+        }
     }
 
     #[inline]

@@ -6,7 +6,7 @@ use crate::{
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
-use super::Gaussian;
+use super::{Gaussian, Uniform};
 
 pub type InvGaussian = InvNormal;
 
@@ -59,8 +59,21 @@ impl Distribution for InvNormal {
         Probability::new_unchecked(term1 + term2)
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        let mu = self.mu;
+        let lambda = self.lambda;
+
+        let nu = Gaussian::standard().sample(rng);
+
+        let y = nu * nu;
+        let x =
+            mu +
+            mu * mu * y / 2.0 / self.lambda -
+            mu / 2.0 / lambda * (4.0 * mu * lambda * y + mu * mu * y * y).sqrt();
+
+        let z = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
+
+        if z < mu / (mu + x) { x } else { mu * mu / x }
     }
 }
 
