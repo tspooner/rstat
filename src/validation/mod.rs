@@ -1,5 +1,5 @@
 use ndarray::Array2;
-use std::{iter::Sum, result::Result as StdResult};
+use std::{iter::{Sum, FromIterator}, result::Result as StdResult};
 
 mod constraints;
 pub use constraints::*;
@@ -140,4 +140,8 @@ impl Validator {
             Err(UnsatisfiedConstraint::Tensor(TensorConstraint::Normalised))
         }
     }
+}
+
+impl FromIterator<Validator> for Validator {
+    fn from_iter<I: IntoIterator<Item=Validator>>(_: I) -> Self { Validator }
 }

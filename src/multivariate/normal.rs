@@ -3,6 +3,7 @@ extern crate ndarray_linalg;
 use crate::{
     consts::PI_2,
     prelude::*,
+    validation::{Validator, Result},
 };
 use ndarray::{Array1, Array2};
 use ndarray_linalg::{Determinant, solve::Inverse, cholesky::{Cholesky, UPLO}};
@@ -24,6 +25,18 @@ pub struct Normal {
 }
 
 impl Normal {
+    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> Result<Normal> {
+        Validator
+            .require_square(&sigma)
+            .and_then(|v| {
+                sigma
+                    .iter()
+                    .map(|&x| v.require_positive_real(x))
+                    .collect::<Result<Validator>>()
+                    .map(|_| Normal::new_unchecked(mu, sigma))
+            })
+    }
+
     pub fn new_unchecked(mu: Array1<f64>, sigma: Array2<f64>) -> Normal {
         Normal {
             mu,
@@ -37,28 +50,25 @@ impl Normal {
         }
     }
 
-    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> Normal {
-        assert!(sigma.is_square());
+    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Result<Normal> {
+        Validator
+            .require_positive_real(sigma)
+            .map(|_| {
+                let mut sigma_mat = Array2::eye(mu.len());
+                sigma_mat.diag_mut().fill(sigma);
 
-        sigma.iter().for_each(|&v| assert_positive_real!(v));
-
-        Self::new_unchecked(mu, sigma)
+                Self::new_unchecked(mu, sigma_mat)
+            })
     }
 
-    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Normal {
-        assert_positive_real!(sigma);
+    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<Normal> {
+        Validator
+            .require_natural(n)
+            .and_then(|_| Self::isotropic(Array1::from_elem((n,), mu), sigma))
 
-        let mut sigma_mat = Array2::eye(mu.len());
-        sigma_mat.diag_mut().fill(sigma);
-
-        Self::new_unchecked(mu, sigma_mat)
     }
 
-    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Normal {
-        Self::isotropic(Array1::from_elem((n,), mu), sigma)
-    }
-
-    pub fn standard(n: usize) -> Normal {
+    pub fn standard(n: usize) -> Result<Normal> {
         Self::homogeneous(n, 0.0, 1.0)
     }
 
@@ -80,9 +90,7 @@ impl Distribution for Normal {
         ProductSpace::new(vec![Reals; self.mu.len()])
     }
 
-    fn cdf(&self, x: Vec<f64>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, x: Vec<f64>) -> Probability { todo!() }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         let z = Array1::from_shape_fn((self.mu.len(),), |_| rng.sample(RandSN));
@@ -128,7 +136,7 @@ mod tests {
 
     #[test]
     fn test_pdf() {
-        let m = Normal::standard(5);
+        let m = Normal::standard(5).unwrap();
         let prob = m.pdf(vec![0.0; 5]);
 
         assert!((prob - 0.010105326013811646).abs() < 1e-7);

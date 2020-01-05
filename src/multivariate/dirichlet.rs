@@ -16,13 +16,14 @@ impl Dirichlet {
     pub fn new(alphas: Vec<f64>) -> Result<Dirichlet> {
         Validator
             .require_min_len(&alphas, 2)?
-            .require_normalised(alphas.iter())?;
-
-        for a in alphas.iter() {
-            Validator.require_positive_real(*a)?;
-        }
-
-        Ok(Dirichlet::new_unchecked(alphas))
+            .require_normalised(alphas.iter())
+            .and_then(|v| {
+                alphas
+                    .iter()
+                    .map(|&x| v.require_positive_real(x))
+                    .collect::<Result<Validator>>()
+                    .map(|_| Dirichlet::new_unchecked(alphas))
+            })
     }
 
     pub fn new_unchecked(alphas: Vec<f64>) -> Dirichlet {
@@ -61,9 +62,7 @@ impl Distribution for Dirichlet {
         ProductSpace::new(vec![Interval::bounded(0.0, 1.0); self.alphas.len()])
     }
 
-    fn cdf(&self, _: Vec<f64>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, _: Vec<f64>) -> Probability { todo!() }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         use rand_distr::Gamma as GammaSampler;

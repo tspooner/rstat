@@ -1,6 +1,7 @@
 use crate::{
     prelude::*,
     multivariate::Normal,
+    validation::Result,
 };
 use rand::Rng;
 use spaces::{ProductSpace, real::Reals};
@@ -11,20 +12,24 @@ use ndarray::{Array1, Array2};
 pub struct LogNormal(Normal);
 
 impl LogNormal {
+    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> Result<LogNormal> {
+        Normal::new(mu, sigma).map(LogNormal)
+    }
+
     pub fn new_unchecked(mu: Array1<f64>, sigma: Array2<f64>) -> LogNormal {
         LogNormal(Normal::new_unchecked(mu, sigma))
     }
 
-    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> LogNormal {
-        LogNormal(Normal::isotropic(mu, sigma))
+    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Result<LogNormal> {
+        Normal::isotropic(mu, sigma).map(LogNormal)
     }
 
-    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> LogNormal {
-        LogNormal(Normal::homogeneous(n, mu, sigma))
+    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<LogNormal> {
+        Normal::homogeneous(n, mu, sigma).map(LogNormal)
     }
 
-    pub fn standard(n: usize) -> LogNormal {
-        LogNormal(Normal::standard(n))
+    pub fn standard(n: usize) -> Result<LogNormal> {
+        Normal::standard(n).map(LogNormal)
     }
 
     pub fn precision(&self) -> Array2<f64> { self.0.precision() }
@@ -37,9 +42,7 @@ impl Distribution for LogNormal {
         self.0.support()
     }
 
-    fn cdf(&self, x: Vec<f64>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, x: Vec<f64>) -> Probability { todo!() }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
         self.0.sample(rng).into_iter().map(|v| v.exp()).collect()
