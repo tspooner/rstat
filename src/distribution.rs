@@ -54,9 +54,7 @@ pub trait Distribution {
     ///
     /// The CDF is defined as the probability that a random variable X takes on a value less than
     /// or equal to `x`: `F(x) = P(X <= x)`.
-    fn cdf(&self, x: Sample<Self>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, x: Sample<Self>) -> Probability;
 
     /// Evaluates the complementary cumulative distribution function at `x`.
     ///
@@ -128,7 +126,7 @@ pub trait DiscreteDistribution: Distribution {
     /// equal to `x`: `f(x) = P(X = x) = P({s in S : X(s) = x})`. We require that all sum of
     /// probabilities over all possible outcomes sums to 1.
     fn pmf(&self, x: Sample<Self>) -> Probability {
-        self.logpmf(x).exp().into()
+        Probability::new_unchecked(self.logpmf(x).exp())
     }
 
     ln_variant!(

@@ -40,11 +40,11 @@ impl Error for ProbabilityError {
 pub struct Probability(f64);
 
 impl Probability {
-    pub fn new(p: f64) -> ProbabilityResult<Probability> {
+    pub fn new(p: f64) -> ProbabilityResult<Self> {
         ProbabilityError::check_bounded(p).map(|p| Probability(p))
     }
 
-    pub(crate) fn new_unchecked(p: f64) -> Probability {
+    pub fn new_unchecked(p: f64) -> Probability {
         Probability(p)
     }
 
@@ -68,17 +68,11 @@ impl Probability {
         Probability(self.0.powi(e))
     }
 
-    pub fn normalised<P: Into<Probability>>(probs: Vec<P>) -> Vec<Probability> {
-        let mut z: f64 = 0.0;
-        let probs: Vec<f64> = probs.into_iter().map(|v| {
-            let p: Probability = v.into();
-            z += p.0;
-
-            p.0
-        }).collect();
+    pub fn normalised(probs: Vec<Probability>) -> Vec<Probability> {
+        let z: f64 = probs.iter().fold(0.0, |acc, p| acc + p.0);
 
         probs.into_iter().map(|p| {
-            Probability(p / z)
+            Probability(p.0 / z)
         }).collect()
     }
 }
@@ -95,9 +89,11 @@ impl fmt::Display for Probability {
     }
 }
 
-impl From<f64> for Probability {
-    fn from(p: f64) -> Probability {
-        Probability::new(p).unwrap()
+impl std::convert::TryFrom<f64> for Probability {
+    type Error = ProbabilityError;
+
+    fn try_from(p: f64) -> ProbabilityResult<Self> {
+        Probability::new(p)
     }
 }
 

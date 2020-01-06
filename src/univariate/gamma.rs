@@ -1,0 +1,160 @@
+use crate::{
+    Convolution, ConvolutionError, ConvolutionResult,
+    prelude::*,
+    validation::{Validator, Result},
+};
+use rand::Rng;
+use spaces::real::PositiveReals;
+use std::fmt;
+use super::Exponential;
+
+#[derive(Debug, Clone, Copy)]
+pub struct Gamma {
+    pub alpha: f64,
+    pub beta: f64,
+}
+
+impl Gamma {
+    pub fn new(alpha: f64, beta: f64) -> Result<Gamma> {
+        Validator
+            .require_non_negative(alpha)?
+            .require_non_negative(beta)
+            .map(|_| Gamma::new_unchecked(alpha, beta))
+    }
+
+    pub fn new_unchecked(alpha: f64, beta: f64) -> Gamma {
+        Gamma { alpha, beta }
+    }
+
+    pub fn with_scale(k: f64, theta: f64) -> Result<Gamma> {
+        Gamma::new(k, 1.0 / theta)
+    }
+}
+
+impl Default for Gamma {
+    fn default() -> Gamma {
+        Gamma {
+            alpha: 1.0,
+            beta: 1.0,
+        }
+    }
+}
+
+impl Into<rand_distr::Gamma<f64>> for Gamma {
+    fn into(self) -> rand_distr::Gamma<f64> {
+        rand_distr::Gamma::new(self.alpha, self.beta).unwrap()
+    }
+}
+
+impl Into<rand_distr::Gamma<f64>> for &Gamma {
+    fn into(self) -> rand_distr::Gamma<f64> {
+        rand_distr::Gamma::new(self.alpha, self.beta).unwrap()
+    }
+}
+
+impl Distribution for Gamma {
+    type Support = PositiveReals;
+
+    fn support(&self) -> PositiveReals {
+        PositiveReals
+    }
+
+    fn cdf(&self, x: f64) -> Probability {
+        use special_fun::FloatSpecial;
+
+        Probability::new_unchecked(self.alpha.gammainc(self.beta * x) / self.alpha.gamma())
+    }
+
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
+        use rand_distr::Distribution;
+
+        let sampler: rand_distr::Gamma<f64> = self.into();
+
+        sampler.sample(rng)
+    }
+}
+
+impl ContinuousDistribution for Gamma {
+    fn pdf(&self, x: f64) -> f64 {
+        use special_fun::FloatSpecial;
+
+        self.beta.powf(self.alpha) * x.powf(self.alpha - 1.0) * (-self.beta * x).exp()
+            / self.alpha.gamma()
+    }
+}
+
+impl UnivariateMoments for Gamma {
+    fn mean(&self) -> f64 {
+        self.alpha / self.beta
+    }
+
+    fn variance(&self) -> f64 {
+        self.alpha / self.beta / self.beta
+    }
+
+    fn skewness(&self) -> f64 {
+        2.0 / self.alpha.sqrt()
+    }
+
+    fn excess_kurtosis(&self) -> f64 {
+        6.0 / self.alpha
+    }
+}
+
+impl Modes for Gamma {
+    fn modes(&self) -> Vec<f64> {
+        if self.alpha < 1.0 {
+            unimplemented!("Mode is undefined for alpha < 1.")
+        }
+
+        vec![(self.alpha - 1.0) / self.beta]
+    }
+}
+
+impl Entropy for Gamma {
+    fn entropy(&self) -> f64 {
+        use special_fun::FloatSpecial;
+
+        self.alpha - self.beta.ln()
+            + self.alpha.gamma().ln()
+            + (1.0 - self.alpha) * self.alpha.digamma()
+    }
+}
+
+impl Convolution<Gamma> for Gamma {
+    fn convolve(self, rv: Gamma) -> ConvolutionResult<Gamma> {
+        Self::convolve_pair(self, rv)
+    }
+
+    fn convolve_pair(a: Gamma, b: Gamma) -> ConvolutionResult<Gamma> {
+        if a.beta == b.beta {
+            Ok(Gamma::new_unchecked(a.alpha + b.alpha, a.beta))
+        } else {
+            Err(ConvolutionError::MixedParameters)
+        }
+    }
+}
+
+impl Convolution<Exponential> for Gamma {
+    fn convolve(self, rv: Exponential) -> ConvolutionResult<Gamma> {
+        if rv.lambda == self.beta {
+            Ok(Gamma::new_unchecked(self.alpha + 1.0, self.beta))
+        } else {
+            Err(ConvolutionError::MixedParameters)
+        }
+    }
+
+    fn convolve_pair(a: Exponential, b: Exponential) -> ConvolutionResult<Gamma> {
+        if a.lambda == b.lambda {
+            Ok(Gamma::new_unchecked(2.0, a.lambda))
+        } else {
+            Err(ConvolutionError::MixedParameters)
+        }
+    }
+}
+
+impl fmt::Display for Gamma {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
+        write!(f, "Gamma({}, {})", self.alpha, self.beta)
+    }
+}

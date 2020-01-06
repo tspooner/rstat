@@ -33,10 +33,10 @@ impl Distribution for Degenerate<f64> {
 
     fn cdf(&self, x: f64) -> Probability {
         if x < self.k {
-            0.0
+            Probability::zero()
         } else {
-            1.0
-        }.into()
+            Probability::one()
+        }
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -108,10 +108,10 @@ impl Distribution for Degenerate<i64> {
 
     fn cdf(&self, x: i64) -> Probability {
         if x < self.k {
-            0.0
+            Probability::zero()
         } else {
-            1.0
-        }.into()
+            Probability::one()
+        }
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> i64 {
@@ -122,10 +122,10 @@ impl Distribution for Degenerate<i64> {
 impl DiscreteDistribution for Degenerate<i64> {
     fn pmf(&self, x: i64) -> Probability {
         if x == self.k {
-            1.0
+            Probability::one()
         } else {
-            0.0
-        }.into()
+            Probability::zero()
+        }
     }
 }
 

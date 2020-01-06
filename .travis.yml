@@ -1,5 +1,4 @@
 language: rust
-dist: trusty
 sudo: required
 
 # Cache cargo symbols for faster build
@@ -12,9 +11,9 @@ addons:
       - libelf-dev
       - libdw-dev
       - binutils-dev
-      - gfortran
-      - libopenblas-dev
       - cmake
+      - libopenblas-dev
+      - gfortran
     sources:
       - kalakris-cmake
 

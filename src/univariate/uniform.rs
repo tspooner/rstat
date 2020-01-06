@@ -1,4 +1,4 @@
-use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*};
+use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*, validation::{Validator, Result}};
 use rand::Rng;
 use spaces::{
     real::Interval as RealInterval,
@@ -34,14 +34,15 @@ where
 
 // Continuous:
 impl Uniform<f64> {
-    pub fn new(a: f64, b: f64) -> Uniform<f64> {
-        if b <= a {
-            panic!("b must be strictly greater than a.")
-        }
+    pub fn new(a: f64, b: f64) -> Result<Uniform<f64>> {
+        Validator
+            .require_lte(a, b)
+            .map(|_| Self::new_unchecked(a, b))
+    }
 
+    pub fn new_unchecked(a: f64, b: f64) -> Uniform<f64> {
         Uniform {
-            a,
-            b,
+            a, b,
             prob: 1.0 / (b - a),
         }
     }
@@ -66,13 +67,12 @@ impl Distribution for Uniform<f64> {
 
     fn cdf(&self, x: f64) -> Probability {
         if x < self.a {
-            0.0
+            Probability::zero()
         } else if x >= self.b {
-            1.0
+            Probability::one()
         } else {
-            (x - self.a) * self.prob
+            Probability::new_unchecked((x - self.a) * self.prob)
         }
-        .into()
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -142,12 +142,17 @@ impl fmt::Display for Uniform<f64> {
 
 // Discrete:
 impl Uniform<i64> {
-    pub fn new(a: i64, b: i64) -> Uniform<i64> {
-        if b <= a {
-            panic!("b must be strictly greater than a.")
-        }
+    pub fn new(a: i64, b: i64) -> Result<Uniform<i64>> {
+        Validator
+            .require_lte(a, b)
+            .map(|_| Self::new_unchecked(a, b))
+    }
 
-        Uniform { a, b, prob: 1.0 / (b - a + 1) as f64 }
+    pub fn new_unchecked(a: i64, b: i64) -> Uniform<i64> {
+        Uniform {
+            a, b,
+            prob: 1.0 / (b - a + 1) as f64
+        }
     }
 
     #[inline]
@@ -165,12 +170,12 @@ impl Distribution for Uniform<i64> {
 
     fn cdf(&self, k: i64) -> Probability {
         if k < self.a {
-            0.0
+            Probability::zero()
         } else if k >= self.b {
-            1.0
+            Probability::one()
         } else {
-            (k - self.a + 1) as f64 * self.prob
-        }.into()
+            Probability::new_unchecked((k - self.a + 1) as f64 * self.prob)
+        }
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> i64 {
@@ -185,10 +190,10 @@ impl Distribution for Uniform<i64> {
 impl DiscreteDistribution for Uniform<i64> {
     fn pmf(&self, x: i64) -> Probability {
         if x < self.a || x > self.b {
-            0.0
+            Probability::zero()
         } else {
-            self.prob
-        }.into()
+            Probability::new_unchecked(self.prob)
+        }
     }
 }
 
