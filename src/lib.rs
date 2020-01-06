@@ -4,10 +4,14 @@
 
 extern crate rand;
 extern crate rand_distr;
+
 extern crate spaces;
-extern crate ndarray;
 extern crate num_traits;
 extern crate special_fun;
+
+extern crate ndarray;
+extern crate ndarray_linalg;
+
 
 mod consts;
 mod macros;
