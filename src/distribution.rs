@@ -1,5 +1,4 @@
 use crate::Probability;
-use ndarray::{Array, Array1, Dimension, ShapeBuilder};
 use rand::Rng;
 use spaces::Space;
 
@@ -36,8 +35,8 @@ macro_rules! ln_variant {
 macro_rules! batch_variant {
     ($(#[$attr:meta])* => $name:ident, $name_batch:ident, $x:ty, $res:ty) => {
         $(#[$attr])*
-        fn $name_batch(&self, xs: Array1<$x>) -> Array1<$res> {
-            xs.mapv(|x| self.$name(x))
+        fn $name_batch(&self, xs: Vec<$x>) -> Vec<$res> {
+            xs.into_iter().map(|x| self.$name(x)).collect()
         }
     }
 }
@@ -98,14 +97,6 @@ pub trait Distribution {
 
     fn sample_n<R: Rng + ?Sized>(&self, rng: &mut R, n: usize) -> Vec<Sample<Self>> {
         (0..n).into_iter().map(move |_| self.sample(rng)).collect()
-    }
-
-    fn sample_shape<D, Sh, R>(&self, rng: &mut R, shape: Sh) -> Array<Sample<Self>, D>
-        where D: Dimension,
-              Sh: ShapeBuilder<Dim=D>,
-              R: Rng + ?Sized,
-    {
-        Array::from_shape_fn(shape, move |_| self.sample(rng))
     }
 
     fn sample_iter<R>(self, rng: R) -> Sampler<Self, R>
