@@ -1,5 +1,7 @@
 #[derive(Debug, Clone, Copy)]
 pub enum NumericConstraint {
+    Equal,
+
     Negative,
     NonPositive,
 

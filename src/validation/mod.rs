@@ -58,6 +58,14 @@ impl Validator {
         }
     }
 
+    pub fn require_equal<T: PartialEq>(self, x: T, y: T) -> Result<Self> {
+        if x != y {
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::Equal))
+        } else {
+            Ok(self)
+        }
+    }
+
     pub fn require_lt<T: PartialOrd>(self, a: T, b: T) -> Result<Self> {
         if a < b {
             Ok(self)
