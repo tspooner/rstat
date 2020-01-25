@@ -1,5 +1,5 @@
 use crate::{
-    consts::{ONE_EIGHTH, ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
+    consts::{ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
     prelude::*,
     validation::{Validator, Result},
 };
@@ -61,7 +61,7 @@ impl UnivariateMoments for Arcsine {
     fn variance(&self) -> f64 {
         let diff = self.b - self.a;
 
-        ONE_EIGHTH * diff * diff
+        diff * diff / 8.0
     }
 
     fn skewness(&self) -> f64 {
@@ -102,5 +102,46 @@ impl Entropy for Arcsine {
 impl fmt::Display for Arcsine {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Arcsine({}, {})", self.a, self.b)
+    }
+}
+
+
+#[cfg(test)]
+mod tests {
+    use super::{Arcsine, UnivariateMoments, Quantiles, Modes};
+
+    #[test]
+    fn test_mean() {
+        assert_eq!(Arcsine::new_unchecked(0.0, 1.0).mean(), 0.5);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 0.0).mean(), -0.5);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).mean(), 0.0);
+    }
+
+    #[test]
+    fn test_variance() {
+        assert_eq!(Arcsine::new_unchecked(0.0, 1.0).variance(), 1.0 / 8.0);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 0.0).variance(), 1.0 / 8.0);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).variance(), 1.0 / 2.0);
+    }
+
+    #[test]
+    fn test_skewness() {
+        assert_eq!(Arcsine::new_unchecked(0.0, 1.0).skewness(), 0.0);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 0.0).skewness(), 0.0);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).skewness(), 0.0);
+    }
+
+    #[test]
+    fn test_median() {
+        assert_eq!(Arcsine::new_unchecked(0.0, 1.0).median(), 0.5);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 0.0).median(), -0.5);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).median(), 0.0);
+    }
+
+    #[test]
+    fn test_mode() {
+        assert_eq!(Arcsine::new_unchecked(0.0, 1.0).modes(), vec![0.0, 1.0]);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 0.0).modes(), vec![-1.0, 0.0]);
+        assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).modes(), vec![-1.0, 1.0]);
     }
 }

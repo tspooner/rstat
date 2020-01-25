@@ -20,7 +20,6 @@ pub const TWO_OVER_PI2: f64 = 2.0 / PI2;
 
 pub const ONE_HALF: f64 = 1.0 / 2.0;
 pub const ONE_THIRD: f64 = 1.0 / 3.0;
-pub const ONE_EIGHTH: f64 = 1.0 / 8.0;
 pub const ONE_TWELTH: f64 = 1.0 / 12.0;
 pub const ONE_TWENTY_FOURTH: f64 = 1.0 / 24.0;
 
