@@ -1,8 +1,8 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -15,18 +15,18 @@ pub struct Triangular {
 }
 
 impl Triangular {
-    pub fn new(a: f64, b: f64, c: f64) -> Result<Triangular> {
-        Validator
-            .require_lte(a, b)?
-            .require_lte(b, c)
-            .map(|_| Triangular::new_unchecked(a, b, c))
+    pub fn new(a: f64, b: f64, c: f64) -> Result<Triangular, Error> {
+        let a = assert_constraint!(a <= b)?;
+        let b = assert_constraint!(b <= c)?;
+
+        Ok(Triangular::new_unchecked(a, b, c))
     }
 
     pub fn new_unchecked(a: f64, b: f64, c: f64) -> Triangular {
         Triangular { a, b, c }
     }
 
-    pub fn symmetric(a: f64, b: f64) -> Result<Triangular> {
+    pub fn symmetric(a: f64, b: f64) -> Result<Triangular, Error> {
         Triangular::new(a, b, (a + b) / 2.0)
     }
 }

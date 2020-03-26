@@ -1,8 +1,8 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -15,18 +15,18 @@ pub struct Gamma {
 }
 
 impl Gamma {
-    pub fn new(alpha: f64, beta: f64) -> Result<Gamma> {
-        Validator
-            .require_non_negative(alpha)?
-            .require_non_negative(beta)
-            .map(|_| Gamma::new_unchecked(alpha, beta))
+    pub fn new(alpha: f64, beta: f64) -> Result<Gamma, Error> {
+        let alpha = assert_constraint!(alpha+)?;
+        let beta = assert_constraint!(beta+)?;
+
+        Ok(Gamma::new_unchecked(alpha, beta))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> Gamma {
         Gamma { alpha, beta }
     }
 
-    pub fn with_scale(k: f64, theta: f64) -> Result<Gamma> {
+    pub fn with_scale(k: f64, theta: f64) -> Result<Gamma, Error> {
         Gamma::new(k, 1.0 / theta)
     }
 }

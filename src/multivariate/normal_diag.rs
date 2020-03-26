@@ -1,9 +1,9 @@
 use crate::{
     consts::PI_2,
+    linalg::{Vector, Matrix},
     prelude::*,
-    validation::{Validator, Result},
 };
-use ndarray::{Array1, Array2};
+use failure::Error;
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{ProductSpace, real::Reals};
@@ -13,48 +13,49 @@ pub type DiagonalGaussian = DiagonalNormal;
 
 #[derive(Debug, Clone)]
 pub struct DiagonalNormal {
-    pub mu: Array1<f64>,
-    pub sigma: Array1<f64>,
+    pub mu: Vector<f64>,
+    pub sigma: Vector<f64>,
 }
 
 impl DiagonalNormal {
-    pub fn new(mu: Array1<f64>, sigma: Array1<f64>) -> Result<DiagonalNormal> {
-        Validator
-            .require_equal(mu.len(), sigma.len())
-            .and_then(|v| {
-                sigma
-                    .iter()
-                    .map(|&x| v.require_non_negative(x))
-                    .collect::<Result<Validator>>()
-                    .map(|_| DiagonalNormal::new_unchecked(mu, sigma))
-            })
+    pub fn new(mu: Vector<f64>, sigma: Vector<f64>) -> Result<DiagonalNormal, Error> {
+        let mu_len = mu.len();
+
+        #[allow(unused_parens)]
+        assert_constraint!(mu_len == (sigma.len()))?;
+
+        for s in sigma.iter().cloned() {
+            assert_constraint!(s >= 0.0)?;
+        }
+
+        Ok(DiagonalNormal::new_unchecked(mu, sigma))
     }
 
-    pub fn new_unchecked(mu: Array1<f64>, sigma: Array1<f64>) -> DiagonalNormal {
+    pub fn new_unchecked(mu: Vector<f64>, sigma: Vector<f64>) -> DiagonalNormal {
         DiagonalNormal {
             mu,
             sigma,
         }
     }
 
-    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Result<DiagonalNormal> {
-        Validator
-            .require_non_negative(sigma)
-            .map(|_| Self::new_unchecked(mu, Array1::from(vec![sigma; 2])))
+    pub fn isotropic(mu: Vector<f64>, sigma: f64) -> Result<DiagonalNormal, Error> {
+        let sigma = assert_constraint!(sigma >= 0.0)?;
+
+        Ok(Self::new_unchecked(mu, Vector::from(vec![sigma; 2])))
     }
 
-    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<DiagonalNormal> {
-        Validator
-            .require_natural(n)
-            .and_then(|_| Self::isotropic(Array1::from_elem((n,), mu), sigma))
+    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<DiagonalNormal, Error> {
+        let n = assert_constraint!(n > 0)?;
+
+        Self::isotropic(Vector::from_elem((n,), mu), sigma)
 
     }
 
-    pub fn standard(n: usize) -> Result<DiagonalNormal> {
+    pub fn standard(n: usize) -> Result<DiagonalNormal, Error> {
         Self::homogeneous(n, 0.0, 1.0)
     }
 
-    pub fn precision(&self) -> Array1<f64> { self.sigma.mapv(|x| 1.0 / x) }
+    pub fn precision(&self) -> Vector<f64> { self.sigma.mapv(|x| 1.0 / x) }
 
     #[inline]
     pub fn z(&self, xs: Vec<f64>) -> f64 {
@@ -99,19 +100,19 @@ impl ContinuousDistribution for DiagonalNormal {
 }
 
 impl MultivariateMoments for DiagonalNormal {
-    fn mean(&self) -> Array1<f64> {
+    fn mean(&self) -> Vector<f64> {
         self.mu.clone()
     }
 
-    fn covariance(&self) -> Array2<f64> {
-        let mut cov = Array2::eye(self.sigma.len());
+    fn covariance(&self) -> Matrix<f64> {
+        let mut cov = Matrix::eye(self.sigma.len());
 
         cov.diag_mut().assign(&self.sigma);
 
         cov
     }
 
-    fn variance(&self) -> Array1<f64> {
+    fn variance(&self) -> Vector<f64> {
         self.sigma.clone()
     }
 }

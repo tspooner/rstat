@@ -1,8 +1,8 @@
 use crate::{
     consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -14,10 +14,10 @@ pub struct Cosine {
 }
 
 impl Cosine {
-    pub fn new(mu: f64, s: f64) -> Result<Cosine> {
-        Validator
-            .require_non_negative(s)
-            .map(|_| Cosine::new_unchecked(mu, s))
+    pub fn new(mu: f64, s: f64) -> Result<Cosine, Error> {
+        let s = assert_constraint!(s+)?;
+
+        Ok(Cosine::new_unchecked(mu, s))
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Cosine {

@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{Validator, Result}};
+use crate::prelude::*;
+use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -10,18 +11,18 @@ pub struct InvGamma {
 }
 
 impl InvGamma {
-    pub fn new(alpha: f64, beta: f64) -> Result<InvGamma> {
-        Validator
-            .require_non_negative(alpha)?
-            .require_non_negative(beta)
-            .map(|_| InvGamma::new_unchecked(alpha, beta))
+    pub fn new(alpha: f64, beta: f64) -> Result<InvGamma, Error> {
+        let alpha = assert_constraint!(alpha+)?;
+        let beta = assert_constraint!(beta+)?;
+
+        Ok(InvGamma::new_unchecked(alpha, beta))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> InvGamma {
         InvGamma { alpha, beta }
     }
 
-    pub fn with_scale(k: f64, theta: f64) -> Result<InvGamma> {
+    pub fn with_scale(k: f64, theta: f64) -> Result<InvGamma, Error> {
         InvGamma::new(k, 1.0 / theta)
     }
 }

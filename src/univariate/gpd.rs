@@ -1,8 +1,8 @@
 use crate::{
     consts::ONE_THIRD,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -15,10 +15,10 @@ pub struct GeneralisedPareto {
 }
 
 impl GeneralisedPareto {
-    pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedPareto> {
-        Validator
-            .require_non_negative(sigma)
-            .map(|_| GeneralisedPareto::new_unchecked(mu, sigma, zeta))
+    pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedPareto, Error> {
+        let sigma = assert_constraint!(sigma+)?;
+
+        Ok(GeneralisedPareto::new_unchecked(mu, sigma, zeta))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64, zeta: f64) -> GeneralisedPareto {

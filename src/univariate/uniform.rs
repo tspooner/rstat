@@ -1,4 +1,9 @@
-use crate::{consts::{NINE_FIFTHS, SIX_FIFTHS}, prelude::*, validation::{Validator, Result}};
+use crate::{
+    consts::{NINE_FIFTHS, SIX_FIFTHS},
+    prelude::*,
+    constraints::{self, Constraint},
+};
+use failure::Error;
 use rand::Rng;
 use spaces::{
     real::Interval as RealInterval,
@@ -8,42 +13,42 @@ use std::fmt;
 
 #[derive(Debug, Clone, Copy)]
 pub struct Uniform<T> {
-    pub a: T,
-    pub b: T,
-
+    loc: T,
+    scale: T,
     prob: f64,
 }
 
 impl<T> Into<rand_distr::Uniform<T>> for Uniform<T>
 where
-    T: rand_distr::uniform::SampleUniform,
+    T: rand_distr::uniform::SampleUniform + Clone + std::ops::Add<Output = T>,
 {
     fn into(self) -> rand_distr::Uniform<T> {
-        rand_distr::Uniform::new(self.a, self.b)
+        rand_distr::Uniform::new(self.loc.clone(), self.loc.clone() + self.scale.clone())
     }
 }
 
-impl<T: Clone> Into<rand_distr::Uniform<T>> for &Uniform<T>
+impl<T> Into<rand_distr::Uniform<T>> for &Uniform<T>
 where
-    T: rand_distr::uniform::SampleUniform,
+    T: rand_distr::uniform::SampleUniform + Clone + std::ops::Add<Output = T>,
 {
     fn into(self) -> rand_distr::Uniform<T> {
-        rand_distr::Uniform::new(self.a.clone(), self.b.clone())
+        rand_distr::Uniform::new(self.loc.clone(), self.loc.clone() + self.scale.clone())
     }
 }
 
 // Continuous:
 impl Uniform<f64> {
-    pub fn new(a: f64, b: f64) -> Result<Uniform<f64>> {
-        Validator
-            .require_lte(a, b)
-            .map(|_| Self::new_unchecked(a, b))
+    pub fn new(loc: f64, scale: f64) -> Result<Uniform<f64>, Error> {
+        let scale = constraints::Positive.check(scale)?;
+
+        Ok(Uniform::new_unchecked(loc, scale))
     }
 
-    pub fn new_unchecked(a: f64, b: f64) -> Uniform<f64> {
+    pub fn new_unchecked(loc: f64, scale: f64) -> Uniform<f64> {
         Uniform {
-            a, b,
-            prob: 1.0 / (b - a),
+            loc,
+            scale,
+            prob: 1.0 / scale,
         }
     }
 }
@@ -51,8 +56,8 @@ impl Uniform<f64> {
 impl Default for Uniform<f64> {
     fn default() -> Uniform<f64> {
         Uniform {
-            a: 0.0,
-            b: 1.0,
+            loc: 0.0,
+            scale: 1.0,
             prob: 1.0,
         }
     }
@@ -62,16 +67,16 @@ impl Distribution for Uniform<f64> {
     type Support = RealInterval;
 
     fn support(&self) -> RealInterval {
-        RealInterval::bounded(self.a, self.b)
+        RealInterval::bounded(self.loc, self.loc + self.scale)
     }
 
     fn cdf(&self, x: f64) -> Probability {
-        if x < self.a {
+        if x < self.loc {
             Probability::zero()
-        } else if x >= self.b {
+        } else if x >= (self.loc + self.scale) {
             Probability::one()
         } else {
-            Probability::new_unchecked((x - self.a) * self.prob)
+            Probability::new_unchecked((x - self.loc) * self.prob)
         }
     }
 
@@ -86,7 +91,7 @@ impl Distribution for Uniform<f64> {
 
 impl ContinuousDistribution for Uniform<f64> {
     fn pdf(&self, x: f64) -> f64 {
-        if x < self.a || x > self.b {
+        if x < self.loc || x > (self.loc + self.scale) {
             0.0
         } else {
             self.prob
@@ -96,13 +101,11 @@ impl ContinuousDistribution for Uniform<f64> {
 
 impl UnivariateMoments for Uniform<f64> {
     fn mean(&self) -> f64 {
-        (self.a + self.b) / 2.0
+        self.loc + self.scale / 2.0
     }
 
     fn variance(&self) -> f64 {
-        let width = self.b - self.a;
-
-        width * width / 12.0
+        self.scale * self.scale / 12.0
     }
 
     fn skewness(&self) -> f64 {
@@ -120,44 +123,39 @@ impl UnivariateMoments for Uniform<f64> {
 
 impl Quantiles for Uniform<f64> {
     fn quantile(&self, p: Probability) -> f64 {
-        self.a + f64::from(p) * (self.b - self.a)
+        self.loc + p * self.scale
     }
 
     fn median(&self) -> f64 {
-        (self.a + self.b) / 2.0
+        self.loc + self.scale / 2.0
     }
 }
 
 impl Entropy for Uniform<f64> {
     fn entropy(&self) -> f64 {
-        (self.b - self.a).ln()
+        self.scale.ln()
     }
 }
 
 impl fmt::Display for Uniform<f64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "U({}, {})", self.a, self.b)
+        write!(f, "U({}, {})", self.loc, self.loc + self.scale)
     }
 }
 
 // Discrete:
 impl Uniform<i64> {
-    pub fn new(a: i64, b: i64) -> Result<Uniform<i64>> {
-        Validator
-            .require_lte(a, b)
-            .map(|_| Self::new_unchecked(a, b))
-    }
-
-    pub fn new_unchecked(a: i64, b: i64) -> Uniform<i64> {
+    pub fn new(loc: i64, scale: u64) -> Uniform<i64> {
         Uniform {
-            a, b,
-            prob: 1.0 / (b - a + 1) as f64
+            loc,
+            scale: scale as i64,
+            prob: 1.0 / (scale + 1) as f64
         }
     }
 
     #[inline]
     pub fn span(&self) -> u64 {
-        (self.b - self.a + 1) as u64
+        (self.scale + 1) as u64
     }
 }
 
@@ -165,16 +163,16 @@ impl Distribution for Uniform<i64> {
     type Support = DiscreteInterval;
 
     fn support(&self) -> DiscreteInterval {
-        DiscreteInterval::bounded(self.a, self.b)
+        DiscreteInterval::bounded(self.loc, self.loc + self.scale)
     }
 
     fn cdf(&self, k: i64) -> Probability {
-        if k < self.a {
+        if k < self.loc {
             Probability::zero()
-        } else if k >= self.b {
+        } else if k >= self.loc + self.scale {
             Probability::one()
         } else {
-            Probability::new_unchecked((k - self.a + 1) as f64 * self.prob)
+            Probability::new_unchecked((k - self.loc + 1) as f64 * self.prob)
         }
     }
 
@@ -189,7 +187,7 @@ impl Distribution for Uniform<i64> {
 
 impl DiscreteDistribution for Uniform<i64> {
     fn pmf(&self, x: i64) -> Probability {
-        if x < self.a || x > self.b {
+        if x < self.loc || x > self.loc + self.scale {
             Probability::zero()
         } else {
             Probability::new_unchecked(self.prob)
@@ -199,7 +197,7 @@ impl DiscreteDistribution for Uniform<i64> {
 
 impl UnivariateMoments for Uniform<i64> {
     fn mean(&self) -> f64 {
-        (self.a + self.b) as f64 / 2.0
+        self.loc as f64 + self.scale as f64 / 2.0
     }
 
     fn variance(&self) -> f64 {
@@ -222,17 +220,17 @@ impl Quantiles for Uniform<i64> {
     fn quantile(&self, p: Probability) -> f64 {
         let n = self.span() as f64;
 
-        self.a as f64 + (f64::from(p) * n).floor()
+        self.loc as f64 + (p * n).floor()
     }
 
     fn median(&self) -> f64 {
-        (self.a + self.b) as f64 / 2.0
+        self.loc as f64 + self.scale as f64 / 2.0
     }
 }
 
 impl Entropy for Uniform<i64> {
     fn entropy(&self) -> f64 {
-        let n = (self.b - self.a + 1) as f64;
+        let n = (self.scale + 1) as f64;
 
         n.ln()
     }
@@ -240,6 +238,6 @@ impl Entropy for Uniform<i64> {
 
 impl fmt::Display for Uniform<i64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "U{{{}, {}}}", self.a, self.b)
+        write!(f, "U{{{}, {}}}", self.loc, self.loc + self.scale)
     }
 }

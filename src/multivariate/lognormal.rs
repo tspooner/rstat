@@ -1,38 +1,38 @@
 use crate::{
     prelude::*,
+    linalg::{Vector, Matrix},
     multivariate::Normal,
-    validation::Result,
 };
+use failure::Error;
 use rand::Rng;
 use spaces::{ProductSpace, real::Reals};
 use std::fmt;
-use ndarray::{Array1, Array2};
 
 #[derive(Debug, Clone)]
 pub struct LogNormal(Normal);
 
 impl LogNormal {
-    pub fn new(mu: Array1<f64>, sigma: Array2<f64>) -> Result<LogNormal> {
+    pub fn new(mu: Vector<f64>, sigma: Matrix<f64>) -> Result<LogNormal, Error> {
         Normal::new(mu, sigma).map(LogNormal)
     }
 
-    pub fn new_unchecked(mu: Array1<f64>, sigma: Array2<f64>) -> LogNormal {
+    pub fn new_unchecked(mu: Vector<f64>, sigma: Matrix<f64>) -> LogNormal {
         LogNormal(Normal::new_unchecked(mu, sigma))
     }
 
-    pub fn isotropic(mu: Array1<f64>, sigma: f64) -> Result<LogNormal> {
+    pub fn isotropic(mu: Vector<f64>, sigma: f64) -> Result<LogNormal, Error> {
         Normal::isotropic(mu, sigma).map(LogNormal)
     }
 
-    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<LogNormal> {
+    pub fn homogeneous(n: usize, mu: f64, sigma: f64) -> Result<LogNormal, Error> {
         Normal::homogeneous(n, mu, sigma).map(LogNormal)
     }
 
-    pub fn standard(n: usize) -> Result<LogNormal> {
+    pub fn standard(n: usize) -> Result<LogNormal, Error> {
         Normal::standard(n).map(LogNormal)
     }
 
-    pub fn precision(&self) -> Array2<f64> { self.0.precision() }
+    pub fn precision(&self) -> Matrix<f64> { self.0.precision() }
 }
 
 impl Distribution for LogNormal {
@@ -56,30 +56,30 @@ impl ContinuousDistribution for LogNormal {
 }
 
 impl MultivariateMoments for LogNormal {
-    fn mean(&self) -> Array1<f64> {
+    fn mean(&self) -> Vector<f64> {
         let mu = self.0.mean();
         let var = self.0.variance();
 
         (mu + var / 2.0).mapv(|v| v.exp())
     }
 
-    fn covariance(&self) -> Array2<f64> {
+    fn covariance(&self) -> Matrix<f64> {
         let mu = self.0.mean();
         let cov = self.0.covariance();
         let var = cov.diag();
 
         let n = mu.len();
 
-        Array2::from_shape_fn((n, n), |(i, j)| {
+        Matrix::from_shape_fn((n, n), |(i, j)| {
             (mu[i] + mu[j] + (var[i] + var[j]) / 2.0).exp() * (cov[(i, j)].exp() - 1.0)
         })
     }
 
-    fn variance(&self) -> Array1<f64> {
+    fn variance(&self) -> Vector<f64> {
         let mu = self.0.mean();
         let var = self.0.variance();
 
-        Array1::from_shape_fn(mu.len(), |i| {
+        Vector::from_shape_fn(mu.len(), |i| {
             (2.0 * mu[i] + var[i]).exp() * (var[i].exp() - 1.0)
         })
     }

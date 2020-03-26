@@ -1,8 +1,8 @@
 use crate::{
     consts::{PI_2, PI_E_2},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -15,19 +15,19 @@ pub struct InvNormal {
     pub mu: f64,
     pub lambda: f64,
 
-    sgd: Gaussian,
+    sdg: Gaussian,
 }
 
 impl InvNormal {
-    pub fn new(mu: f64, lambda: f64) -> Result<InvNormal> {
-        Validator
-            .require_non_negative(mu)?
-            .require_non_negative(lambda)
-            .map(|_| InvNormal::new_unchecked(mu, lambda))
+    pub fn new(mu: f64, lambda: f64) -> Result<InvNormal, Error> {
+        let mu = assert_constraint!(mu+)?;
+        let lambda = assert_constraint!(lambda+)?;
+
+        Ok(InvNormal::new_unchecked(mu, lambda))
     }
 
     pub fn new_unchecked(mu: f64, lambda: f64) -> InvNormal {
-        InvNormal { mu, lambda, sgd: Gaussian::standard() }
+        InvNormal { mu, lambda, sdg: Gaussian::standard() }
     }
 }
 
@@ -36,7 +36,7 @@ impl Default for InvNormal {
         InvNormal {
             mu: 1.0,
             lambda: 1.0,
-            sgd: Gaussian::standard(),
+            sdg: Gaussian::standard(),
         }
     }
 }
@@ -52,9 +52,10 @@ impl Distribution for InvNormal {
         let xom = x / self.mu;
         let lox_sqrt = (self.lambda / x).sqrt();
 
-        let term1 = f64::from(self.sgd.cdf(lox_sqrt * (xom - 1.0)));
-        let term2 = (2.0 * self.lambda / self.mu).exp() *
-            f64::from(self.sgd.cdf(-lox_sqrt * (xom + 1.0)));
+        let term1 = self.sdg.cdf(lox_sqrt * (xom - 1.0)).unwrap();
+        let term2 =
+            (2.0 * self.lambda / self.mu).exp()
+            * self.sdg.cdf(-lox_sqrt * (xom + 1.0)).unwrap();
 
         Probability::new_unchecked(term1 + term2)
     }

@@ -1,9 +1,11 @@
 use crate::{
+    constraints::{Positive, Interval, Constraint},
     consts::PI_2,
+    linalg::{Vector, Matrix},
     prelude::*,
-    validation::{Validator, Result},
 };
-use ndarray::{array, Array1, Array2};
+use failure::Error;
+use ndarray::array;
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{TwoSpace, real::Reals};
@@ -19,46 +21,28 @@ pub struct BivariateNormal {
 }
 
 impl BivariateNormal {
-    pub fn new(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> Result<BivariateNormal> {
-        Validator
-            .require_non_negative(sigma[0])?
-            .require_non_negative(sigma[1])?
-            .require_lte(rho, 1.0)?
-            .require_gte(rho, -1.0)
-            .map(|_| BivariateNormal {
-                mu,
-                sigma,
-                rho,
-            })
+    pub fn new(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> Result<BivariateNormal, Error> {
+        let s0 = Positive.check(sigma[0])?;
+        let s1 = Positive.check(sigma[1])?;
+        let rho = Interval { lb: -1.0, ub: 1.0, }.check(rho)?;
+
+        Ok(BivariateNormal::new_unchecked(mu, [s0, s1], rho))
     }
 
-    pub fn independent(mu: [f64; 2], sigma: [f64; 2]) -> Result<BivariateNormal> {
-        Validator
-            .require_non_negative(sigma[0])?
-            .require_non_negative(sigma[1])
-            .map(|_| BivariateNormal {
-                mu,
-                sigma,
-                rho: 0.0
-            })
+    pub fn independent(mu: [f64; 2], sigma: [f64; 2]) -> Result<BivariateNormal, Error> {
+        BivariateNormal::new(mu, sigma, 0.0)
     }
 
-    pub fn isotropic(mu: [f64; 2], sigma: f64) -> Result<BivariateNormal> {
-        Validator
-            .require_non_negative(sigma)
-            .map(|_| BivariateNormal {
-                mu,
-                sigma: [sigma; 2],
-                rho: 0.0
-            })
+    pub fn isotropic(mu: [f64; 2], sigma: f64) -> Result<BivariateNormal, Error> {
+        BivariateNormal::independent(mu, [sigma, sigma])
     }
 
     pub fn standard() -> BivariateNormal {
-        BivariateNormal {
-            mu: [0.0; 2],
-            sigma: [1.0; 2],
-            rho: 0.0
-        }
+        BivariateNormal::new_unchecked([0.0; 2], [1.0; 2], 0.0)
+    }
+
+    pub fn new_unchecked(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> BivariateNormal {
+        BivariateNormal { mu, sigma, rho, }
     }
 
     #[inline]
@@ -113,11 +97,11 @@ impl ContinuousDistribution for BivariateNormal {
 }
 
 impl MultivariateMoments for BivariateNormal {
-    fn mean(&self) -> Array1<f64> {
+    fn mean(&self) -> Vector<f64> {
         vec![self.mu[0], self.mu[1]].into()
     }
 
-    fn covariance(&self) -> Array2<f64> {
+    fn covariance(&self) -> Matrix<f64> {
         let cross_sigma = self.sigma[0] * self.sigma[1];
 
         array![
@@ -126,14 +110,14 @@ impl MultivariateMoments for BivariateNormal {
         ]
     }
 
-    fn variance(&self) -> Array1<f64> {
+    fn variance(&self) -> Vector<f64> {
         vec![
             self.sigma[0] * self.sigma[0],
             self.sigma[1] * self.sigma[1]
         ].into()
     }
 
-    fn correlation(&self) -> Array2<f64> {
+    fn correlation(&self) -> Matrix<f64> {
         array![
             [1.0, self.rho],
             [self.rho, 1.0],

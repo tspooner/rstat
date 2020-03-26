@@ -1,8 +1,8 @@
 use crate::{
     consts::{PI, PI_16, THREE_HALVES},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
@@ -14,10 +14,10 @@ pub struct Levy {
 }
 
 impl Levy {
-    pub fn new(mu: f64, c: f64) -> Result<Levy> {
-        Validator
-            .require_non_negative(c)
-            .map(|_| Levy::new_unchecked(mu, c))
+    pub fn new(mu: f64, c: f64) -> Result<Levy, Error> {
+        let c = assert_constraint!(c+)?;
+
+        Ok(Levy::new_unchecked(mu, c))
     }
 
     pub fn new_unchecked(mu: f64, c: f64) -> Levy {

@@ -1,6 +1,5 @@
-use crate::{Probability, Distribution};
+use crate::{Probability, Distribution, linalg::{Vector, Matrix}};
 use spaces::Space;
-use ndarray::{Array1, Array2};
 
 pub trait UnivariateMoments: Distribution {
     /// Computes the expected value of the distribution.
@@ -28,28 +27,28 @@ pub trait UnivariateMoments: Distribution {
 
 pub trait MultivariateMoments: Distribution {
     /// Computes the vector of expected values of the distribution.
-    fn mean(&self) -> Array1<f64>;
+    fn mean(&self) -> Vector<f64>;
 
     /// Computes the vector of variances of the distribution.
     ///
     /// A default implementation is provided by calling `self.covariance()` and taking the
     /// diagonal. It is recommended, however, that you provide specialised version to remove the
     /// overhead of computing the off-diagonal terms.
-    fn variance(&self) -> Array1<f64> {
+    fn variance(&self) -> Vector<f64> {
         self.covariance().into_diag()
     }
 
     /// Computes the covariance matrix of the distribution.
-    fn covariance(&self) -> Array2<f64>;
+    fn covariance(&self) -> Matrix<f64>;
 
     /// Computes the correlation matrix of the distribution.
     ///
     /// A default implementation is provided by calling `self.covariance()` and using the terms to
     /// compute `corr(Xi, Xj) = cov(Xi, Xj) / sqrt(var(Xi) var(Xj)).`
-    fn correlation(&self) -> Array2<f64> {
+    fn correlation(&self) -> Matrix<f64> {
         let cov = self.covariance();
 
-        Array2::from_shape_fn(cov.dim(), |(i, j)| {
+        Matrix::from_shape_fn(cov.dim(), |(i, j)| {
             cov[(i, j)] * (cov[(i, i)] * cov[(j, j)]).sqrt()
         })
     }
@@ -111,5 +110,5 @@ pub trait Entropy {
 
 pub trait FisherInformation {
     /// Computes the Fisher information matrix of the distribution, `I(X)`.
-    fn fisher_information(&self) -> Array2<f64>;
+    fn fisher_information(&self) -> Matrix<f64>;
 }

@@ -1,8 +1,8 @@
 use crate::{
     consts::PI,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -13,10 +13,10 @@ pub struct StudentT {
 }
 
 impl StudentT {
-    pub fn new(nu: f64) -> Result<StudentT> {
-        Validator
-            .require_non_negative(nu)
-            .map(|_| StudentT::new_unchecked(nu))
+    pub fn new(nu: f64) -> Result<StudentT, Error> {
+        let nu = assert_constraint!(nu+)?;
+
+        Ok(StudentT::new_unchecked(nu))
     }
 
     pub fn new_unchecked(nu: f64) -> StudentT {

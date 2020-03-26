@@ -1,4 +1,4 @@
-use crate::{fitting::MLE, prelude::*, validation::{Result, UnsatisfiedConstraint}};
+use crate::{fitting::MLE, prelude::*};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
@@ -12,14 +12,7 @@ pub struct Bernoulli {
 }
 
 impl Bernoulli {
-    pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Bernoulli>
-    where
-        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
-    {
-        p.try_into().map(Bernoulli::new_unchecked).map_err(|e| e.into())
-    }
-
-    pub fn new_unchecked(p: Probability) -> Bernoulli {
+    pub fn new(p: Probability) -> Bernoulli {
         Bernoulli {
             p: p,
             q: !p,
@@ -31,13 +24,13 @@ impl Bernoulli {
 
 impl Into<rand_distr::Bernoulli> for Bernoulli {
     fn into(self) -> rand_distr::Bernoulli {
-        rand_distr::Bernoulli::new(f64::from(self.p)).unwrap()
+        rand_distr::Bernoulli::new(self.p.unwrap()).unwrap()
     }
 }
 
 impl Into<rand_distr::Bernoulli> for &Bernoulli {
     fn into(self) -> rand_distr::Bernoulli {
-        rand_distr::Bernoulli::new(f64::from(self.p)).unwrap()
+        rand_distr::Bernoulli::new(self.p.unwrap()).unwrap()
     }
 }
 
@@ -72,7 +65,7 @@ impl UnivariateMoments for Bernoulli {
     }
 
     fn skewness(&self) -> f64 {
-        (1.0 - 2.0 * f64::from(self.p)) / self.variance.sqrt()
+        (1.0 - 2.0 * self.p.unwrap()) / self.variance.sqrt()
     }
 
     fn kurtosis(&self) -> f64 {
@@ -90,7 +83,7 @@ impl Quantiles for Bernoulli {
     }
 
     fn median(&self) -> f64 {
-        match f64::from(self.p) {
+        match self.p.unwrap() {
             p if (p - 0.5).abs() < 1e-7 => 0.5,
             p if (p < 0.5) => 0.0,
             _ => 1.0,
@@ -137,7 +130,7 @@ impl MLE for Bernoulli {
             xs.into_iter().fold(0, |acc, x| acc + x as u64) as f64 / n
         );
 
-        Bernoulli::new_unchecked(p)
+        Bernoulli::new(p)
     }
 }
 

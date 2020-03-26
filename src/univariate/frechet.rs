@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{Validator, Result}};
+use crate::prelude::*;
+use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
@@ -12,11 +13,11 @@ pub struct Frechet {
 }
 
 impl Frechet {
-    pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet> {
-        Validator
-            .require_non_negative(alpha)?
-            .require_non_negative(s)
-            .map(|_| Frechet::new_unchecked(alpha, s, m))
+    pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet, Error> {
+        let alpha = assert_constraint!(alpha+)?;
+        let s = assert_constraint!(s+)?;
+
+        Ok(Frechet::new_unchecked(alpha, s, m))
     }
 
     pub fn new_unchecked(alpha: f64, s: f64, m: f64) -> Frechet {
@@ -62,7 +63,7 @@ impl Distribution for Frechet {
 impl ContinuousDistribution for Frechet {
     fn pdf(&self, x: f64) -> f64 {
         let z = self.z(x);
-        let cdf = f64::from(self.cdf(x));
+        let cdf = self.cdf(x).unwrap();
 
         self.alpha / self.s * z.powf(-1.0 - self.alpha) * cdf
     }

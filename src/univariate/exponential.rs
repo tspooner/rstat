@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{Validator, Result}};
+use crate::prelude::*;
+use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -10,10 +11,10 @@ pub struct Exponential {
 }
 
 impl Exponential {
-    pub fn new(lambda: f64) -> Result<Exponential> {
-        Validator
-            .require_non_negative(lambda)
-            .map(|_| Exponential::new_unchecked(lambda))
+    pub fn new(lambda: f64) -> Result<Exponential, Error> {
+        let lambda = assert_constraint!(lambda+)?;
+
+        Ok(Exponential::new_unchecked(lambda))
     }
 
     pub fn new_unchecked(lambda: f64) -> Exponential {

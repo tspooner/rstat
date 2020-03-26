@@ -2,8 +2,8 @@ use crate::{
     consts::PI_2,
     prelude::*,
     univariate::Normal,
-    validation::Result,
 };
+use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -13,7 +13,7 @@ use std::fmt;
 pub struct LogNormal(Normal);
 
 impl LogNormal {
-    pub fn new(mu: f64, sigma: f64) -> Result<LogNormal> {
+    pub fn new(mu: f64, sigma: f64) -> Result<LogNormal, Error> {
         Normal::new(mu, sigma).map(LogNormal)
     }
 

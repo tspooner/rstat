@@ -2,6 +2,7 @@ use crate::{
     consts::{PI_2, TWO_OVER_PI},
     prelude::*,
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::NonNegativeReals;
 use std::fmt;
@@ -13,18 +14,26 @@ pub struct FoldedNormal {
 }
 
 impl FoldedNormal {
-    pub fn new(mu: f64, sigma: f64) -> FoldedNormal {
-        assert_positive_real!(sigma);
+    pub fn new(mu: f64, sigma: f64) -> Result<FoldedNormal, Error> {
+        let sigma = assert_constraint!(sigma+)?;
 
-        FoldedNormal { mu, sigma }
+        Ok(FoldedNormal::new_unchecked(mu, sigma))
     }
 
-    pub fn half_normal(sigma: f64) -> FoldedNormal {
+    pub fn new_unchecked(mu: f64, sigma: f64) -> FoldedNormal {
+        FoldedNormal { mu, sigma, }
+    }
+
+    pub fn half_normal(sigma: f64) -> Result<FoldedNormal, Error> {
         FoldedNormal::new(0.0, sigma)
     }
 
+    pub fn half_normal_unchecked(sigma: f64) -> FoldedNormal {
+        FoldedNormal::new_unchecked(0.0, sigma)
+    }
+
     pub fn standard() -> FoldedNormal {
-        FoldedNormal::new(0.0, 1.0)
+        FoldedNormal::new_unchecked(0.0, 1.0)
     }
 
     #[inline(always)]

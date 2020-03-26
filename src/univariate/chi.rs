@@ -1,8 +1,8 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -13,8 +13,10 @@ pub struct Chi {
 }
 
 impl Chi {
-    pub fn new(k: usize) -> Result<Chi> {
-        Validator.require_gte(k, 1).map(|_| Chi::new_unchecked(k))
+    pub fn new(k: usize) -> Result<Chi, Error> {
+        let k = assert_constraint!(k > 0)?;
+
+        Ok(Chi::new_unchecked(k))
     }
 
     pub fn new_unchecked(k: usize) -> Chi {

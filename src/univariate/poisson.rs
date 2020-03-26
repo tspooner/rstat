@@ -3,8 +3,8 @@ use crate::{
     consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
     fitting::MLE,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::discrete::Naturals;
@@ -17,8 +17,10 @@ pub struct Poisson {
 }
 
 impl Poisson {
-    pub fn new(lambda: f64) -> Result<Poisson> {
-        Validator.require_non_negative(lambda).map(|_| Poisson::new_unchecked(lambda))
+    pub fn new(lambda: f64) -> Result<Poisson, Error> {
+        let lambda = assert_constraint!(lambda+)?;
+
+        Ok(Poisson::new_unchecked(lambda))
     }
 
     pub fn new_unchecked(lambda: f64) -> Poisson {

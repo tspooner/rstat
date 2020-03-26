@@ -14,11 +14,11 @@ mod degenerate;
 pub use self::degenerate::*;
 
 // Continuous:
-mod arcsine;
-pub use self::arcsine::*;
+// mod arcsine;
+// pub use self::arcsine::*;
 
-mod beta;
-pub use self::beta::*;
+// mod beta;
+// pub use self::beta::*;
 
 mod beta_prime;
 pub use self::beta_prime::*;

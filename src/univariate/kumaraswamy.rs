@@ -1,4 +1,5 @@
 use crate::prelude::*;
+use failure::Error;
 use rand;
 use spaces::real::Interval;
 use std::fmt;
@@ -13,10 +14,14 @@ pub struct Kumaraswamy {
 }
 
 impl Kumaraswamy {
-    pub fn new(a: f64, b: f64) -> Kumaraswamy {
-        assert_positive_real!(a);
-        assert_positive_real!(b);
+    pub fn new(a: f64, b: f64) -> Result<Kumaraswamy, Error> {
+        let a = assert_constraint!(a+)?;
+        let b = assert_constraint!(b+)?;
 
+        Ok(Kumaraswamy::new_unchecked(a, b))
+    }
+
+    pub fn new_unchecked(a: f64, b: f64) -> Kumaraswamy {
         Kumaraswamy { a, b }
     }
 

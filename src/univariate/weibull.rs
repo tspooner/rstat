@@ -1,8 +1,8 @@
 use crate::{
     consts::THREE_HALVES,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -14,11 +14,11 @@ pub struct Weibull {
 }
 
 impl Weibull {
-    pub fn new(lambda: f64, k: f64) -> Result<Weibull> {
-        Validator
-            .require_non_negative(lambda)?
-            .require_non_negative(k)
-            .map(|_| Weibull::new_unchecked(lambda, k))
+    pub fn new(lambda: f64, k: f64) -> Result<Weibull, Error> {
+        let lambda = assert_constraint!(lambda+)?;
+        let k = assert_constraint!(k+)?;
+
+        Ok(Weibull::new_unchecked(lambda, k))
     }
 
     pub fn new_unchecked(lambda: f64, k: f64) -> Weibull {

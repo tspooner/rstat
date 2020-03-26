@@ -27,7 +27,7 @@ macro_rules! ln_variant {
     ($(#[$attr:meta])* => $name:ident, $name_ln:ident, $x:ty) => {
         $(#[$attr])*
         fn $name_ln(&self, x: $x) -> f64 {
-            f64::from(self.$name(x)).ln()
+            self.$name(x).ln()
         }
     }
 }

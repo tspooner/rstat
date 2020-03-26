@@ -1,4 +1,4 @@
-use crate::{prelude::*, validation::{Result, UnsatisfiedConstraint}};
+use crate::prelude::*;
 use rand::Rng;
 use spaces::discrete::NonNegativeIntegers;
 use std::fmt;
@@ -11,14 +11,7 @@ pub struct Geometric {
 }
 
 impl Geometric {
-    pub fn new<P: std::convert::TryInto<Probability>>(p: P) -> Result<Geometric>
-    where
-        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
-    {
-        p.try_into().map(Geometric::new_unchecked).map_err(|e| e.into())
-    }
-
-    pub fn new_unchecked(p: Probability) -> Geometric {
+    pub fn new(p: Probability) -> Geometric {
         Geometric { p, q: !p, }
     }
 }
@@ -29,7 +22,7 @@ impl Distribution for Geometric {
     fn support(&self) -> NonNegativeIntegers { NonNegativeIntegers }
 
     fn cdf(&self, k: u64) -> Probability {
-        Probability::new_unchecked(1.0 - f64::from(self.q).powi(k as i32 + 1))
+        Probability::new_unchecked(1.0 - self.q.powi(k as i32 + 1))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 {
@@ -39,21 +32,25 @@ impl Distribution for Geometric {
 
 impl DiscreteDistribution for Geometric {
     fn pmf(&self, k: u64) -> Probability {
-        (self.p * self.q.powi(k as i32)).into()
+        Probability::new_unchecked(self.p * self.q.powi(k as i32))
     }
 }
 
 impl UnivariateMoments for Geometric {
     fn mean(&self) -> f64 {
-        f64::from(self.q / self.p)
+        self.q.unwrap() / self.p.unwrap()
     }
 
     fn variance(&self) -> f64 {
-        f64::from(self.q / self.p / self.p)
+        let (p, q) = (self.p.unwrap(), self.q.unwrap());
+
+        q / p / p
     }
 
     fn skewness(&self) -> f64 {
-        (2.0 - f64::from(self.p)) / f64::from(self.q).sqrt()
+        let (p, q) = (self.p.unwrap(), self.q.unwrap());
+
+        (2.0 - p) / q.sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
@@ -67,7 +64,7 @@ impl Quantiles for Geometric {
     }
 
     fn median(&self) -> f64 {
-        (-1.0 / f64::from(self.q).log2()) - 1.0
+        (-1.0 / self.q.log2()) - 1.0
     }
 }
 
@@ -79,8 +76,7 @@ impl Modes for Geometric {
 
 impl Entropy for Geometric {
     fn entropy(&self) -> f64 {
-        let p = f64::from(self.p);
-        let q = f64::from(self.q);
+        let (p, q) = (self.p.unwrap(), self.q.unwrap());
 
         (-q * q.log2() - p * p.log2()) / p
     }
@@ -88,6 +84,6 @@ impl Entropy for Geometric {
 
 impl fmt::Display for Geometric {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Geometric({})", f64::from(self.p))
+        write!(f, "Geometric({})", self.p)
     }
 }

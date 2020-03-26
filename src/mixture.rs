@@ -60,7 +60,7 @@ where
 
     fn cdf(&self, x: <Self::Support as Space>::Value) -> Probability {
         self.components.iter().zip(self.dist.ps.iter())
-            .fold(Probability::zero(), |acc, (c, p)| acc + *p * c.cdf(x.clone()))
+            .fold(Probability::zero(), |acc, (c, &p)| acc + p * c.cdf(x.clone()))
             .into()
     }
 
@@ -76,12 +76,7 @@ where
     fn pdf(&self, x: <Self::Support as Space>::Value) -> f64 {
         self.components.iter()
             .zip(self.dist.ps.iter())
-            .filter_map(|(c, &p)| if p.non_zero() {
-                Some(f64::from(p) * c.pdf(x.clone()))
-            } else {
-                None
-            })
-            .sum()
+            .fold(0.0, |acc, (c, &p)| acc + p * c.pdf(x.clone()))
     }
 }
 
@@ -92,27 +87,18 @@ where
     fn mean(&self) -> f64 {
         self.components.iter()
             .zip(self.dist.ps.iter())
-            .filter_map(|(c, &p)| if p.non_zero() {
-                Some(f64::from(p) * c.mean())
-            } else {
-                None
-            })
-            .sum()
+            .fold(0.0, |acc, (c, &p)| acc + p * c.mean())
     }
 
     fn variance(&self) -> f64 {
-        let mean = self.mean();
-        let var_term: f64 = self.components.iter()
+        let (mean, var_term) = self.components.iter()
             .zip(self.dist.ps.iter())
-            .filter_map(|(c, &p)| if p.non_zero() {
+            .fold((0.0, 0.0), |acc, (c, &p)| {
                 let c_mean = c.mean();
                 let c_variance = c.variance();
 
-                Some(f64::from(p) * (c_mean * c_mean + c_variance))
-            } else {
-                None
-            })
-            .sum();
+                (acc.0 + p * c_mean, acc.1 + p * (c_mean * c_mean + c_variance))
+            });
 
         var_term - mean * mean
     }
@@ -151,6 +137,8 @@ mod tests {
             Categorical::new(vec![0.2, 0.5, 0.3])?,
             vec![Normal::new(-2.0, 1.2)?, Normal::new(0.0, 1.0)?, Normal::new(3.0, 2.5)?],
         );
+
+        println!("{:?}", gmm.variance());
 
         assert!((gmm.mean() - 0.5).abs() < 1e-7);
         assert!((gmm.variance() - 5.913).abs() < 1e-7);

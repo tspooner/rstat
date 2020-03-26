@@ -1,8 +1,8 @@
 use crate::{
     consts::{PI2, PI3, TWELVE_FIFTHS, TWENTY_SEVEN_FIFTHS},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -14,10 +14,10 @@ pub struct Gumbel {
 }
 
 impl Gumbel {
-    pub fn new(mu: f64, beta: f64) -> Result<Gumbel> {
-        Validator
-            .require_non_negative(beta)
-            .map(|_| Gumbel::new_unchecked(mu, beta))
+    pub fn new(mu: f64, beta: f64) -> Result<Gumbel, Error> {
+        let beta = assert_constraint!(beta+)?;
+
+        Ok(Gumbel::new_unchecked(mu, beta))
     }
 
     pub fn new_unchecked(mu: f64, beta: f64) -> Gumbel {

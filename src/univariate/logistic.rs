@@ -1,8 +1,8 @@
 use crate::{
     consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -14,10 +14,10 @@ pub struct Logistic {
 }
 
 impl Logistic {
-    pub fn new(mu: f64, s: f64) -> Result<Logistic> {
-        Validator
-            .require_non_negative(s)
-            .map(|_| Logistic::new_unchecked(mu, s))
+    pub fn new(mu: f64, s: f64) -> Result<Logistic, Error> {
+        let s = assert_constraint!(s+)?;
+
+        Ok(Logistic::new_unchecked(mu, s))
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Logistic {

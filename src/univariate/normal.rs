@@ -3,8 +3,8 @@ use crate::{
     consts::{PI_2, PI_E_2},
     fitting::MLE,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Reals;
@@ -19,10 +19,10 @@ pub struct Normal {
 }
 
 impl Normal {
-    pub fn new(mu: f64, sigma: f64) -> Result<Normal> {
-        Validator
-            .require_non_negative(sigma)
-            .map(|_| Normal::new_unchecked(mu, sigma))
+    pub fn new(mu: f64, sigma: f64) -> Result<Normal, Error> {
+        let sigma = assert_constraint!(mu+)?;
+
+        Ok(Normal::new_unchecked(mu, sigma))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> Normal {

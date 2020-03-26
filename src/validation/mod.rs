@@ -1,9 +1,52 @@
+use num::{Zero, PrimInt};
 use ndarray::Array2;
 use std::{iter::{Sum, FromIterator}, result::Result as StdResult};
-use num_traits::{Zero, PrimInt};
 
-mod constraints;
-pub use constraints::*;
+#[derive(Debug, Clone, Copy)]
+pub enum NumericConstraint {
+    Equal,
+
+    Negative,
+    NonPositive,
+
+    Positive,
+    NonNegative,
+
+    Natural,
+
+    LessThan,
+    LessThanOrEqual,
+
+    GreaterThan,
+    GreaterThanOrEqual,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum TensorConstraint {
+    Length(usize),
+    MinLength(usize),
+
+    NDimensional(usize),
+
+    Square,
+
+    SumsTo,
+    Normalised,
+}
+
+#[derive(Debug, Clone, Copy)]
+pub enum UnsatisfiedConstraint {
+    Generic,
+    Numeric(NumericConstraint),
+    Tensor(TensorConstraint),
+    Probability(crate::probability::ProbabilityError),
+}
+
+impl From<crate::probability::ProbabilityError> for UnsatisfiedConstraint {
+    fn from(err: crate::probability::ProbabilityError) -> UnsatisfiedConstraint {
+        UnsatisfiedConstraint::Probability(err)
+    }
+}
 
 pub type Result<T> = StdResult<T, UnsatisfiedConstraint>;
 
@@ -70,7 +113,7 @@ impl Validator {
         if a < b {
             Ok(self)
         } else {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LT))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LessThan))
         }
     }
 
@@ -78,7 +121,7 @@ impl Validator {
         if a <= b {
             Ok(self)
         } else {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LTE))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::LessThanOrEqual))
         }
     }
 
@@ -86,7 +129,7 @@ impl Validator {
         if a > b {
             Ok(self)
         } else {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GT))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GreaterThan))
         }
     }
 
@@ -94,7 +137,7 @@ impl Validator {
         if a >= b {
             Ok(self)
         } else {
-            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GTE))
+            Err(UnsatisfiedConstraint::Numeric(NumericConstraint::GreaterThanOrEqual))
         }
     }
 }

@@ -2,8 +2,8 @@ use crate::{
     Convolution, ConvolutionResult,
     consts::{ONE_OVER_PI, PI},
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -15,8 +15,10 @@ pub struct Cauchy {
 }
 
 impl Cauchy {
-    pub fn new(x0: f64, gamma: f64) -> Result<Cauchy> {
-        Validator.require_non_negative(gamma).map(|_| Cauchy::new_unchecked(x0, gamma))
+    pub fn new(x0: f64, gamma: f64) -> Result<Cauchy, Error> {
+        let gamma = assert_constraint!(gamma+)?;
+
+        Ok(Cauchy::new_unchecked(x0, gamma))
     }
 
     pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {
@@ -84,7 +86,7 @@ impl ContinuousDistribution for Cauchy {
 
 impl Quantiles for Cauchy {
     fn quantile(&self, p: Probability) -> f64 {
-        self.x0 + self.gamma * (PI * (f64::from(p) - 0.5)).tan()
+        self.x0 + self.gamma * (PI * (p - 0.5)).tan()
     }
 
     fn median(&self) -> f64 {

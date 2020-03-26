@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{Validator, Result}};
+use crate::prelude::*;
+use failure::Error;
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use special_fun::FloatSpecial;
@@ -17,11 +18,11 @@ pub struct BetaBinomial {
 }
 
 impl BetaBinomial {
-    pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial> {
-        Validator
-            .require_non_negative(alpha)?
-            .require_non_negative(beta)
-            .map(|_| BetaBinomial::new_unchecked(n, alpha, beta))
+    pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial, Error> {
+        let alpha = assert_constraint!(alpha+)?;
+        let beta = assert_constraint!(beta+)?;
+
+        Ok(BetaBinomial::new_unchecked(n, alpha, beta))
     }
 
     pub fn new_unchecked(n: usize, alpha: f64, beta: f64) -> BetaBinomial {

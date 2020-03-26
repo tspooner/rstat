@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{Validator, Result}};
+use crate::prelude::*;
+use failure::Error;
 use rand::Rng;
 use spaces::{Interval, ProductSpace};
 use std::fmt;
@@ -13,17 +14,16 @@ pub struct Dirichlet {
 }
 
 impl Dirichlet {
-    pub fn new(alphas: Vec<f64>) -> Result<Dirichlet> {
-        Validator
-            .require_min_len(&alphas, 2)?
-            .require_normalised(alphas.iter())
-            .and_then(|v| {
-                alphas
-                    .iter()
-                    .map(|&x| v.require_non_negative(x))
-                    .collect::<Result<Validator>>()
-                    .map(|_| Dirichlet::new_unchecked(alphas))
-            })
+    pub fn new(alphas: Vec<f64>) -> Result<Dirichlet, Error> {
+        let n = alphas.len();
+
+        assert_constraint!(n >= 2)?;
+
+        for a in alphas.iter().cloned() {
+            assert_constraint!(a > 0.0)?;
+        }
+
+        Ok(Dirichlet::new_unchecked(alphas))
     }
 
     pub fn new_unchecked(alphas: Vec<f64>) -> Dirichlet {
@@ -83,7 +83,10 @@ impl ContinuousDistribution for Dirichlet {
     }
 
     fn logpdf(&self, xs: Vec<f64>) -> f64 {
-        assert_len!(xs => self.alphas.len(); K);
+        assert!(
+            xs.len() == self.alphas.len(),
+            format!("Input `xs` must have length {}.", self.alphas.len())
+        );
 
         xs.iter()
             .zip(self.alphas.iter())

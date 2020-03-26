@@ -1,8 +1,8 @@
 use crate::{
     consts::E,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -14,10 +14,10 @@ pub struct Laplace {
 }
 
 impl Laplace {
-    pub fn new(mu: f64, b: f64) -> Result<Laplace> {
-        Validator
-            .require_non_negative(b)
-            .map(|_| Laplace::new_unchecked(mu, b))
+    pub fn new(mu: f64, b: f64) -> Result<Laplace, Error> {
+        let b = assert_constraint!(b+)?;
+
+        Ok(Laplace::new_unchecked(mu, b))
     }
 
     pub fn new_unchecked(mu: f64, b: f64) -> Laplace {

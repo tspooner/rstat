@@ -1,8 +1,8 @@
 use crate::{
     Convolution, ConvolutionError, ConvolutionResult,
     prelude::*,
-    validation::{Validator, Result},
 };
+use failure::Error;
 use rand;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -13,10 +13,10 @@ pub struct ChiSq {
 }
 
 impl ChiSq {
-    pub fn new(k: usize) -> Result<ChiSq> {
-        Validator
-            .require_gte(k, 1)
-            .map(|_| ChiSq::new_unchecked(k))
+    pub fn new(k: usize) -> Result<ChiSq, Error> {
+        let k = assert_constraint!(k > 0)?;
+
+        Ok(ChiSq::new_unchecked(k))
     }
 
     pub fn new_unchecked(k: usize) -> ChiSq {

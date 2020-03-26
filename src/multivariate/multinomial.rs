@@ -1,4 +1,5 @@
-use crate::{prelude::*, validation::{UnsatisfiedConstraint}};
+use crate::prelude::*;
+use failure::Error;
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{ProductSpace, discrete::Ordinal};
@@ -7,31 +8,19 @@ use std::fmt;
 #[derive(Debug, Clone)]
 pub struct Multinomial {
     pub n: usize,
-    pub ps: Vec<Probability>,
+    pub ps: Simplex,
 }
 
 impl Multinomial {
-    pub fn new<P: std::convert::TryInto<Probability>>(n: usize, ps: Vec<P>)
-        -> Result<Multinomial, UnsatisfiedConstraint>
-    where
-        <P as std::convert::TryInto<Probability>>::Error: Into<UnsatisfiedConstraint>,
-    {
-        ps.into_iter()
-            .map(|p| p.try_into().map_err(|e| e.into()))
-            .collect::<Result<Vec<Probability>, UnsatisfiedConstraint>>()
-            .map(Probability::normalised)
-            .map(|ps| Multinomial::new_unchecked(n, ps))
+    pub fn new(n: usize, ps: Simplex) -> Result<Multinomial, Error> {
+        let n = assert_constraint!(n > 0)?;
+
+        Ok(Multinomial::new_unchecked(n, ps))
     }
 
 
-    pub fn new_unchecked(n: usize, ps: Vec<Probability>) -> Multinomial {
+    pub fn new_unchecked(n: usize, ps: Simplex) -> Multinomial {
         Multinomial { n, ps, }
-    }
-
-    pub fn equiprobable(n: usize, k: usize) -> Multinomial {
-        let p = Probability::new_unchecked(1.0 / k as f64);
-
-        Multinomial::new_unchecked(n, vec![p; k])
     }
 }
 
@@ -67,7 +56,10 @@ impl DiscreteDistribution for Multinomial {
     }
 
     fn logpmf(&self, xs: Vec<usize>) -> f64 {
-        assert_len!(xs => self.ps.len(); K);
+        let xn = xs.len();
+
+        #[allow(unused_parens)]
+        let _ = assert_constraint!(xn == (self.ps.len())).unwrap();
 
         if xs.iter().fold(0, |acc, v| acc + *v) == self.n {
             panic!("Total number of trials must be equal to n.")
@@ -81,7 +73,7 @@ impl DiscreteDistribution for Multinomial {
             let xlogy = if x == 0 {
                 0.0
             } else {
-                x_f64 * f64::from(p).ln()
+                x_f64 * p.ln()
             };
 
             acc + xlogy - (x_f64 + 1.0).loggamma()
@@ -93,12 +85,12 @@ impl DiscreteDistribution for Multinomial {
 
 impl MultivariateMoments for Multinomial {
     fn mean(&self) -> Array1<f64> {
-        self.ps.iter().map(|&p| f64::from(p) * self.n as f64).collect()
+        self.ps.iter().map(|&p| p * self.n as f64).collect()
     }
 
     fn variance(&self) -> Array1<f64> {
         self.ps.iter().map(|&p| {
-            f64::from(p * !p) * self.n as f64
+            (p * !p) * self.n as f64
         }).collect()
     }
 
@@ -110,9 +102,12 @@ impl MultivariateMoments for Multinomial {
             if i == j {
                 let p = self.ps[i];
 
-                f64::from(p * !p) * n
+                (p * !p) * n
             } else {
-                -f64::from(self.ps[i] * self.ps[j]) * n
+                let pi = self.ps[i].unwrap();
+                let pj = self.ps[j].unwrap();
+
+                -pi * pj * n
             }
         })
     }
@@ -121,8 +116,8 @@ impl MultivariateMoments for Multinomial {
         let d = self.ps.len();
 
         Array2::from_shape_fn((d, d), |(i, j)| {
-            let pi = f64::from(self.ps[i]);
-            let pj = f64::from(self.ps[j]);
+            let pi = self.ps[i].unwrap();
+            let pj = self.ps[j].unwrap();
 
             -(pi * pj / (1.0 - pi) / (1.0 - pj)).sqrt()
         })
