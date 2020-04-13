@@ -1,132 +1,123 @@
-use crate::prelude::*;
-use failure::Error;
+use crate::{prelude::*, univariate::uniform::Uniform};
 use rand::Rng;
 use spaces::real::Interval;
-use std::fmt;
-use super::Uniform;
+use std::{fmt, f64::INFINITY};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Frechet {
-    pub alpha: f64,
-    pub s: f64,
-    pub m: f64,
+pub use crate::params::Shape;
+
+new_dist!(Frechet<Shape<f64>>);
+
+macro_rules! get_alpha {
+    ($self:ident) => { ($self.0).0 }
 }
 
 impl Frechet {
-    pub fn new(alpha: f64, s: f64, m: f64) -> Result<Frechet, Error> {
-        let alpha = assert_constraint!(alpha+)?;
-        let s = assert_constraint!(s+)?;
-
-        Ok(Frechet::new_unchecked(alpha, s, m))
+    pub fn new(alpha: f64) -> Result<Frechet, failure::Error> {
+        Ok(Frechet(Shape::new(alpha)?))
     }
 
-    pub fn new_unchecked(alpha: f64, s: f64, m: f64) -> Frechet {
-        Frechet { alpha, s, m }
-    }
-
-    #[inline(always)]
-    fn z(&self, x: f64) -> f64 {
-        (x - self.m) / self.s
+    pub fn new_unchecked(alpha: f64) -> Frechet {
+        Frechet(Shape(alpha))
     }
 }
 
 impl Default for Frechet {
-    fn default() -> Frechet {
-        Frechet {
-            alpha: 1.0,
-            s: 1.0,
-            m: 1.0,
-        }
-    }
+    fn default() -> Frechet { Frechet(Shape(1.0)) }
 }
 
 impl Distribution for Frechet {
     type Support = Interval;
+    type Params = Shape<f64>;
 
-    fn support(&self) -> Interval {
-        Interval::left_bounded(self.m)
-    }
+    fn support(&self) -> Interval { Interval::left_bounded(0.0) }
 
-    fn cdf(&self, x: f64) -> Probability {
-        let z = self.z(x);
+    fn params(&self) -> Shape<f64> { Shape(get_alpha!(self)) }
 
-        Probability::new_unchecked((-(z.powf(-self.alpha))).exp())
+    fn cdf(&self, x: &f64) -> Probability {
+        Probability::new_unchecked((-(x.powf(-get_alpha!(self)))).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        let u = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
+        let u = Uniform::default();
 
-        self.m + self.s * (-u.ln()).powf(1.0 / self.alpha)
+        (-u.sample(rng).ln()).powf(1.0 / get_alpha!(self))
     }
 }
 
 impl ContinuousDistribution for Frechet {
-    fn pdf(&self, x: f64) -> f64 {
-        let z = self.z(x);
+    fn pdf(&self, x: &f64) -> f64 {
         let cdf = self.cdf(x).unwrap();
+        let alpha = get_alpha!(self);
 
-        self.alpha / self.s * z.powf(-1.0 - self.alpha) * cdf
+        alpha * x.powf(-1.0 - alpha) * cdf
     }
 }
 
 impl UnivariateMoments for Frechet {
     fn mean(&self) -> f64 {
-        if self.alpha <= 1.0 {
-            unimplemented!("Mean is infinite for alpha <= 1.")
+        match get_alpha!(self) {
+            alpha if alpha <= 1.0 => INFINITY,
+            alpha => {
+                use special_fun::FloatSpecial;
+
+                (1.0 - 1.0 / alpha).gamma()
+            }
         }
-
-        use special_fun::FloatSpecial;
-
-        self.m + self.s * (1.0 - 1.0 / self.alpha).gamma()
     }
 
     fn variance(&self) -> f64 {
-        if self.alpha <= 2.0 {
-            unimplemented!("Variance is infinite for alpha <= 2.")
+        match get_alpha!(self) {
+            alpha if alpha <= 2.0 => INFINITY,
+            alpha => {
+                use special_fun::FloatSpecial;
+
+                let gamma_1m1oa = (1.0 - 1.0 / alpha).gamma();
+
+                (1.0 - 2.0 / alpha).gamma() - gamma_1m1oa * gamma_1m1oa
+            }
         }
-
-        use special_fun::FloatSpecial;
-
-        let gamma_1m1oa = (1.0 - 1.0 / self.alpha).gamma();
-
-        self.s * self.s * ((1.0 - 2.0 / self.alpha).gamma() - gamma_1m1oa * gamma_1m1oa)
     }
 
     fn skewness(&self) -> f64 {
-        if self.alpha <= 3.0 {
-            unimplemented!("Skewness is infinite for alpha <= 3.")
+        match get_alpha!(self) {
+            alpha if alpha <= 3.0 => INFINITY,
+            alpha => {
+                use special_fun::FloatSpecial;
+
+                let gamma_1m1oa = (1.0 - 1.0 / alpha).gamma();
+                let gamma_1m2oa = (1.0 - 2.0 / alpha).gamma();
+
+                let numerator =
+                    (1.0 - 3.0 / alpha).gamma() - 3.0 * gamma_1m2oa * gamma_1m1oa
+                    + 2.0 * gamma_1m1oa * gamma_1m1oa * gamma_1m1oa;
+
+                let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
+                let denominator =
+                    (denominator_inner * denominator_inner * denominator_inner).sqrt();
+
+                (numerator / denominator).into()
+            }
         }
-
-        use special_fun::FloatSpecial;
-
-        let gamma_1m1oa = (1.0 - 1.0 / self.alpha).gamma();
-        let gamma_1m2oa = (1.0 - 2.0 / self.alpha).gamma();
-
-        let numerator = (1.0 - 3.0 / self.alpha).gamma() - 3.0 * gamma_1m2oa * gamma_1m1oa
-            + 2.0 * gamma_1m1oa * gamma_1m1oa * gamma_1m1oa;
-        let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
-        let denominator = (denominator_inner * denominator_inner * denominator_inner).sqrt();
-
-        (numerator / denominator).into()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        if self.alpha <= 4.0 {
-            unimplemented!("Kurtosis is infinite for alpha <= 4.")
-        }
+        match get_alpha!(self) {
+            alpha if alpha <= 4.0 => INFINITY,
+            alpha => {
+                use special_fun::FloatSpecial;
 
-        use special_fun::FloatSpecial;
+                let gamma_1m1oa = (1.0 - 1.0 / alpha).gamma();
+                let gamma_1m2oa = (1.0 - 2.0 / alpha).gamma();
 
-        let gamma_1m1oa = (1.0 - 1.0 / self.alpha).gamma();
-        let gamma_1m2oa = (1.0 - 2.0 / self.alpha).gamma();
-
-        let numerator = (1.0 - 4.0 / self.alpha).gamma()
-            - 4.0 * (1.0 - 3.0 / self.alpha).gamma() * gamma_1m1oa
-            + 3.0 * gamma_1m2oa * gamma_1m2oa;
-        let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
-        let denominator = denominator_inner * denominator_inner;
+                let numerator = (1.0 - 4.0 / alpha).gamma()
+                    - 4.0 * (1.0 - 3.0 / alpha).gamma() * gamma_1m1oa
+                    + 3.0 * gamma_1m2oa * gamma_1m2oa;
+                let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
+                let denominator = denominator_inner * denominator_inner;
 
         numerator / denominator - 6.0
+            }
+        }
     }
 }
 
@@ -136,13 +127,15 @@ impl Quantiles for Frechet {
     }
 
     fn median(&self) -> f64 {
-        self.m + self.s / 2.0f64.ln().powf(1.0 / self.alpha)
+        1.0 / 2.0f64.ln().powf(1.0 / get_alpha!(self))
     }
 }
 
 impl Modes for Frechet {
     fn modes(&self) -> Vec<f64> {
-        vec![self.m + self.s * (self.alpha / (1.0 + self.alpha)).powf(1.0 / self.alpha)]
+        let alpha = get_alpha!(self);
+
+        vec![(alpha / (1.0 + alpha)).powf(1.0 / alpha)]
     }
 }
 
@@ -150,14 +143,15 @@ impl Entropy for Frechet {
     fn entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
+        let alpha = get_alpha!(self);
         let gamma = -(1.0f64.digamma());
 
-        1.0 + gamma / self.alpha + gamma + (self.s / self.alpha).ln()
+        1.0 + gamma / alpha + gamma + (1.0 / alpha).ln()
     }
 }
 
 impl fmt::Display for Frechet {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Frechet({}, {}, {})", self.alpha, self.s, self.m)
+        write!(f, "Frechet({})", get_alpha!(self))
     }
 }

@@ -1,52 +1,49 @@
 use crate::prelude::*;
-use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct InvGamma {
-    pub alpha: f64,
-    pub beta: f64,
+shape_params! {
+    Params<f64> {
+        alpha,
+        beta
+    }
+}
+
+new_dist!(InvGamma<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
 }
 
 impl InvGamma {
-    pub fn new(alpha: f64, beta: f64) -> Result<InvGamma, Error> {
-        let alpha = assert_constraint!(alpha+)?;
-        let beta = assert_constraint!(beta+)?;
-
-        Ok(InvGamma::new_unchecked(alpha, beta))
+    pub fn new(alpha: f64, beta: f64) -> Result<InvGamma, failure::Error> {
+        Params::new(alpha, beta).map(|p| InvGamma(p))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> InvGamma {
-        InvGamma { alpha, beta }
-    }
-
-    pub fn with_scale(k: f64, theta: f64) -> Result<InvGamma, Error> {
-        InvGamma::new(k, 1.0 / theta)
+        InvGamma(Params::new_unchecked(alpha, beta))
     }
 }
 
 impl Default for InvGamma {
-    fn default() -> InvGamma {
-        InvGamma {
-            alpha: 1.0,
-            beta: 1.0,
-        }
-    }
+    fn default() -> InvGamma { InvGamma(Params::new_unchecked(1.0, 1.0)) }
 }
 
 impl Distribution for InvGamma {
     type Support = PositiveReals;
+    type Params = Params;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked(self.alpha.gammainc(self.beta / x) / self.alpha.gamma())
+        let (alpha, beta) = get_params!(self);
+
+        Probability::new_unchecked(alpha.gammainc(beta / x) / alpha.gamma())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -55,53 +52,55 @@ impl Distribution for InvGamma {
 }
 
 impl ContinuousDistribution for InvGamma {
-    fn pdf(&self, x: f64) -> f64 {
+    fn pdf(&self, x: &f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        self.beta.powf(self.alpha) * x.powf(-self.alpha - 1.0) * (-self.beta / x).exp()
-            / self.alpha.gamma()
+        let (alpha, beta) = get_params!(self);
+
+        beta.powf(alpha) * x.powf(-alpha - 1.0) * (-beta / x).exp() / alpha.gamma()
     }
 }
 
 impl UnivariateMoments for InvGamma {
     fn mean(&self) -> f64 {
-        if self.alpha <= 1.0 {
-            unimplemented!("Mean is undefined for alpha <= 1.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 1.0 => undefined!("Mean is undefined for alpha <= 1."),
+            alpha => self.0.beta.0 / (alpha - 1.0)
         }
-
-        self.beta / (self.alpha - 1.0)
     }
 
     fn variance(&self) -> f64 {
-        if self.alpha <= 2.0 {
-            unimplemented!("Variance is undefined for alpha <= 2.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 2.0 => undefined!("Variance is undefined for alpha <= 2."),
+            alpha => {
+                let am1 = alpha - 1.0;
+                let beta = self.0.beta.0;
+
+                beta * beta / am1 / am1 / (alpha - 2.0)
+            }
         }
-
-        let am1 = self.alpha - 1.0;
-
-        self.beta * self.beta / am1 / am1 / (self.alpha - 2.0)
     }
 
     fn skewness(&self) -> f64 {
-        if self.alpha <= 3.0 {
-            unimplemented!("Skewness is undefined for alpha <= 3.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 3.0 => undefined!("Skewness is undefined for alpha <= 3."),
+            alpha => 4.0 * (alpha - 2.0).sqrt() / (alpha - 3.0)
         }
-
-        4.0 * (self.alpha - 2.0).sqrt() / (self.alpha - 3.0)
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        if self.alpha <= 4.0 {
-            unimplemented!("Kurtosis is undefined for alpha <= 4.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 4.0 => undefined!("Kurtosis is undefined for alpha <= 4."),
+            alpha => (30.0 * alpha - 66.0) / (alpha - 3.0) / (alpha - 4.0)
         }
-
-        (30.0 * self.alpha - 66.0) / (self.alpha - 3.0) / (self.alpha - 4.0)
     }
 }
 
 impl Modes for InvGamma {
     fn modes(&self) -> Vec<f64> {
-        vec![self.beta / (self.alpha + 1.0)]
+        let (alpha, beta) = get_params!(self);
+
+        vec![beta / (alpha + 1.0)]
     }
 }
 
@@ -109,13 +108,16 @@ impl Entropy for InvGamma {
     fn entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        self.alpha + (self.beta * self.alpha.gamma()).ln()
-            - (1.0 + self.alpha) * self.alpha.digamma()
+        let (alpha, beta) = get_params!(self);
+
+        alpha + (beta * alpha.gamma()).ln() - (1.0 + alpha) * alpha.digamma()
     }
 }
 
 impl fmt::Display for InvGamma {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Inv-Gamma({}, {})", self.alpha, self.beta)
+        let (alpha, beta) = get_params!(self);
+
+        write!(f, "Inv-Gamma({}, {})", alpha, beta)
     }
 }

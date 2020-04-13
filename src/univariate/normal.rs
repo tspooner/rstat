@@ -1,142 +1,111 @@
 use crate::{
-    Convolution, ConvolutionResult,
     consts::{PI_2, PI_E_2},
     fitting::MLE,
     prelude::*,
 };
-use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
-pub type Gaussian = Normal;
+locscale_params! {
+    Params {
+        mu<f64>,
+        sigma<f64>
+    }
+}
 
-#[derive(Debug, Clone, Copy)]
-pub struct Normal {
-    pub mu: f64,
-    pub sigma: f64,
+new_dist!(Normal<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0) }
 }
 
 impl Normal {
-    pub fn new(mu: f64, sigma: f64) -> Result<Normal, Error> {
-        let sigma = assert_constraint!(mu+)?;
-
-        Ok(Normal::new_unchecked(mu, sigma))
+    pub fn new(mu: f64, sigma: f64) -> Result<Normal, failure::Error> {
+        Params::new(mu, sigma).map(|p| Normal(p))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> Normal {
-        Normal { mu, sigma }
+        Normal(Params::new_unchecked(mu, sigma))
     }
 
     pub fn standard() -> Normal {
-        Normal {
-            mu: 0.0,
-            sigma: 1.0,
-        }
+        Normal(Params::new_unchecked(0.0, 1.0))
     }
 
     #[inline(always)]
     pub fn z(&self, x: f64) -> f64 {
-        (x - self.mu) / self.sigma
+        let (mu, sigma) = get_params!(self);
+
+        (x - mu) / sigma
     }
 
     #[inline(always)]
-    pub fn precision(&self) -> f64 {
-        1.0 / self.sigma / self.sigma
-    }
+    pub fn precision(&self) -> f64 { 1.0 / self.0.sigma.0 / self.0.sigma.0 }
 
     #[inline(always)]
-    pub fn width(&self) -> f64 {
-        2.0 * self.precision()
-    }
-}
-
-impl Default for Normal {
-    fn default() -> Normal {
-        Normal::standard()
-    }
-}
-
-impl Into<rand_distr::Normal<f64>> for Normal {
-    fn into(self) -> rand_distr::Normal<f64> {
-        rand_distr::Normal::new(self.mu, self.sigma).unwrap()
-    }
-}
-
-impl Into<rand_distr::Normal<f64>> for &Normal {
-    fn into(self) -> rand_distr::Normal<f64> {
-        rand_distr::Normal::new(self.mu, self.sigma).unwrap()
-    }
+    pub fn width(&self) -> f64 { 2.0 * self.precision() }
 }
 
 impl Distribution for Normal {
     type Support = Reals;
+    type Params = Params;
 
-    fn support(&self) -> Reals {
-        Reals
-    }
+    fn support(&self) -> Reals { Reals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> Self::Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked(0.5 + (self.z(x) / 2.0f64.sqrt()).erf() / 2.0)
+        Probability::new_unchecked(self.z(*x).norm())
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Normal<f64> = self.into();
+        let (mu, sigma) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Normal::new(mu, sigma).unwrap().sample(rng)
     }
 }
 
 impl ContinuousDistribution for Normal {
-    fn pdf(&self, x: f64) -> f64 {
-        let z = self.z(x);
-        let norm = PI_2.sqrt() * self.sigma;
+    fn pdf(&self, x: &f64) -> f64 {
+        let z = self.z(*x);
+        let norm = PI_2.sqrt() * self.0.sigma.0;
 
         (-z * z / 2.0).exp() / norm
     }
 }
 
 impl UnivariateMoments for Normal {
-    fn mean(&self) -> f64 {
-        self.mu
-    }
+    fn mean(&self) -> f64 { self.0.mu.0 }
 
-    fn variance(&self) -> f64 {
-        self.sigma * self.sigma
-    }
+    fn variance(&self) -> f64 { self.0.sigma.0 * self.0.sigma.0 }
 
-    fn skewness(&self) -> f64 {
-        0.0
-    }
+    fn skewness(&self) -> f64 { 0.0 }
 
-    fn kurtosis(&self) -> f64 {
-        0.0
-    }
+    fn kurtosis(&self) -> f64 { 0.0 }
 
-    fn excess_kurtosis(&self) -> f64 {
-        -3.0
-    }
+    fn excess_kurtosis(&self) -> f64 { -3.0 }
 }
 
 impl Quantiles for Normal {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
+    fn quantile(&self, p: Probability) -> f64 {
+        use special_fun::FloatSpecial;
+
+        let (mu, sigma) = get_params!(self);
+
+        mu + sigma * p.unwrap().norm_inv()
     }
 
-    fn median(&self) -> f64 {
-        self.mu
-    }
+    fn median(&self) -> f64 { self.0.mu.0 }
 }
 
 impl Modes for Normal {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.mu]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
 impl Entropy for Normal {
@@ -159,20 +128,18 @@ impl FisherInformation for Normal {
 }
 
 impl Convolution<Normal> for Normal {
-    fn convolve(self, rv: Normal) -> ConvolutionResult<Normal> {
-        Self::convolve_pair(self, rv)
-    }
+    type Output = Normal;
 
-    fn convolve_pair(a: Normal, b: Normal) -> ConvolutionResult<Normal> {
-        let new_mu = a.mu + b.mu;
-        let new_var = (a.variance() + b.variance()).sqrt();
+    fn convolve(self, rv: Normal) -> Result<Normal, failure::Error> {
+        let new_mu = self.0.mu.0 + rv.0.mu.0;
+        let new_var = (self.variance() + rv.variance()).sqrt();
 
         Ok(Normal::new_unchecked(new_mu, new_var))
     }
 }
 
 impl MLE for Normal {
-    fn fit_mle(xs: Vec<f64>) -> Self {
+    fn fit_mle(xs: &[f64]) -> Result<Self, failure::Error> {
         let n = xs.len() as f64;
 
         let mean = xs.iter().fold(0.0, |acc, &x| acc + x) / n;
@@ -180,12 +147,12 @@ impl MLE for Normal {
             x - mean
         }).fold(0.0, |acc, r| acc + r * r) / (n - 1.0);
 
-        Normal::new_unchecked(mean, var.sqrt())
+        Normal::new(mean, var.sqrt())
     }
 }
 
 impl fmt::Display for Normal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "N({}, {})", self.mu, self.variance())
+        write!(f, "N({}, {})", self.0.mu.0, self.variance())
     }
 }

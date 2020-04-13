@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use failure::Error;
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use std::fmt;
@@ -8,20 +7,12 @@ pub type Multinoulli = Categorical;
 
 #[derive(Debug, Clone)]
 pub struct Categorical {
-    pub ps: Vec<Probability>,
+    pub ps: SimplexVector,
 }
 
 impl Categorical {
-    pub fn new(ps: Vec<Probability>) -> Result<Categorical, Error> {
-        Ok(Categorical::new_unchecked(Probability::normalised(ps)))
-    }
-
-    pub fn new_unchecked(ps: Vec<Probability>) -> Categorical {
+    pub fn new(ps: SimplexVector) -> Categorical {
         Categorical { ps, }
-    }
-
-    pub fn equiprobable(n: usize) -> Categorical {
-        Categorical::new_unchecked(vec![Probability::new_unchecked(1.0 / n as f64); n])
     }
 
     pub fn n_categories(&self) -> usize {
@@ -29,27 +20,38 @@ impl Categorical {
     }
 }
 
+impl From<SimplexVector> for Categorical {
+    fn from(ps: SimplexVector) -> Categorical {
+        Categorical::new(ps)
+    }
+}
+
 impl Distribution for Categorical {
     type Support = Ordinal;
+    type Params = SimplexVector;
 
     fn support(&self) -> Ordinal { Ordinal::new(self.ps.len() as usize) }
 
-    fn cdf(&self, _: usize) -> Probability {
-        unimplemented!()
+    fn params(&self) -> SimplexVector { self.ps.clone() }
+
+    fn cdf(&self, x: &usize) -> Probability {
+        Probability::new_unchecked(self.ps.iter().take(*x).sum())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> usize {
-        unimplemented!()
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+        self.ps.sample_index(rng)
     }
 }
 
 impl DiscreteDistribution for Categorical {
-    fn pmf(&self, i: usize) -> Probability {
+    fn pmf(&self, i: &usize) -> Probability {
+        let i = *i;
+
         if i > self.ps.len() {
             panic!("Index must lie in the support: i < k.")
         }
 
-        self.ps[i]
+        Probability::new_unchecked(self.ps[i])
     }
 }
 

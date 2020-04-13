@@ -1,44 +1,79 @@
-use crate::prelude::*;
+use crate::{params::Count, prelude::*};
 use failure::Error;
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{ProductSpace, discrete::Ordinal};
 use std::fmt;
 
+#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
-pub struct Multinomial {
-    pub n: usize,
-    pub ps: Simplex,
+pub struct Params {
+    pub n: Count<usize>,
+    pub ps: SimplexVector,
 }
 
-impl Multinomial {
-    pub fn new(n: usize, ps: Simplex) -> Result<Multinomial, Error> {
-        let n = assert_constraint!(n > 0)?;
+impl Params {
+    pub fn new(n: usize, ps: Vec<f64>) -> Result<Params, failure::Error> {
+        Ok(Params {
+            n: Count::new(n)?,
+            ps: SimplexVector::new(ps)?,
+        })
+    }
 
-        Ok(Multinomial::new_unchecked(n, ps))
+    pub fn new_unchecked(n: usize, ps: Vec<f64>) -> Params {
+        Params {
+            n: Count(n),
+            ps: SimplexVector::new_unchecked(ps),
+        }
+    }
+
+    pub fn n(&self) -> &Count<usize> { &self.n }
+
+    pub fn ps(&self) -> &SimplexVector { &self.ps }
+}
+
+#[derive(Debug, Clone)]
+pub struct Multinomial(Params);
+
+impl Multinomial {
+    pub fn new(n: usize, ps: Vec<f64>) -> Result<Multinomial, Error> {
+        let params = Params::new(n, ps)?;
+
+        Ok(Multinomial(params))
     }
 
 
-    pub fn new_unchecked(n: usize, ps: Simplex) -> Multinomial {
-        Multinomial { n, ps, }
+    pub fn new_unchecked(n: usize, ps: Vec<f64>) -> Multinomial {
+        Multinomial(Params::new_unchecked(n, ps))
     }
 }
 
 impl Multinomial {
     #[inline]
     pub fn n_categories(&self) -> usize {
-        self.ps.len()
+        self.0.ps.len()
+    }
+}
+
+impl From<Params> for Multinomial {
+    fn from(params: Params) -> Multinomial {
+        Multinomial(params)
     }
 }
 
 impl Distribution for Multinomial {
     type Support = ProductSpace<Ordinal>;
+    type Params = Params;
 
     fn support(&self) -> ProductSpace<Ordinal> {
-        ProductSpace::new(vec![Ordinal::new(self.n); self.ps.len()])
+        std::iter::repeat(Ordinal::new(self.0.n.0))
+            .take(self.0.ps.len())
+            .collect()
     }
 
-    fn cdf(&self, _: Vec<usize>) -> Probability {
+    fn params(&self) -> Params { self.0.clone() }
+
+    fn cdf(&self, _: &Vec<usize>) -> Probability {
         unimplemented!()
     }
 
@@ -48,27 +83,27 @@ impl Distribution for Multinomial {
 }
 
 impl DiscreteDistribution for Multinomial {
-    fn pmf(&self, xs: Vec<usize>) -> Probability {
-        match xs.iter().fold(0, |acc, x| acc + *x) {
+    fn pmf(&self, xs: &Vec<usize>) -> Probability {
+        match xs.iter().fold(0, |acc, x| acc + x) {
             0 => Probability::zero(),
-            _ => Probability::new(self.logpmf(xs).exp()).unwrap(),
+            _ => Probability::new(self.log_pmf(xs).exp()).unwrap(),
         }
     }
 
-    fn logpmf(&self, xs: Vec<usize>) -> f64 {
+    fn log_pmf(&self, xs: &Vec<usize>) -> f64 {
         let xn = xs.len();
 
         #[allow(unused_parens)]
-        let _ = assert_constraint!(xn == (self.ps.len())).unwrap();
+        let _ = assert_constraint!(xn == (self.0.ps.len())).unwrap();
 
-        if xs.iter().fold(0, |acc, v| acc + *v) == self.n {
+        if xs.iter().fold(0, |acc, v| acc + *v) == self.0.n.0 {
             panic!("Total number of trials must be equal to n.")
         }
 
         use special_fun::FloatSpecial;
 
-        let term_1 = (self.n as f64 + 1.0).loggamma();
-        let term_2 = xs.iter().zip(self.ps.iter()).fold(0.0, |acc, (&x, &p)| {
+        let term_1 = (self.0.n.0 as f64 + 1.0).loggamma();
+        let term_2 = xs.iter().zip(self.0.ps.iter()).fold(0.0, |acc, (&x, &p)| {
             let x_f64 = x as f64;
             let xlogy = if x == 0 {
                 0.0
@@ -85,27 +120,27 @@ impl DiscreteDistribution for Multinomial {
 
 impl MultivariateMoments for Multinomial {
     fn mean(&self) -> Array1<f64> {
-        self.ps.iter().map(|&p| p * self.n as f64).collect()
+        self.0.ps.iter().map(|&p| p * self.0.n.0 as f64).collect()
     }
 
     fn variance(&self) -> Array1<f64> {
-        self.ps.iter().map(|&p| {
-            (p * !p) * self.n as f64
+        self.0.ps.iter().map(|&p| {
+            (p * (1.0 - p)) * self.0.n.0 as f64
         }).collect()
     }
 
     fn covariance(&self) -> Array2<f64> {
-        let n = self.n as f64;
-        let d = self.ps.len();
+        let n = self.0.n.0 as f64;
+        let d = self.0.ps.len();
 
         Array2::from_shape_fn((d, d), |(i, j)| {
             if i == j {
-                let p = self.ps[i];
+                let p = self.0.ps[i];
 
-                (p * !p) * n
+                (p * (1.0 - p)) * n
             } else {
-                let pi = self.ps[i].unwrap();
-                let pj = self.ps[j].unwrap();
+                let pi = self.0.ps[i];
+                let pj = self.0.ps[j];
 
                 -pi * pj * n
             }
@@ -113,11 +148,11 @@ impl MultivariateMoments for Multinomial {
     }
 
     fn correlation(&self) -> Array2<f64> {
-        let d = self.ps.len();
+        let d = self.0.ps.len();
 
         Array2::from_shape_fn((d, d), |(i, j)| {
-            let pi = self.ps[i].unwrap();
-            let pj = self.ps[j].unwrap();
+            let pi = self.0.ps[i];
+            let pj = self.0.ps[j];
 
             -(pi * pj / (1.0 - pi) / (1.0 - pj)).sqrt()
         })
@@ -126,6 +161,6 @@ impl MultivariateMoments for Multinomial {
 
 impl fmt::Display for Multinomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Mult({}; {:?})", self.n, self.ps)
+        write!(f, "Mult({}; {:?})", self.0.n.0, self.0.ps)
     }
 }

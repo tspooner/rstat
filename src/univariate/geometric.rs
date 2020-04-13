@@ -16,13 +16,22 @@ impl Geometric {
     }
 }
 
+impl From<Probability> for Geometric {
+    fn from(p: Probability) -> Geometric {
+        Geometric::new(p)
+    }
+}
+
 impl Distribution for Geometric {
     type Support = NonNegativeIntegers;
+    type Params = Probability;
 
     fn support(&self) -> NonNegativeIntegers { NonNegativeIntegers }
 
-    fn cdf(&self, k: u64) -> Probability {
-        Probability::new_unchecked(1.0 - self.q.powi(k as i32 + 1))
+    fn params(&self) -> Probability { self.p }
+
+    fn cdf(&self, k: &u64) -> Probability {
+        Probability::new_unchecked(1.0 - self.q.powi(*k as i32 + 1))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 {
@@ -31,8 +40,8 @@ impl Distribution for Geometric {
 }
 
 impl DiscreteDistribution for Geometric {
-    fn pmf(&self, k: u64) -> Probability {
-        Probability::new_unchecked(self.p * self.q.powi(k as i32))
+    fn pmf(&self, k: &u64) -> Probability {
+        Probability::new_unchecked(self.p * self.q.powi(*k as i32))
     }
 }
 

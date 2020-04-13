@@ -1,123 +1,114 @@
 use crate::{
-    Convolution, ConvolutionResult,
     consts::{ONE_OVER_PI, PI},
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Cauchy {
-    pub x0: f64,
-    pub gamma: f64,
+locscale_params! {
+    Params {
+        x0<f64>,
+        gamma<f64>
+    }
+}
+
+new_dist!(Cauchy<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.x0.0, $self.0.gamma.0) }
 }
 
 impl Cauchy {
-    pub fn new(x0: f64, gamma: f64) -> Result<Cauchy, Error> {
-        let gamma = assert_constraint!(gamma+)?;
-
-        Ok(Cauchy::new_unchecked(x0, gamma))
+    pub fn new(x0: f64, gamma: f64) -> Result<Cauchy, failure::Error> {
+        Params::new(x0, gamma).map(|p| Cauchy(p))
     }
 
     pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {
-        Cauchy { x0, gamma }
+        Cauchy(Params::new_unchecked(x0, gamma))
     }
 
+    #[inline(always)]
     pub fn fwhm(&self) -> f64 {
-        2.0 * self.gamma
+        2.0 * self.0.gamma.0
     }
 
     #[inline(always)]
     fn z(&self, x: f64) -> f64 {
-        (x - self.x0) / self.gamma
+        let (x0, gamma) = get_params!(self);
+
+        (x - x0) / gamma
     }
 }
 
 impl Default for Cauchy {
     fn default() -> Cauchy {
-        Cauchy {
-            x0: 0.0,
-            gamma: 1.0,
-        }
-    }
-}
-
-impl Into<rand_distr::Cauchy<f64>> for Cauchy {
-    fn into(self) -> rand_distr::Cauchy<f64> {
-        rand_distr::Cauchy::new(self.x0, self.gamma).unwrap()
-    }
-}
-
-impl Into<rand_distr::Cauchy<f64>> for &Cauchy {
-    fn into(self) -> rand_distr::Cauchy<f64> {
-        rand_distr::Cauchy::new(self.x0, self.gamma).unwrap()
+        Cauchy(Params::new_unchecked(0.0, 1.0))
     }
 }
 
 impl Distribution for Cauchy {
     type Support = Reals;
+    type Params = Params;
 
-    fn support(&self) -> Reals {
-        Reals
-    }
+    fn support(&self) -> Reals { Reals }
 
-    fn cdf(&self, x: f64) -> Probability {
-        Probability::new_unchecked(ONE_OVER_PI * self.z(x).atan() + 0.5)
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        Probability::new_unchecked(ONE_OVER_PI * self.z(*x).atan() + 0.5)
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Cauchy<f64> = self.into();
+        let (x0, gamma) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Cauchy::new(x0, gamma).unwrap().sample(rng)
     }
 }
 
 impl ContinuousDistribution for Cauchy {
-    fn pdf(&self, x: f64) -> f64 {
-        let z = self.z(x);
+    fn pdf(&self, x: &f64) -> f64 {
+        let z = self.z(*x);
 
-        1.0 / PI / self.gamma / (1.0 + z * z)
+        1.0 / PI / self.0.gamma.0 / (1.0 + z * z)
     }
 }
 
 impl Quantiles for Cauchy {
     fn quantile(&self, p: Probability) -> f64 {
-        self.x0 + self.gamma * (PI * (p - 0.5)).tan()
+        let (x0, gamma) = get_params!(self);
+
+        x0 + gamma * (PI * (p - 0.5)).tan()
     }
 
-    fn median(&self) -> f64 {
-        self.x0
-    }
+    fn median(&self) -> f64 { self.0.x0.0 }
 }
 
 impl Modes for Cauchy {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.x0]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.x0.0] }
 }
 
 impl Entropy for Cauchy {
-    fn entropy(&self) -> f64 {
-        (4.0 * PI * self.gamma).ln()
-    }
+    fn entropy(&self) -> f64 { (4.0 * PI * self.0.gamma.0).ln() }
 }
 
 impl Convolution<Cauchy> for Cauchy {
-    fn convolve(self, rv: Cauchy) -> ConvolutionResult<Cauchy> {
-        Self::convolve_pair(self, rv)
-    }
+    type Output = Cauchy;
 
-    fn convolve_pair(a: Cauchy, b: Cauchy) -> ConvolutionResult<Cauchy> {
-        Ok(Cauchy::new_unchecked(a.x0 + b.x0, a.gamma + b.gamma))
+    fn convolve(self, rv: Cauchy) -> Result<Cauchy, failure::Error> {
+        let x0 = self.0.x0.0 + rv.0.x0.0;
+        let gamma = self.0.gamma.0 + rv.0.gamma.0;
+
+        Ok(Cauchy::new_unchecked(x0, gamma))
     }
 }
 
 impl fmt::Display for Cauchy {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Cauchy({}, {})", self.x0, self.gamma)
+        let (x0, gamma) = get_params!(self);
+
+        write!(f, "Cauchy({}, {})", x0, gamma)
     }
 }

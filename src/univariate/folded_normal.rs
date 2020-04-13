@@ -1,84 +1,90 @@
 use crate::{
     consts::{PI_2, TWO_OVER_PI},
+    params::Scale,
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::NonNegativeReals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct FoldedNormal {
-    pub mu: f64,
-    pub sigma: f64,
+locscale_params! {
+    Params {
+        mu<f64>,
+        sigma<f64>
+    }
+}
+
+new_dist!(FoldedNormal<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0) }
 }
 
 impl FoldedNormal {
-    pub fn new(mu: f64, sigma: f64) -> Result<FoldedNormal, Error> {
-        let sigma = assert_constraint!(sigma+)?;
-
-        Ok(FoldedNormal::new_unchecked(mu, sigma))
+    pub fn new(mu: f64, sigma: f64) -> Result<FoldedNormal, failure::Error> {
+        Params::new(mu, sigma).map(|p| FoldedNormal(p))
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> FoldedNormal {
-        FoldedNormal { mu, sigma, }
+        FoldedNormal(Params::new_unchecked(mu, sigma))
     }
 
-    pub fn half_normal(sigma: f64) -> Result<FoldedNormal, Error> {
-        FoldedNormal::new(0.0, sigma)
-    }
-
-    pub fn half_normal_unchecked(sigma: f64) -> FoldedNormal {
-        FoldedNormal::new_unchecked(0.0, sigma)
+    pub fn half_normal(scale: Scale<f64>) -> FoldedNormal {
+        FoldedNormal(Params::new_unchecked(0.0, scale.0))
     }
 
     pub fn standard() -> FoldedNormal {
-        FoldedNormal::new_unchecked(0.0, 1.0)
+        FoldedNormal(Params::new_unchecked(0.0, 1.0))
     }
 
     #[inline(always)]
     pub fn precision(&self) -> f64 {
-        1.0 / self.sigma / self.sigma
+        let s = self.0.sigma.0;
+
+        1.0 / s / s
     }
 }
 
 impl Default for FoldedNormal {
-    fn default() -> FoldedNormal {
-        FoldedNormal::standard()
-    }
+    fn default() -> FoldedNormal { FoldedNormal::standard() }
 }
 
 impl Distribution for FoldedNormal {
     type Support = NonNegativeReals;
+    type Params = Params;
 
-    fn support(&self) -> NonNegativeReals {
-        NonNegativeReals
-    }
+    fn support(&self) -> NonNegativeReals { NonNegativeReals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
+        let (mu, sigma) = get_params!(self);
         let sqrt_2: f64 = 2.0f64.sqrt();
 
         Probability::new_unchecked(0.5 * (
-            ((x + self.mu) / self.sigma / sqrt_2).erf() +
-            ((x - self.mu) / self.sigma / sqrt_2).erf()
+            ((x + mu) / sigma / sqrt_2).erf() +
+            ((x - mu) / sigma / sqrt_2).erf()
         ))
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand_distr::Distribution;
 
-        rand_distr::Normal::new(self.mu, self.sigma).unwrap().sample(rng).abs()
+        let (mu, sigma) = get_params!(self);
+
+        rand_distr::Normal::new(mu, sigma).unwrap().sample(rng).abs()
     }
 }
 
 impl ContinuousDistribution for FoldedNormal {
-    fn pdf(&self, x: f64) -> f64 {
-        let z_pos = (x + self.mu) / self.sigma;
-        let z_neg = (x - self.mu) / self.sigma;
+    fn pdf(&self, x: &f64) -> f64 {
+        let (mu, sigma) = get_params!(self);
 
-        let norm = PI_2.sqrt() * self.sigma;
+        let norm = PI_2.sqrt() * sigma;
+        let z_pos = (x + mu) / sigma;
+        let z_neg = (x - mu) / sigma;
 
         (-z_pos * z_pos / 2.0).exp() / norm + (-z_neg * z_neg / 2.0).exp() / norm
     }
@@ -88,15 +94,17 @@ impl UnivariateMoments for FoldedNormal {
     fn mean(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        let z = self.mu / self.sigma / 2.0f64.sqrt();
+        let (mu, sigma) = get_params!(self);
+        let z = mu / sigma / 2.0f64.sqrt();
 
-        self.sigma * TWO_OVER_PI.sqrt() * (-z * z).exp() + self.mu * z.erf()
+        sigma * TWO_OVER_PI.sqrt() * (-z * z).exp() + mu * z.erf()
     }
 
     fn variance(&self) -> f64 {
+        let (mu, sigma) = get_params!(self);
         let mean = self.mean();
 
-        self.mu * self.mu + self.sigma * self.sigma - mean * mean
+        mu * mu + sigma * sigma - mean * mean
     }
 
     fn skewness(&self) -> f64 { unimplemented!() }
@@ -108,16 +116,14 @@ impl UnivariateMoments for FoldedNormal {
 
 impl Modes for FoldedNormal {
     fn modes(&self) -> Vec<f64> {
-        if self.mu < self.sigma {
-            vec![0.0]
-        } else {
-            vec![self.mu]
-        }
+        let (mu, sigma) = get_params!(self);
+
+        if mu < sigma { vec![0.0] } else { vec![mu] }
     }
 }
 
 impl fmt::Display for FoldedNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "FN({}, {})", self.mu, self.variance())
+        write!(f, "FN({}, {})", self.0.mu.0, self.variance())
     }
 }

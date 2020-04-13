@@ -1,156 +1,146 @@
 use crate::prelude::*;
-use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
 
-#[derive(Debug, Clone, Copy)]
-pub struct Pareto {
-    pub x_m: f64,
-    pub alpha: f64,
+locscale_params! {
+    Params {
+        x_m<f64>,
+        alpha<f64>
+    }
+}
+
+new_dist!(Pareto<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.x_m.0, $self.0.alpha.0) }
 }
 
 impl Pareto {
-    pub fn new(x_m: f64, alpha: f64) -> Result<Pareto, Error> {
-        let x_m = assert_constraint!(x_m+)?;
-        let alpha = assert_constraint!(alpha+)?;
-
-        Ok(Pareto::new_unchecked(x_m, alpha))
+    pub fn new(x_m: f64, alpha: f64) -> Result<Pareto, failure::Error> {
+        Params::new(x_m, alpha).map(|p| Pareto(p))
     }
 
     pub fn new_unchecked(x_m: f64, alpha: f64) -> Pareto {
-        Pareto { x_m, alpha }
-    }
-}
-
-impl Default for Pareto {
-    fn default() -> Pareto {
-        Pareto {
-            x_m: 1.0,
-            alpha: 1.0,
-        }
-    }
-}
-
-impl Into<rand_distr::Pareto<f64>> for Pareto {
-    fn into(self) -> rand_distr::Pareto<f64> {
-        rand_distr::Pareto::new(self.x_m, self.alpha).unwrap()
-    }
-}
-
-impl Into<rand_distr::Pareto<f64>> for &Pareto {
-    fn into(self) -> rand_distr::Pareto<f64> {
-        rand_distr::Pareto::new(self.x_m, self.alpha).unwrap()
+        Pareto(Params::new_unchecked(x_m, alpha))
     }
 }
 
 impl Distribution for Pareto {
     type Support = Interval;
+    type Params = Params;
 
-    fn support(&self) -> Interval {
-        Interval::left_bounded(self.x_m)
-    }
+    fn support(&self) -> Interval { Interval::left_bounded(self.0.x_m.0) }
 
-    fn cdf(&self, x: f64) -> Probability {
-        Probability::new_unchecked(1.0 - (self.x_m / x).powf(self.alpha))
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        let (x_m, alpha) = get_params!(self);
+
+        Probability::new_unchecked(1.0 - (x_m / x).powf(alpha))
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Pareto<f64> = self.into();
+        let (x_m, alpha) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Pareto::<f64>::new(x_m, alpha).unwrap().sample(rng)
     }
 }
 
 impl ContinuousDistribution for Pareto {
-    fn pdf(&self, x: f64) -> f64 {
-        if x < self.x_m {
+    fn pdf(&self, x: &f64) -> f64 {
+        let x_m = self.0.x_m.0;
+
+        if *x < x_m {
             0.0
         } else {
-            self.alpha * self.x_m.powf(self.alpha) / x.powf(self.alpha + 1.0)
+            let alpha = self.0.alpha.0;
+
+            alpha * x_m.powf(alpha) / x.powf(alpha + 1.0)
         }
     }
 }
 
 impl UnivariateMoments for Pareto {
     fn mean(&self) -> f64 {
-        if self.alpha <= 1.0 {
-            INFINITY
-        } else {
-            self.alpha * self.x_m / (self.alpha - 1.0)
+        match self.0.alpha.0 {
+            alpha if alpha <= 1.0 => INFINITY,
+            alpha => alpha * self.0.x_m.0 / (alpha - 1.0),
         }
     }
 
     fn variance(&self) -> f64 {
-        if self.alpha <= 2.0 {
-            INFINITY
-        } else {
-            let am1 = self.alpha - 1.0;
+        match self.0.alpha.0 {
+            alpha if alpha <= 2.0 => INFINITY,
+            alpha => {
+                let x_m = self.0.x_m.0;
+                let am1 = alpha - 1.0;
 
-            self.x_m * self.x_m * self.alpha / am1 / am1 / (self.alpha - 2.0)
+                x_m * x_m * alpha / am1 / am1 / (alpha - 2.0)
+            },
         }
     }
 
     fn skewness(&self) -> f64 {
-        if self.alpha <= 3.0 {
-            unimplemented!("Variance is undefined for alpha <= 3.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 3.0 => undefined!("Variance is undefined for alpha <= 3."),
+            alpha => 2.0 * (1.0 + alpha) / (alpha - 3.0) * ((alpha - 2.0) / alpha).sqrt(),
         }
-
-        2.0 * (1.0 + self.alpha) / (self.alpha - 3.0) * ((self.alpha - 2.0) / self.alpha).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        if self.alpha <= 4.0 {
-            unimplemented!("Kurtosis is undefined for alpha <= 4.")
+        match self.0.alpha.0 {
+            alpha if alpha <= 4.0 => undefined!("Kurtosis is undefined for alpha <= 4."),
+            alpha => {
+                let a2 = alpha * alpha;
+                let a3 = a2 * alpha;
+
+                6.0 * (a3 + a2 - 6.0 * alpha - 2.0) / alpha / (alpha - 3.0) / (alpha - 4.0)
+            },
         }
-
-        let a2 = self.alpha * self.alpha;
-        let a3 = a2 * self.alpha;
-
-        6.0 * (a3 + a2 - 6.0 * self.alpha - 2.0)
-            / self.alpha
-            / (self.alpha - 3.0)
-            / (self.alpha - 4.0)
     }
 }
 
 impl Quantiles for Pareto {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
-        self.x_m * 2.0f64.powf(1.0 / self.alpha)
+        let (x_m, alpha) = get_params!(self);
+
+        x_m * 2.0f64.powf(1.0 / alpha)
     }
 }
 
 impl Modes for Pareto {
     fn modes(&self) -> Vec<f64> {
-        vec![self.x_m]
+        vec![self.0.x_m.0]
     }
 }
 
 impl Entropy for Pareto {
     fn entropy(&self) -> f64 {
-        (self.x_m / self.alpha * (1.0 + 1.0 / self.alpha).exp()).ln()
+        let (x_m, alpha) = get_params!(self);
+
+        (x_m / alpha * (1.0 + 1.0 / alpha).exp()).ln()
     }
 }
 
 impl FisherInformation for Pareto {
     fn fisher_information(&self) -> Array2<f64> {
-        let off_diag = -1.0 / self.x_m;
+        let (x_m, alpha) = get_params!(self);
+        let off_diag = -1.0 / x_m;
 
         unsafe {
             Array2::from_shape_vec_unchecked(
                 (2, 2),
                 vec![
-                    self.alpha / self.x_m / self.x_m,
+                    alpha / x_m / x_m,
                     off_diag,
                     off_diag,
-                    1.0 / self.alpha / self.alpha,
+                    1.0 / alpha / alpha,
                 ],
             )
         }
@@ -159,6 +149,8 @@ impl FisherInformation for Pareto {
 
 impl fmt::Display for Pareto {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Pareto({}, {})", self.x_m, self.alpha)
+        let (x_m, alpha) = get_params!(self);
+
+        write!(f, "Pareto({}, {})", x_m, alpha)
     }
 }

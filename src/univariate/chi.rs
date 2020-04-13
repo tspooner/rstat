@@ -2,39 +2,43 @@ use crate::{
     consts::THREE_HALVES,
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Chi {
-    pub k: usize,
+pub use crate::params::DOF;
+
+new_dist!(Chi<DOF<usize>>);
+
+macro_rules! get_k {
+    ($self:ident) => { ($self.0).0 as f64 }
 }
 
 impl Chi {
-    pub fn new(k: usize) -> Result<Chi, Error> {
-        let k = assert_constraint!(k > 0)?;
-
-        Ok(Chi::new_unchecked(k))
+    pub fn new(dof: usize) -> Result<Chi, failure::Error> {
+        Ok(Chi(DOF::new(dof)?))
     }
 
-    pub fn new_unchecked(k: usize) -> Chi {
-        Chi { k }
+    pub fn new_unchecked(dof: usize) -> Chi {
+        Chi(DOF(dof))
     }
+
+    #[inline(always)]
+    pub fn k(&self) -> f64 { get_k!(self) }
 }
 
 impl Distribution for Chi {
     type Support = PositiveReals;
+    type Params = DOF<usize>;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> DOF<usize> { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked((self.k as f64 / 2.0).gammainc(x * x / 2.0))
+        Probability::new_unchecked((get_k!(self) / 2.0).gammainc(x * x / 2.0))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -43,10 +47,10 @@ impl Distribution for Chi {
 }
 
 impl ContinuousDistribution for Chi {
-    fn pdf(&self, x: f64) -> f64 {
+    fn pdf(&self, x: &f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        let k = self.k as f64;
+        let k = get_k!(self);
         let ko2 = k / 2.0;
         let norm = 2.0f64.powf(ko2 - 1.0) * ko2.gamma();
 
@@ -58,15 +62,16 @@ impl UnivariateMoments for Chi {
     fn mean(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        let k = self.k as f64;
+        let k = get_k!(self);
 
         2.0f64.sqrt() * ((k + 1.0) / 2.0).gamma() / (k / 2.0).gamma()
     }
 
     fn variance(&self) -> f64 {
+        let k = get_k!(self);
         let mu = self.mean();
 
-        self.k as f64 - mu * mu
+        k - mu * mu
     }
 
     fn skewness(&self) -> f64 {
@@ -92,7 +97,7 @@ impl Quantiles for Chi {
     }
 
     fn median(&self) -> f64 {
-        let k = self.k as f64;
+        let k = get_k!(self);
 
         (k * (1.0 - 2.0 / 9.0 / k).powi(3)).sqrt()
     }
@@ -100,8 +105,10 @@ impl Quantiles for Chi {
 
 impl Modes for Chi {
     fn modes(&self) -> Vec<f64> {
-        if self.k >= 1 {
-            vec![(self.k as f64 - 1.0).sqrt()]
+        let k = (self.0).0;
+
+        if k >= 1 {
+            vec![((k - 1) as f64).sqrt()]
         } else {
             vec![]
         }
@@ -112,7 +119,7 @@ impl Entropy for Chi {
     fn entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        let k = self.k as f64;
+        let k = get_k!(self);
         let ko2 = k / 2.0;
 
         ko2.gamma().ln() + (k - 2.0f64.ln() - (k - 1.0) * ko2.digamma())
@@ -121,6 +128,6 @@ impl Entropy for Chi {
 
 impl fmt::Display for Chi {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Chi({})", self.k)
+        write!(f, "Chi({})", self.k())
     }
 }

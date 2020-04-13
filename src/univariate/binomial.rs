@@ -1,8 +1,8 @@
 use crate::{
-    Convolution, ConvolutionError, ConvolutionResult,
     consts::PI_E,
+    params::Count,
     prelude::*,
-    univariate::Bernoulli,
+    univariate::bernoulli::Bernoulli,
 };
 use ndarray::Array2;
 use rand;
@@ -10,64 +10,80 @@ use spaces::discrete::Ordinal;
 use std::fmt;
 use super::choose;
 
+params! {
+    Params {
+        n: Count<usize>,
+        p: Probability<>
+    }
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Binomial {
-    pub n: usize,
-    pub p: Probability,
-
+    params: Params,
     q: Probability,
 }
 
+macro_rules! get_params {
+    ($self:ident) => { ($self.params.n.0, $self.params.p) }
+}
+
 impl Binomial {
-    pub fn new(n: usize, p: Probability) -> Binomial {
+    pub fn new(n: usize, p: Probability) -> Result<Binomial, failure::Error> {
+        Params::new(n, p.0).map(|params| Binomial {
+            q: !(params.p),
+            params,
+        })
+    }
+
+    pub fn new_unchecked(n: usize, p: Probability) -> Binomial {
         Binomial {
-            n, p,
             q: !p,
+            params: Params::new_unchecked(n, p.0),
         }
     }
 }
 
-impl Into<rand_distr::Binomial> for Binomial {
-    fn into(self) -> rand_distr::Binomial {
-        rand_distr::Binomial::new(self.n as u64, self.p.unwrap()).unwrap()
-    }
-}
-
-impl Into<rand_distr::Binomial> for &Binomial {
-    fn into(self) -> rand_distr::Binomial {
-        rand_distr::Binomial::new(self.n as u64, self.p.unwrap()).unwrap()
+impl From<Params> for Binomial {
+    fn from(params: Params) -> Binomial {
+        Binomial::new_unchecked(params.n.0, params.p)
     }
 }
 
 impl Distribution for Binomial {
     type Support = Ordinal;
+    type Params = Params;
 
-    fn support(&self) -> Ordinal { Ordinal::new(self.n as usize) }
+    fn support(&self) -> Ordinal { Ordinal::new(self.params.n.0) }
 
-    fn cdf(&self, k: usize) -> Probability {
+    fn params(&self) -> Params { self.params }
+
+    fn cdf(&self, k: &usize) -> Probability {
         use special_fun::FloatSpecial;
 
-        let a = (self.n - k) as f64;
+        let a = (self.params.n.0 - k) as f64;
         let b = (k + 1) as f64;
 
         Probability::new_unchecked(self.q.unwrap().betainc(a, b))
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> usize {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Binomial = self.into();
+        let (n, p) = get_params!(self);
+        let dist = rand_distr::Binomial::new(n as u64, p.unwrap()).unwrap();
 
-        sampler.sample(rng) as usize
+        dist.sample(rng) as usize
     }
 }
 
 impl DiscreteDistribution for Binomial {
-    fn pmf(&self, k: usize) -> Probability {
-        let bc = choose(self.n as u64, k as u64) as f64;
+    fn pmf(&self, k: &usize) -> Probability {
+        let (n, p) = get_params!(self);
 
-        let prob_successes = self.p.powi(k as i32);
-        let prob_failures = self.q.powi((self.n - k) as i32);
+        let bc = choose(n as u64, *k as u64) as f64;
+
+        let prob_successes = p.powi(*k as i32);
+        let prob_failures = self.q.powi((n - *k) as i32);
         let prob = prob_successes * prob_failures;
 
         Probability::new_unchecked(bc * prob)
@@ -76,23 +92,27 @@ impl DiscreteDistribution for Binomial {
 
 impl UnivariateMoments for Binomial {
     fn mean(&self) -> f64 {
-        self.p * self.n as f64
+        let (n, p) = get_params!(self);
+
+        p.unwrap() * n as f64
     }
 
     fn variance(&self) -> f64 {
-        let (p, q) = (self.p.unwrap(), self.q.unwrap());
+        let (n, p) = get_params!(self);
+        let (p, q) = (p.unwrap(), self.q.unwrap());
 
-        p * q * self.n as f64
+        p * q * n as f64
     }
 
     fn skewness(&self) -> f64 {
-        (1.0 - self.p * 2.0) / self.variance().sqrt()
+        (1.0 - self.params.p * 2.0) / self.variance().sqrt()
     }
 
     fn kurtosis(&self) -> f64 {
-        let (p, q) = (self.p.unwrap(), self.q.unwrap());
+        let (n, p) = get_params!(self);
+        let (p, q) = (p.unwrap(), self.q.unwrap());
 
-        (1.0 - 6.0 * p * q) / (self.n as f64 * p * q)
+        (1.0 - 6.0 * p * q) / (n as f64 * p * q)
     }
 }
 
@@ -108,7 +128,9 @@ impl Quantiles for Binomial {
 
 impl Modes for Binomial {
     fn modes(&self) -> Vec<usize> {
-        vec![(self.p * self.n as f64).floor() as usize]
+        let (n, p) = get_params!(self);
+
+        vec![(p * n as f64).floor() as usize]
     }
 }
 
@@ -120,44 +142,40 @@ impl Entropy for Binomial {
 
 impl FisherInformation for Binomial {
     fn fisher_information(&self) -> Array2<f64> {
-        Array2::from_elem((1, 1), self.n as f64 / self.p.unwrap() / self.q.unwrap())
+        let (n, p) = get_params!(self);
+
+        Array2::from_elem((1, 1), n as f64 / p.unwrap() / self.q.unwrap())
     }
 }
 
 impl Convolution<Bernoulli> for Binomial {
-    fn convolve(self, rv: Bernoulli) -> ConvolutionResult<Binomial> {
-        if self.p == rv.p {
-            Ok(Binomial::new(self.n + 1, self.p))
-        } else {
-            Err(ConvolutionError::MixedParameters)
-        }
-    }
+    type Output = Binomial;
 
-    fn convolve_pair(a: Bernoulli, b: Bernoulli) -> ConvolutionResult<Binomial> {
-        if a.p == b.p {
-            Ok(Binomial::new(2, a.p))
-        } else {
-            Err(ConvolutionError::MixedParameters)
-        }
+    fn convolve(self, rv: Bernoulli) -> Result<Binomial, failure::Error> {
+        let p1 = self.params.p;
+        let p2 = rv.p;
+
+        Binomial::new(self.params.n.0 + 1, assert_constraint!(p1 == p2)?)
     }
 }
 
 impl Convolution<Binomial> for Binomial {
-    fn convolve(self, b: Binomial) -> ConvolutionResult<Binomial> {
-        Self::convolve_pair(self, b)
-    }
+    type Output = Binomial;
 
-    fn convolve_pair(a: Binomial, b: Binomial) -> ConvolutionResult<Binomial> {
-        if a.p == b.p {
-            Ok(Binomial::new(a.n + b.n, a.p))
-        } else {
-            Err(ConvolutionError::MixedParameters)
-        }
+    fn convolve(self, rv: Binomial) -> Result<Binomial, failure::Error> {
+        let p1 = self.params.p;
+        let p2 = rv.params.p;
+
+        assert_constraint!(p1 == p2)?;
+
+        Binomial::new(self.params.n.0 + rv.params.n.0, p1)
     }
 }
 
 impl fmt::Display for Binomial {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Bin({}, {})", self.n, self.p)
+        let (n, p) = get_params!(self);
+
+        write!(f, "Bin({}, {})", n, p)
     }
 }

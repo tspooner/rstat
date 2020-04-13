@@ -1,5 +1,4 @@
 use crate::prelude::*;
-use failure::Error;
 use rand;
 use spaces::real::Interval;
 use std::fmt;
@@ -7,63 +6,59 @@ use std::fmt;
 #[inline]
 fn harmonic_n(n: usize) -> f64 { (1..=n).map(|i| 1.0 / i as f64).sum() }
 
-#[derive(Debug, Clone, Copy)]
-pub struct Kumaraswamy {
-    pub a: f64,
-    pub b: f64,
+shape_params! {
+    Params<f64> { a, b }
+}
+
+new_dist!(Kumaraswamy<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.a.0, $self.0.b.0) }
 }
 
 impl Kumaraswamy {
-    pub fn new(a: f64, b: f64) -> Result<Kumaraswamy, Error> {
-        let a = assert_constraint!(a+)?;
-        let b = assert_constraint!(b+)?;
-
-        Ok(Kumaraswamy::new_unchecked(a, b))
-    }
-
-    pub fn new_unchecked(a: f64, b: f64) -> Kumaraswamy {
-        Kumaraswamy { a, b }
-    }
-
     fn moment_n(&self, n: usize) -> f64 {
         use special_fun::FloatSpecial;
 
-        self.b * (1.0 + n as f64 / self.a).beta(self.b)
+        let (a, b) = get_params!(self);
+
+        b * (1.0 + n as f64 / a).beta(b)
     }
 }
 
 impl Default for Kumaraswamy {
     fn default() -> Kumaraswamy {
-        Kumaraswamy {
-            a: 1.0,
-            b: 1.0,
-        }
+        Kumaraswamy(Params::new_unchecked(1.0, 1.0))
     }
 }
 
 impl Distribution for Kumaraswamy {
     type Support = Interval;
+    type Params = Params;
 
-    fn support(&self) -> Interval {
-        Interval::bounded(0.0, 1.0)
-    }
+    fn support(&self) -> Interval { Interval::bounded(0.0, 1.0) }
 
-    fn cdf(&self, x: f64) -> Probability {
-        Probability::new_unchecked(1.0 - (1.0 - x.powf(self.a)).powf(self.b))
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        let (a, b) = get_params!(self);
+
+        Probability::new_unchecked(1.0 - (1.0 - x.powf(a)).powf(b))
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::{Distribution, Uniform};
+        let x = crate::univariate::uniform::Uniform::<f64>::default().sample(rng);
+        let (a, b) = get_params!(self);
 
-        let x: f64 = Uniform::new_inclusive(0.0, 1.0).sample(rng);
-
-        (1.0 - (1.0 - x).powf(1.0 / self.b)).powf(1.0 / self.a)
+        (1.0f64 - (1.0 - x).powf(1.0 / b)).powf(1.0 / a)
     }
 }
 
 impl ContinuousDistribution for Kumaraswamy {
-    fn pdf(&self, x: f64) -> f64 {
-        self.a * self.b * x.powf(self.a - 1.0) * (1.0 - x.powf(self.a)).powf(self.b - 1.0)
+    fn pdf(&self, x: &f64) -> f64 {
+        let (a, b) = get_params!(self);
+
+        a * b * x.powf(a - 1.0) * (1.0 - x.powf(a)).powf(b - 1.0)
     }
 }
 
@@ -95,14 +90,18 @@ impl Quantiles for Kumaraswamy {
     }
 
     fn median(&self) -> f64 {
-        (1.0 - 2.0f64.powf(-1.0 / self.b)).powf(1.0 / self.a)
+        let (a, b) = get_params!(self);
+
+        (1.0 - 2.0f64.powf(-1.0 / b)).powf(1.0 / a)
     }
 }
 
 impl Modes for Kumaraswamy {
     fn modes(&self) -> Vec<f64> {
-        if (self.a > 1.0 && self.b >= 1.0) || (self.a >= 1.0 && self.b > 1.0) {
-            vec![((self.a - 1.0) / (self.a * self.b - 1.0)).powf(1.0 / self.a)]
+        let (a, b) = get_params!(self);
+
+        if (a > 1.0 && b >= 1.0) || (a >= 1.0 && b > 1.0) {
+            vec![((a - 1.0) / (a * b - 1.0)).powf(1.0 / a)]
         } else {
             vec![]
         }
@@ -111,14 +110,17 @@ impl Modes for Kumaraswamy {
 
 impl Entropy for Kumaraswamy {
     fn entropy(&self) -> f64 {
-        let hb = harmonic_n(self.b.floor() as usize);
+        let (a, b) = get_params!(self);
+        let hb = harmonic_n(b.floor() as usize);
 
-        (1.0 - 1.0 / self.b) + (1.0 - 1.0 / self.a) * hb - (self.a * self.b).ln()
+        (1.0 - 1.0 / b) + (1.0 - 1.0 / a) * hb - (a * b).ln()
     }
 }
 
 impl fmt::Display for Kumaraswamy {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Kumaraswamy({}, {})", self.a, self.b)
+        let (a, b) = get_params!(self);
+
+        write!(f, "Kumaraswamy({}, {})", a, b)
     }
 }

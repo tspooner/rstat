@@ -1,21 +1,12 @@
+//! A collection of multivariate (i.e. multiple output) [distributions](trait.Distribution.html).
 pub use crate::statistics::MultivariateMoments as Moments;
 
 // Continuous:
-mod normal;
-pub use self::normal::*;
+pub mod normal;
 
-mod normal_biv;
-pub use self::normal_biv::*;
+pub mod lognormal;
 
-mod normal_diag;
-pub use self::normal_diag::*;
-
-mod lognormal;
-pub use self::lognormal::*;
-
-mod dirichlet;
-pub use self::dirichlet::*;
+pub mod dirichlet;
 
 // Discrete:
-mod multinomial;
-pub use self::multinomial::*;
+pub mod multinomial;

@@ -2,7 +2,6 @@ use crate::{
     consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -15,40 +14,36 @@ const EXCESS_KURTOSIS: f64 =
     1.5 * PI2 - 6.0 * PI + 16.0 / FOUR_MINUS_PI_OVER_2 / FOUR_MINUS_PI_OVER_2;
 const KURTOSIS: f64 = EXCESS_KURTOSIS + 3.0;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Rayleigh {
-    pub sigma: f64,
+pub use crate::params::Shape;
+
+new_dist!(Rayleigh<Shape<f64>>);
+
+macro_rules! get_sigma {
+    ($self:ident) => { ($self.0).0 }
 }
 
 impl Rayleigh {
-    pub fn new(sigma: f64) -> Result<Rayleigh, Error> {
-        let sigma = assert_constraint!(sigma+)?;
-
-        Ok(Rayleigh::new_unchecked(sigma))
+    pub fn new(sigma: f64) -> Result<Rayleigh, failure::Error> {
+        Ok(Rayleigh(Shape::new(sigma)?))
     }
 
     pub fn new_unchecked(sigma: f64) -> Rayleigh {
-        Rayleigh { sigma }
-    }
-}
-
-impl Default for Rayleigh {
-    fn default() -> Rayleigh {
-        Rayleigh { sigma: 1.0 }
+        Rayleigh(Shape(sigma))
     }
 }
 
 impl Distribution for Rayleigh {
     type Support = PositiveReals;
+    type Params = Shape<f64>;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
-        let sigma2 = self.sigma * self.sigma;
+    fn params(&self) -> Shape<f64> { self.0 }
 
-        Probability::new_unchecked(1.0 - (-x * x / sigma2 / 2.0).exp())
+    fn cdf(&self, x: &f64) -> Probability {
+        let sigma = get_sigma!(self);
+
+        Probability::new_unchecked(1.0 - (-x * x / sigma * sigma / 2.0).exp())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -57,33 +52,28 @@ impl Distribution for Rayleigh {
 }
 
 impl ContinuousDistribution for Rayleigh {
-    fn pdf(&self, x: f64) -> f64 {
-        let sigma2 = self.sigma * self.sigma;
+    fn pdf(&self, x: &f64) -> f64 {
+        let sigma = get_sigma!(self);
+        let sigma2 = sigma * sigma;
 
         x / sigma2 * (-x * x / sigma2 / 2.0).exp()
     }
 }
 
 impl UnivariateMoments for Rayleigh {
-    fn mean(&self) -> f64 {
-        self.sigma * PI_OVER_2.sqrt()
-    }
+    fn mean(&self) -> f64 { get_sigma!(self) * PI_OVER_2.sqrt() }
 
     fn variance(&self) -> f64 {
-        FOUR_MINUS_PI_OVER_2 * self.sigma * self.sigma
+        let sigma = get_sigma!(self);
+
+        FOUR_MINUS_PI_OVER_2 * sigma * sigma
     }
 
-    fn skewness(&self) -> f64 {
-        TWO_PI_MINUS_3 * PI.sqrt() / FOUR_MINUS_PI.powf(THREE_HALVES)
-    }
+    fn skewness(&self) -> f64 { TWO_PI_MINUS_3 * PI.sqrt() / FOUR_MINUS_PI.powf(THREE_HALVES) }
 
-    fn kurtosis(&self) -> f64 {
-        KURTOSIS
-    }
+    fn kurtosis(&self) -> f64 { KURTOSIS }
 
-    fn excess_kurtosis(&self) -> f64 {
-        EXCESS_KURTOSIS
-    }
+    fn excess_kurtosis(&self) -> f64 { EXCESS_KURTOSIS }
 }
 
 impl Quantiles for Rayleigh {
@@ -92,13 +82,13 @@ impl Quantiles for Rayleigh {
     }
 
     fn median(&self) -> f64 {
-        self.sigma * (2.0 * 2.0f64.ln()).sqrt()
+        get_sigma!(self) * (2.0 * 2.0f64.ln()).sqrt()
     }
 }
 
 impl Modes for Rayleigh {
     fn modes(&self) -> Vec<f64> {
-        vec![self.sigma]
+        vec![get_sigma!(self)]
     }
 }
 
@@ -108,12 +98,12 @@ impl Entropy for Rayleigh {
 
         let gamma = -(1.0f64.digamma());
 
-        1.0 + (self.sigma / 2.0f64.sqrt()).ln() + gamma / 2.0
+        1.0 + (get_sigma!(self) / 2.0f64.sqrt()).ln() + gamma / 2.0
     }
 }
 
 impl fmt::Display for Rayleigh {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Rayleigh({})", self.sigma)
+        write!(f, "Rayleigh({})", get_sigma!(self))
     }
 }

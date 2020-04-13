@@ -1,51 +1,53 @@
-use crate::prelude::*;
-use failure::Error;
+use crate::{params::{Shape, Rate}, prelude::*};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Erlang {
-    pub k: usize,
-    pub lambda: f64,
+params! {
+    Params {
+        k: Shape<usize>,
+        lambda: Rate<f64>
+    }
+}
+
+new_dist!(Erlang<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.k.0, $self.0.lambda.0) }
 }
 
 impl Erlang {
-    pub fn new(k: usize, lambda: f64) -> Result<Erlang, Error> {
-        let k = assert_constraint!(k > 0)?;
-        let lambda = assert_constraint!(lambda+)?;
-
-        Ok(Erlang::new_unchecked(k, lambda))
+    pub fn new(mu: usize, s: f64) -> Result<Erlang, failure::Error> {
+        Params::new(mu, s).map(|p| Erlang(p))
     }
 
-    pub fn new_unchecked(k: usize, lambda: f64) -> Erlang {
-        Erlang { k, lambda }
+    pub fn new_unchecked(mu: usize, s: f64) -> Erlang {
+        Erlang(Params::new_unchecked(mu, s))
     }
 
-    pub fn mu(&self) -> f64 {
-        1.0 / self.lambda
-    }
+    #[inline(always)]
+    pub fn mu(&self) -> f64 { 1.0 / self.0.lambda.0 }
 }
 
 impl Default for Erlang {
-    fn default() -> Erlang {
-        Erlang { k: 1, lambda: 1.0 }
-    }
+    fn default() -> Erlang { Erlang(Params::new_unchecked(1, 1.0)) }
 }
 
 impl Distribution for Erlang {
     type Support = PositiveReals;
+    type Params = Params;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked(
-            (self.k as f64).gammainc(self.lambda * x) / (self.k as f64).factorial()
-        )
+        let (k, lambda) = get_params!(self);
+        let k = k as f64;
+
+        Probability::new_unchecked(k.gammainc(lambda * x) / k.factorial())
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -54,40 +56,49 @@ impl Distribution for Erlang {
 }
 
 impl ContinuousDistribution for Erlang {
-    fn pdf(&self, x: f64) -> f64 {
+    fn pdf(&self, x: &f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        self.lambda.powi(self.k as i32) * x.powi(self.k as i32 - 1) * (-self.lambda * x).exp()
-            / (self.k as f64).factorial()
+        let (k, lambda) = get_params!(self);
+
+        lambda.powi(k as i32) * x.powi(k as i32 - 1) * (-lambda * x).exp() / (k as f64).factorial()
     }
 }
 
 impl UnivariateMoments for Erlang {
     fn mean(&self) -> f64 {
-        self.k as f64 / self.lambda
+        let (k, lambda) = get_params!(self);
+
+        k as f64 / lambda
     }
 
     fn variance(&self) -> f64 {
-        self.k as f64 / self.lambda / self.lambda
+        let (k, lambda) = get_params!(self);
+
+        k as f64 / lambda / lambda
     }
 
     fn skewness(&self) -> f64 {
-        2.0 / (self.k as f64).sqrt()
+        2.0 / (self.0.k.0 as f64).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        6.0 / self.k as f64
+        6.0 / self.0.k.0 as f64
     }
 }
 
 impl Modes for Erlang {
     fn modes(&self) -> Vec<f64> {
-        vec![(self.k - 1) as f64 / self.lambda]
+        let (k, lambda) = get_params!(self);
+
+        vec![(k - 1) as f64 / lambda]
     }
 }
 
 impl fmt::Display for Erlang {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Erlang({})", self.k)
+        let (k, lambda) = get_params!(self);
+
+        write!(f, "Erlang({}, {})", k, lambda)
     }
 }

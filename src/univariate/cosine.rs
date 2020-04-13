@@ -2,31 +2,37 @@ use crate::{
     consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2},
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Cosine {
-    pub mu: f64,
-    pub s: f64,
+locscale_params! {
+    Params {
+        mu<f64>,
+        s<f64>
+    }
+}
+
+new_dist!(Cosine<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.mu.0, $self.0.s.0) }
 }
 
 impl Cosine {
-    pub fn new(mu: f64, s: f64) -> Result<Cosine, Error> {
-        let s = assert_constraint!(s+)?;
-
-        Ok(Cosine::new_unchecked(mu, s))
+    pub fn new(mu: f64, s: f64) -> Result<Cosine, failure::Error> {
+        Params::new(mu, s).map(|p| Cosine(p))
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Cosine {
-        Cosine { mu, s }
+        Cosine(Params::new_unchecked(mu, s))
     }
 
     #[inline]
     fn z(&self, x: f64) -> f64 {
-        (x - self.mu) / self.s
+        let (mu, s) = get_params!(self);
+
+        (x - mu) / s
     }
 
     #[inline]
@@ -37,13 +43,18 @@ impl Cosine {
 
 impl Distribution for Cosine {
     type Support = Interval;
+    type Params = Params;
 
     fn support(&self) -> Interval {
-        Interval::bounded(self.mu - self.s, self.mu + self.s)
+        let (mu, s) = get_params!(self);
+
+        Interval::bounded(mu - s, mu + s)
     }
 
-    fn cdf(&self, x: f64) -> Probability {
-        let z = self.z(x);
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        let z = self.z(*x);
 
         Probability::new_unchecked(0.5 * (1.0 + z + ONE_OVER_PI * (z * PI).sin()))
     }
@@ -54,18 +65,16 @@ impl Distribution for Cosine {
 }
 
 impl ContinuousDistribution for Cosine {
-    fn pdf(&self, x: f64) -> f64 {
-        0.5 * self.hvc(x)
-    }
+    fn pdf(&self, x: &f64) -> f64 { 0.5 * self.hvc(*x) }
 }
 
 impl UnivariateMoments for Cosine {
-    fn mean(&self) -> f64 {
-        self.mu
-    }
+    fn mean(&self) -> f64 { self.0.mu.0 }
 
     fn variance(&self) -> f64 {
-        self.s * self.s * (ONE_THIRD - TWO_OVER_PI2)
+        let s = self.0.s.0;
+
+        s * s * (ONE_THIRD - TWO_OVER_PI2)
     }
 
     fn skewness(&self) -> f64 {
@@ -84,19 +93,17 @@ impl Quantiles for Cosine {
         unimplemented!()
     }
 
-    fn median(&self) -> f64 {
-        self.mu
-    }
+    fn median(&self) -> f64 { self.0.mu.0 }
 }
 
 impl Modes for Cosine {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.mu]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
 impl fmt::Display for Cosine {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Cosine({}, {})", self.mu, self.s)
+        let (mu, s) = get_params!(self);
+
+        write!(f, "Cosine({}, {})", mu, s)
     }
 }

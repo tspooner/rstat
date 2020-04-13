@@ -1,48 +1,51 @@
 use crate::prelude::*;
-use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct BetaPrime {
-    pub alpha: f64,
-    pub beta: f64,
+shape_params! {
+    Params<f64> {
+        alpha,
+        beta
+    }
+}
+
+new_dist!(BetaPrime<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
 }
 
 impl BetaPrime {
-    pub fn new(alpha: f64, beta: f64) -> Result<BetaPrime, Error> {
-        let alpha = assert_constraint!(alpha+)?;
-        let beta = assert_constraint!(beta+)?;
-
-        Ok(BetaPrime::new_unchecked(alpha, beta))
+    pub fn new(alpha: f64, beta: f64) -> Result<BetaPrime, failure::Error> {
+        Params::new(alpha, beta).map(|p| BetaPrime(p))
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> BetaPrime {
-        BetaPrime { alpha, beta }
+        BetaPrime(Params::new_unchecked(alpha, beta))
     }
 }
 
 impl Default for BetaPrime {
     fn default() -> BetaPrime {
-        BetaPrime {
-            alpha: 1.0,
-            beta: 1.0,
-        }
+        BetaPrime(Params::new_unchecked(1.0, 1.0))
     }
 }
 
 impl Distribution for BetaPrime {
     type Support = PositiveReals;
+    type Params = Params;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked((x / (1.0 + x)).betainc(self.alpha, self.beta))
+        let (alpha, beta) = get_params!(self);
+
+        Probability::new_unchecked((x / (1.0 + x)).betainc(alpha, beta))
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
@@ -51,11 +54,13 @@ impl Distribution for BetaPrime {
 }
 
 impl ContinuousDistribution for BetaPrime {
-    fn pdf(&self, x: f64) -> f64 {
+    fn pdf(&self, x: &f64) -> f64 {
         use special_fun::FloatSpecial;
 
-        let numerator = x.powf(self.alpha - 1.0) * (1.0 + x).powf(-self.alpha - self.beta);
-        let denominator = self.alpha.beta(self.beta);
+        let (a, b) = get_params!(self);
+
+        let numerator = x.powf(a - 1.0) * (1.0 + x).powf(-a - b);
+        let denominator = a.beta(b);
 
         numerator / denominator
     }
@@ -63,40 +68,45 @@ impl ContinuousDistribution for BetaPrime {
 
 impl UnivariateMoments for BetaPrime {
     fn mean(&self) -> f64 {
-        if self.beta <= 1.0 {
-            unimplemented!("Mean is undefined for values of beta <= 1.")
+        let (a, b) = get_params!(self);
+
+        if b <= 1.0 {
+            undefined!("mean is undefined for values of beta <= 1.")
         }
 
-        self.alpha / (self.beta - 1.0)
+        a / (b - 1.0)
     }
 
     fn variance(&self) -> f64 {
-        if self.beta <= 2.0 {
-            unimplemented!("Variance is undefined for values of beta <= 2.")
+        let (a, b) = get_params!(self);
+
+        if b <= 2.0 {
+            undefined!("variance is undefined for values of beta <= 2.")
         }
 
-        let bm1 = self.beta - 1.0;
+        let bm1 = b - 1.0;
 
-        self.alpha * (self.alpha + bm1) / (self.beta - 2.0) / bm1 / bm1
+        a * (a + bm1) / (b - 2.0) / bm1 / bm1
     }
 
     fn skewness(&self) -> f64 {
-        if self.beta <= 3.0 {
-            unimplemented!("Skewness is undefined for values of beta <= 3.")
+        let (a, b) = get_params!(self);
+
+        if b <= 3.0 {
+            undefined!("skewness is undefined for values of beta <= 3.")
         }
 
-        let bm1 = self.beta - 1.0;
+        let bm1 = b - 1.0;
 
-        2.0 * (2.0 * self.alpha + bm1) / (self.beta - 3.0)
-            * ((self.beta - 2.0) / (self.alpha * (self.alpha + bm1))).sqrt()
+        2.0 * (2.0 * a + bm1) / (b - 3.0) * ((b - 2.0) / (a * (a + bm1))).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        let bm1 = self.beta - 1.0;
+        let (a, b) = get_params!(self);
+        let bm1 = b - 1.0;
 
-        let numerator =
-            6.0 * (self.alpha + bm1) * (5.0 * self.beta - 11.0) + bm1 * bm1 * (self.beta - 2.0);
-        let denominator = self.alpha * (self.alpha + bm1) * (self.beta - 3.0) * (self.beta - 4.0);
+        let numerator = 6.0 * (a + bm1) * (5.0 * b - 11.0) + bm1 * bm1 * (b - 2.0);
+        let denominator = a * (a + bm1) * (b - 3.0) * (b - 4.0);
 
         numerator / denominator
     }
@@ -104,8 +114,10 @@ impl UnivariateMoments for BetaPrime {
 
 impl Modes for BetaPrime {
     fn modes(&self) -> Vec<f64> {
-        if self.alpha >= 1.0 {
-            vec![(self.alpha - 1.0) / (self.beta + 1.0)]
+        let (a, b) = get_params!(self);
+
+        if a >= 1.0 {
+            vec![(a - 1.0) / (b + 1.0)]
         } else {
             vec![0.0]
         }
@@ -116,17 +128,20 @@ impl Entropy for BetaPrime {
     fn entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
-        let apb = self.alpha + self.beta;
+        let (a, b) = get_params!(self);
+        let apb = a + b;
 
-        self.alpha.logbeta(self.beta)
-            - (self.alpha - 1.0) * self.alpha.digamma()
-            - (self.beta - 1.0) * self.beta.digamma()
+        a.logbeta(b)
+            - (a - 1.0) * a.digamma()
+            - (b - 1.0) * b.digamma()
             + (apb - 2.0) * apb.digamma()
     }
 }
 
 impl fmt::Display for BetaPrime {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "BetaPrime({}, {})", self.alpha, self.beta)
+        let (alpha, beta) = get_params!(self);
+
+        write!(f, "BetaPrime({}, {})", alpha, beta)
     }
 }

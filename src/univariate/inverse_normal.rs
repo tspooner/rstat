@@ -1,75 +1,87 @@
 use crate::{
     consts::{PI_2, PI_E_2},
+    params::Shape,
     prelude::*,
+    univariate::{normal, uniform::Uniform},
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
-use super::{Gaussian, Uniform};
+
+params! {
+    Params {
+        mu: Shape<f64>,
+        lambda: Shape<f64>
+    }
+}
 
 pub type InvGaussian = InvNormal;
 
 #[derive(Debug, Clone, Copy)]
 pub struct InvNormal {
-    pub mu: f64,
-    pub lambda: f64,
+    params: Params,
+    std_norm: normal::Normal,
+}
 
-    sdg: Gaussian,
+macro_rules! get_params {
+    ($self:ident) => { ($self.params.mu.0, $self.params.lambda.0) }
 }
 
 impl InvNormal {
-    pub fn new(mu: f64, lambda: f64) -> Result<InvNormal, Error> {
-        let mu = assert_constraint!(mu+)?;
-        let lambda = assert_constraint!(lambda+)?;
-
-        Ok(InvNormal::new_unchecked(mu, lambda))
+    pub fn new(mu: f64, lambda: f64) -> Result<InvNormal, failure::Error> {
+        Params::new(mu, lambda).map(|p| InvNormal {
+            params: p,
+            std_norm: normal::Normal::standard(),
+        })
     }
 
     pub fn new_unchecked(mu: f64, lambda: f64) -> InvNormal {
-        InvNormal { mu, lambda, sdg: Gaussian::standard() }
+        InvNormal {
+            params: Params::new_unchecked(mu, lambda),
+            std_norm: normal::Normal::standard(),
+        }
     }
 }
 
-impl Default for InvNormal {
-    fn default() -> InvNormal {
+impl From<Params> for InvNormal {
+    fn from(params: Params) -> InvNormal {
         InvNormal {
-            mu: 1.0,
-            lambda: 1.0,
-            sdg: Gaussian::standard(),
+            params,
+            std_norm: normal::Normal(normal::Params::new_unchecked(0.0, 1.0)),
         }
     }
 }
 
 impl Distribution for InvNormal {
     type Support = PositiveReals;
+    type Params = Params;
 
-    fn support(&self) -> PositiveReals {
-        PositiveReals
-    }
+    fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn cdf(&self, x: f64) -> Probability {
-        let xom = x / self.mu;
-        let lox_sqrt = (self.lambda / x).sqrt();
+    fn params(&self) -> Params { self.params }
 
-        let term1 = self.sdg.cdf(lox_sqrt * (xom - 1.0)).unwrap();
+    fn cdf(&self, x: &f64) -> Probability {
+        let (mu, lambda) = get_params!(self);
+
+        let xom = x / mu;
+        let lox_sqrt = (lambda / x).sqrt();
+        let inner_term = lox_sqrt * (xom - 1.0);
+
+        let term1 = self.std_norm.cdf(&inner_term).unwrap();
         let term2 =
-            (2.0 * self.lambda / self.mu).exp()
-            * self.sdg.cdf(-lox_sqrt * (xom + 1.0)).unwrap();
+            (2.0 * lambda / mu).exp()
+            * self.std_norm.cdf(&(&inner_term)).unwrap();
 
         Probability::new_unchecked(term1 + term2)
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        let mu = self.mu;
-        let lambda = self.lambda;
+        let (mu, lambda) = get_params!(self);
 
-        let nu = Gaussian::standard().sample(rng);
+        let nu = self.std_norm.sample(rng);
 
         let y = nu * nu;
-        let x =
-            mu +
-            mu * mu * y / 2.0 / self.lambda -
+        let x = mu + mu * mu * y / 2.0 / lambda -
             mu / 2.0 / lambda * (4.0 * mu * lambda * y + mu * mu * y * y).sqrt();
 
         let z = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
@@ -79,40 +91,47 @@ impl Distribution for InvNormal {
 }
 
 impl ContinuousDistribution for InvNormal {
-    fn pdf(&self, x: f64) -> f64 {
-        let z = (self.lambda / PI_2 / x / x / x).sqrt();
+    fn pdf(&self, x: &f64) -> f64 {
+        let (mu, lambda) = get_params!(self);
+        let z = (lambda / PI_2 / x / x / x).sqrt();
 
-        let diff = x - self.mu;
-        let exponent = (-self.lambda * diff * diff) / 2.0 / self.mu / self.mu / x;
+        let diff = x - mu;
+        let exponent = (-lambda * diff * diff) / 2.0 / mu / mu / x;
 
         z * exponent.exp()
     }
 }
 
 impl UnivariateMoments for InvNormal {
-    fn mean(&self) -> f64 {
-        self.mu
-    }
+    fn mean(&self) -> f64 { self.params.mu.0 }
 
     fn variance(&self) -> f64 {
-        self.mu * self.mu * self.mu / self.lambda
+        let (mu, lambda) = get_params!(self);
+
+        mu * mu * mu / lambda
     }
 
     fn skewness(&self) -> f64 {
-        3.0 * (self.mu / self.lambda).sqrt()
+        let (mu, lambda) = get_params!(self);
+
+        3.0 * (mu / lambda).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        16.0 * self.mu / self.lambda
+        let (mu, lambda) = get_params!(self);
+
+        16.0 * mu / lambda
     }
 }
 
 impl Modes for InvNormal {
     fn modes(&self) -> Vec<f64> {
-        let term1 = (1.0 + 9.0 * self.mu * self.mu / 4.0 / self.lambda / self.lambda).sqrt();
-        let term2 = 3.0 * self.mu / 2.0 / self.lambda;
+        let (mu, lambda) = get_params!(self);
 
-        vec![self.mu * (term1 - term2)]
+        let term1 = (1.0 + 9.0 * mu * mu / 4.0 / lambda / lambda).sqrt();
+        let term2 = 3.0 * mu / 2.0 / lambda;
+
+        vec![mu * (term1 - term2)]
     }
 }
 
@@ -124,6 +143,8 @@ impl Entropy for InvNormal {
 
 impl fmt::Display for InvNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "IG({}, {})", self.mu, self.lambda)
+        let (mu, lambda) = get_params!(self);
+
+        write!(f, "IG({}, {})", mu, lambda)
     }
 }

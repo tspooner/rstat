@@ -1,121 +1,87 @@
+//! A collection of univariate (i.e. scalar output) [distributions](trait.Distribution.html).
 pub use crate::statistics::UnivariateMoments as Moments;
 
 #[inline]
 pub(self) fn factorial(n: u64) -> u64 { (2..n).product() }
 
 #[inline]
-pub(self) fn choose(n: u64, k: u64) -> u64 { (1..k).fold(n, |acc, i| acc * (n - i)) / factorial(k) }
+pub(self) fn choose(n: u64, k: u64) -> u64 {
+    (1..k).fold(n, |acc, i| acc * (n - i)) / factorial(k)
+}
 
 // Miscellaneous:
-mod uniform;
-pub use self::uniform::*;
+pub mod uniform;
 
-mod degenerate;
-pub use self::degenerate::*;
+pub mod degenerate;
 
 // Continuous:
-// mod arcsine;
-// pub use self::arcsine::*;
+pub mod arcsine;
 
-// mod beta;
-// pub use self::beta::*;
+pub mod beta;
 
-mod beta_prime;
-pub use self::beta_prime::*;
+pub mod beta_prime;
 
-mod cauchy;
-pub use self::cauchy::*;
+pub mod cauchy;
 
-mod chi;
-pub use self::chi::*;
+pub mod chi;
 
-mod chi_sq;
-pub use self::chi_sq::*;
+pub mod chi_sq;
 
-mod cosine;
-pub use self::cosine::*;
+pub mod cosine;
 
-mod erlang;
-pub use self::erlang::*;
+pub mod erlang;
 
-mod exponential;
-pub use self::exponential::*;
+pub mod exponential;
 
-mod f_dist;
-pub use self::f_dist::*;
+pub mod f_dist;
 
-mod folded_normal;
-pub use self::folded_normal::*;
+pub mod folded_normal;
 
-mod frechet;
-pub use self::frechet::*;
+pub mod frechet;
 
-mod gamma;
-pub use self::gamma::*;
+pub mod gamma;
 
-mod gev;
-pub use self::gev::*;
+pub mod gev;
 
-mod gpd;
-pub use self::gpd::*;
+pub mod gpd;
 
-mod gumbel;
-pub use self::gumbel::*;
+pub mod gumbel;
 
-mod inverse_gamma;
-pub use self::inverse_gamma::*;
+pub mod inverse_gamma;
 
-mod inverse_normal;
-pub use self::inverse_normal::*;
+pub mod inverse_normal;
 
-mod kumaraswamy;
-pub use self::kumaraswamy::*;
+pub mod kumaraswamy;
 
-mod laplace;
-pub use self::laplace::*;
+pub mod laplace;
 
-mod levy;
-pub use self::levy::*;
+pub mod levy;
 
-mod logistic;
-pub use self::logistic::*;
+pub mod logistic;
 
-mod lognormal;
-pub use self::lognormal::*;
+pub mod lognormal;
 
-mod normal;
-pub use self::normal::*;
+pub mod normal;
 
-mod pareto;
-pub use self::pareto::*;
+pub mod pareto;
 
-mod rayleigh;
-pub use self::rayleigh::*;
+pub mod rayleigh;
 
-mod student_t;
-pub use self::student_t::*;
+pub mod student_t;
 
-mod triangular;
-pub use self::triangular::*;
+pub mod triangular;
 
-mod weibull;
-pub use self::weibull::*;
+pub mod weibull;
 
 // Discrete:
-mod bernoulli;
-pub use self::bernoulli::*;
+pub mod bernoulli;
 
-mod beta_binomial;
-pub use self::beta_binomial::*;
+pub mod beta_binomial;
 
-mod binomial;
-pub use self::binomial::*;
+pub mod binomial;
 
-mod categorical;
-pub use self::categorical::*;
+pub mod categorical;
 
-mod geometric;
-pub use self::geometric::*;
+pub mod geometric;
 
-mod poisson;
-pub use self::poisson::*;
+pub mod poisson;

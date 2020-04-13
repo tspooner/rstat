@@ -1,9 +1,8 @@
 use crate::{
     consts::{NINE_FIFTHS, SIX_FIFTHS},
+    params::{Loc, Scale},
     prelude::*,
-    constraints::{self, Constraint},
 };
-use failure::Error;
 use rand::Rng;
 use spaces::{
     real::Interval as RealInterval,
@@ -11,44 +10,65 @@ use spaces::{
 };
 use std::fmt;
 
+#[cfg_attr(any(feature = "test", feature = "serde"), derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy)]
-pub struct Uniform<T> {
-    loc: T,
-    scale: T,
+pub struct Params<T: num::Zero + num::One + PartialOrd + Copy> {
+    pub lb: Loc<T>,
+    pub width: Scale<T>,
+}
+
+impl<T: num::Zero + num::One + PartialOrd + Copy> Params<T> {
+    pub fn new(lb: T, width: T) -> Result<Params<T>, failure::Error>
+    where
+        T: fmt::Debug + fmt::Display + Send + Sync + 'static,
+    {
+        Ok(Params {
+            lb: Loc::new(lb)?,
+            width: Scale::new(width)?,
+        })
+    }
+
+    pub fn new_unchecked(lb: T, width: T) -> Params<T> {
+        Params {
+            lb: Loc(lb),
+            width: Scale(width),
+        }
+    }
+
+    #[inline(always)] pub fn lb(&self) -> &Loc<T> { &self.lb }
+
+    #[inline(always)] pub fn width(&self) -> &Scale<T> { &self.width }
+}
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.params.lb.0, $self.params.lb.0 + $self.params.width.0) }
+}
+
+#[derive(Debug, Clone, Copy)]
+pub struct Uniform<T: num::Zero + num::One + PartialOrd + Copy> {
+    params: Params<T>,
     prob: f64,
-}
-
-impl<T> Into<rand_distr::Uniform<T>> for Uniform<T>
-where
-    T: rand_distr::uniform::SampleUniform + Clone + std::ops::Add<Output = T>,
-{
-    fn into(self) -> rand_distr::Uniform<T> {
-        rand_distr::Uniform::new(self.loc.clone(), self.loc.clone() + self.scale.clone())
-    }
-}
-
-impl<T> Into<rand_distr::Uniform<T>> for &Uniform<T>
-where
-    T: rand_distr::uniform::SampleUniform + Clone + std::ops::Add<Output = T>,
-{
-    fn into(self) -> rand_distr::Uniform<T> {
-        rand_distr::Uniform::new(self.loc.clone(), self.loc.clone() + self.scale.clone())
-    }
 }
 
 // Continuous:
 impl Uniform<f64> {
-    pub fn new(loc: f64, scale: f64) -> Result<Uniform<f64>, Error> {
-        let scale = constraints::Positive.check(scale)?;
-
-        Ok(Uniform::new_unchecked(loc, scale))
+    pub fn new(lb: f64, width: f64) -> Result<Uniform<f64>, failure::Error> {
+        Params::new(lb, width).map(|p| Uniform {
+            prob: 1.0 / p.width.0,
+            params: p,
+        })
     }
 
-    pub fn new_unchecked(loc: f64, scale: f64) -> Uniform<f64> {
+    pub fn new_unchecked(lb: f64, width: f64) -> Uniform<f64> {
+        Params::new_unchecked(lb, width).into()
+    }
+}
+
+impl From<Params<f64>> for Uniform<f64> {
+    fn from(params: Params<f64>) -> Uniform<f64> {
         Uniform {
-            loc,
-            scale,
-            prob: 1.0 / scale,
+            prob: 1.0 / params.width.0,
+            params,
         }
     }
 }
@@ -56,8 +76,7 @@ impl Uniform<f64> {
 impl Default for Uniform<f64> {
     fn default() -> Uniform<f64> {
         Uniform {
-            loc: 0.0,
-            scale: 1.0,
+            params: Params::new_unchecked(0.0, 1.0),
             prob: 1.0,
         }
     }
@@ -65,33 +84,44 @@ impl Default for Uniform<f64> {
 
 impl Distribution for Uniform<f64> {
     type Support = RealInterval;
+    type Params = Params<f64>;
 
     fn support(&self) -> RealInterval {
-        RealInterval::bounded(self.loc, self.loc + self.scale)
+        let (lb, ub) = get_params!(self);
+
+        RealInterval::bounded(lb, ub)
     }
 
-    fn cdf(&self, x: f64) -> Probability {
-        if x < self.loc {
+    fn params(&self) -> Params<f64> { self.params }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        let x = *x;
+        let (lb, ub) = get_params!(self);
+
+        if x < lb {
             Probability::zero()
-        } else if x >= (self.loc + self.scale) {
+        } else if x >= ub {
             Probability::one()
         } else {
-            Probability::new_unchecked((x - self.loc) * self.prob)
+            Probability::new_unchecked((x - lb) * self.prob)
         }
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Uniform<f64> = self.into();
+        let (lb, ub) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Uniform::new_inclusive(lb, ub).sample(rng)
     }
 }
 
 impl ContinuousDistribution for Uniform<f64> {
-    fn pdf(&self, x: f64) -> f64 {
-        if x < self.loc || x > (self.loc + self.scale) {
+    fn pdf(&self, x: &f64) -> f64 {
+        let x = *x;
+        let (lb, ub) = get_params!(self);
+
+        if x < lb || x > ub {
             0.0
         } else {
             self.prob
@@ -101,93 +131,115 @@ impl ContinuousDistribution for Uniform<f64> {
 
 impl UnivariateMoments for Uniform<f64> {
     fn mean(&self) -> f64 {
-        self.loc + self.scale / 2.0
+        self.params.lb.0 + self.params.width.0 / 2.0
     }
 
     fn variance(&self) -> f64 {
-        self.scale * self.scale / 12.0
+        let width = self.params.width.0;
+
+        width * width / 12.0
     }
 
-    fn skewness(&self) -> f64 {
-        0.0
-    }
+    fn skewness(&self) -> f64 { 0.0 }
 
-    fn kurtosis(&self) -> f64 {
-        NINE_FIFTHS
-    }
+    fn kurtosis(&self) -> f64 { NINE_FIFTHS }
 
-    fn excess_kurtosis(&self) -> f64 {
-        -SIX_FIFTHS
-    }
+    fn excess_kurtosis(&self) -> f64 { -SIX_FIFTHS }
 }
 
 impl Quantiles for Uniform<f64> {
     fn quantile(&self, p: Probability) -> f64 {
-        self.loc + p * self.scale
+        self.params.lb.0 + p * self.params.width.0
     }
 
     fn median(&self) -> f64 {
-        self.loc + self.scale / 2.0
+        self.params.lb.0 + self.params.width.0 / 2.0
     }
 }
 
 impl Entropy for Uniform<f64> {
     fn entropy(&self) -> f64 {
-        self.scale.ln()
+        self.params.width.0.ln()
     }
 }
 
 impl fmt::Display for Uniform<f64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "U({}, {})", self.loc, self.loc + self.scale)
+        let (lb, ub) = get_params!(self);
+
+        write!(f, "U({}, {})", lb, ub)
     }
 }
 
 // Discrete:
 impl Uniform<i64> {
-    pub fn new(loc: i64, scale: u64) -> Uniform<i64> {
-        Uniform {
-            loc,
-            scale: scale as i64,
-            prob: 1.0 / (scale + 1) as f64
-        }
+    pub fn new(lb: i64, width: u64) -> Result<Uniform<i64>, failure::Error> {
+        Params::new(lb, width as i64).map(|p| Uniform {
+            prob: 1.0 / (p.width.0 + 1) as f64,
+            params: p,
+        })
     }
 
-    #[inline]
-    pub fn span(&self) -> u64 {
-        (self.scale + 1) as u64
+    pub fn new_unchecked(lb: i64, width: u64) -> Uniform<i64> {
+        Params::new_unchecked(lb, width as i64).into()
     }
 }
 
+impl From<Params<i64>> for Uniform<i64> {
+    fn from(params: Params<i64>) -> Uniform<i64> {
+        Uniform {
+            prob: 1.0 / (params.width.0 + 1) as f64,
+            params,
+        }
+    }
+}
+
+impl Uniform<i64> {
+    #[inline]
+    pub fn span(&self) -> u64 { (self.params.width.0 + 1) as u64 }
+}
+
+
 impl Distribution for Uniform<i64> {
     type Support = DiscreteInterval;
+    type Params = Params<i64>;
 
     fn support(&self) -> DiscreteInterval {
-        DiscreteInterval::bounded(self.loc, self.loc + self.scale)
+        let (lb, ub) = get_params!(self);
+
+        DiscreteInterval::bounded(lb, ub)
     }
 
-    fn cdf(&self, k: i64) -> Probability {
-        if k < self.loc {
+    fn params(&self) -> Params<i64> { self.params }
+
+    fn cdf(&self, k: &i64) -> Probability {
+        let k = *k;
+        let (lb, ub) = get_params!(self);
+
+        if k < lb {
             Probability::zero()
-        } else if k >= self.loc + self.scale {
+        } else if k >= ub {
             Probability::one()
         } else {
-            Probability::new_unchecked((k - self.loc + 1) as f64 * self.prob)
+            Probability::new_unchecked((k - lb + 1) as f64 * self.prob)
         }
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> i64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Uniform<i64> = self.into();
+        let (lb, ub) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Uniform::new_inclusive(lb, ub).sample(rng)
     }
 }
 
 impl DiscreteDistribution for Uniform<i64> {
-    fn pmf(&self, x: i64) -> Probability {
-        if x < self.loc || x > self.loc + self.scale {
+    fn pmf(&self, x: &i64) -> Probability {
+        let x = *x;
+        let (lb, ub) = get_params!(self);
+
+        if x < lb || x > ub {
             Probability::zero()
         } else {
             Probability::new_unchecked(self.prob)
@@ -197,7 +249,7 @@ impl DiscreteDistribution for Uniform<i64> {
 
 impl UnivariateMoments for Uniform<i64> {
     fn mean(&self) -> f64 {
-        self.loc as f64 + self.scale as f64 / 2.0
+        self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0
     }
 
     fn variance(&self) -> f64 {
@@ -220,24 +272,24 @@ impl Quantiles for Uniform<i64> {
     fn quantile(&self, p: Probability) -> f64 {
         let n = self.span() as f64;
 
-        self.loc as f64 + (p * n).floor()
+        self.params.lb.0 as f64 + (p * n).floor()
     }
 
     fn median(&self) -> f64 {
-        self.loc as f64 + self.scale as f64 / 2.0
+        self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0
     }
 }
 
 impl Entropy for Uniform<i64> {
     fn entropy(&self) -> f64 {
-        let n = (self.scale + 1) as f64;
-
-        n.ln()
+        ((self.params.width.0 + 1) as f64).ln()
     }
 }
 
 impl fmt::Display for Uniform<i64> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "U{{{}, {}}}", self.loc, self.loc + self.scale)
+        let (lb, ub) = get_params!(self);
+
+        write!(f, "U{{{}, {}}}", lb, ub)
     }
 }

@@ -1,79 +1,68 @@
 use crate::{
-    Convolution, ConvolutionResult,
     consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
     fitting::MLE,
     prelude::*,
 };
-use failure::Error;
 use ndarray::Array2;
 use rand::Rng;
 use spaces::discrete::Naturals;
 use std::fmt;
 use super::factorial;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Poisson {
-    pub lambda: f64,
+pub use crate::params::Rate;
+
+new_dist!(Poisson<Rate<f64>>);
+
+macro_rules! get_lambda {
+    ($self:ident) => { ($self.0).0 }
 }
 
 impl Poisson {
-    pub fn new(lambda: f64) -> Result<Poisson, Error> {
-        let lambda = assert_constraint!(lambda+)?;
-
-        Ok(Poisson::new_unchecked(lambda))
+    pub fn new(lambda: f64) -> Result<Poisson, failure::Error> {
+        Ok(Poisson(Rate::new(lambda)?))
     }
 
     pub fn new_unchecked(lambda: f64) -> Poisson {
-        Poisson { lambda }
-    }
-}
-
-impl Into<rand_distr::Poisson<f64>> for Poisson {
-    fn into(self) -> rand_distr::Poisson<f64> {
-        rand_distr::Poisson::new(self.lambda).unwrap()
-    }
-}
-
-impl Into<rand_distr::Poisson<f64>> for &Poisson {
-    fn into(self) -> rand_distr::Poisson<f64> {
-        rand_distr::Poisson::new(self.lambda).unwrap()
+        Poisson(Rate(lambda))
     }
 }
 
 impl Distribution for Poisson {
     type Support = Naturals;
+    type Params = Rate<f64>;
 
     fn support(&self) -> Naturals { Naturals }
 
-    fn cdf(&self, _: u64) -> Probability {
+    fn params(&self) -> Rate<f64> { self.0 }
+
+    fn cdf(&self, _: &u64) -> Probability {
         unimplemented!()
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Poisson<f64> = self.into();
-
-        sampler.sample(rng)
+        rand_distr::Poisson::<f64>::new(get_lambda!(self)).unwrap().sample(rng)
     }
 }
 
 impl DiscreteDistribution for Poisson {
-    fn pmf(&self, k: u64) -> Probability {
-        let p = self.lambda.powi(k as i32) * (-self.lambda).exp() / factorial(k) as f64;
+    fn pmf(&self, k: &u64) -> Probability {
+        let l = get_lambda!(self);
+        let p = l.powi(*k as i32) * l.exp() / factorial(*k) as f64;
 
         Probability::new_unchecked(p)
     }
 }
 
 impl UnivariateMoments for Poisson {
-    fn mean(&self) -> f64 { self.lambda }
+    fn mean(&self) -> f64 { get_lambda!(self) }
 
-    fn variance(&self) -> f64 { self.lambda }
+    fn variance(&self) -> f64 { get_lambda!(self) }
 
-    fn skewness(&self) -> f64 { self.lambda.powf(-ONE_HALF) }
+    fn skewness(&self) -> f64 { get_lambda!(self).powf(-ONE_HALF) }
 
-    fn kurtosis(&self) -> f64 { 1.0 / self.lambda }
+    fn kurtosis(&self) -> f64 { 1.0 / get_lambda!(self) }
 }
 
 impl Quantiles for Poisson {
@@ -82,51 +71,51 @@ impl Quantiles for Poisson {
     }
 
     fn median(&self) -> f64 {
-        (self.lambda + ONE_THIRD - 0.02 / self.lambda).floor()
+        let l = get_lambda!(self);
+
+        (l + ONE_THIRD - 0.02 / l).floor()
     }
 }
 
 impl Modes for Poisson {
     fn modes(&self) -> Vec<u64> {
-        vec![self.lambda.floor() as u64]
+        vec![get_lambda!(self).floor() as u64]
     }
 }
 
 impl Entropy for Poisson {
     fn entropy(&self) -> f64 {
-        (PI_E_2 * self.lambda).ln() / 2.0 -
-            ONE_TWELTH / self.lambda -
-            ONE_TWENTY_FOURTH / self.lambda / self.lambda -
-            NINETEEN_OVER_360 / self.lambda / self.lambda / self.lambda
+        let l = get_lambda!(self);
+
+        (PI_E_2 * l).ln() / 2.0 - ONE_TWELTH / l -
+            ONE_TWENTY_FOURTH / l / l - NINETEEN_OVER_360 / l / l / l
     }
 }
 
 impl FisherInformation for Poisson {
     fn fisher_information(&self) -> Array2<f64> {
-        Array2::from_elem((1, 1), self.lambda)
+        Array2::from_elem((1, 1), get_lambda!(self))
     }
 }
 
 impl Convolution<Poisson> for Poisson {
-    fn convolve(self, rv: Poisson) -> ConvolutionResult<Poisson> {
-        Self::convolve_pair(self, rv)
-    }
+    type Output = Poisson;
 
-    fn convolve_pair(a: Poisson, b: Poisson) -> ConvolutionResult<Poisson> {
-        Ok(Poisson::new_unchecked(a.lambda + b.lambda))
+    fn convolve(self, rv: Poisson) -> Result<Poisson, failure::Error> {
+        Ok(Poisson(Rate(get_lambda!(self) + get_lambda!(rv))))
     }
 }
 
 impl MLE for Poisson {
-    fn fit_mle(xs: Vec<u64>) -> Self {
+    fn fit_mle(xs: &[u64]) -> Result<Self, failure::Error> {
         let n = xs.len() as f64;
 
-        Poisson::new_unchecked(xs.into_iter().fold(0.0, |acc, x| acc + x as f64) as f64 / n)
+        Poisson::new(xs.iter().fold(0.0, |acc, &x| acc + x as f64) as f64 / n)
     }
 }
 
 impl fmt::Display for Poisson {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Poi({})", self.lambda)
+        write!(f, "Poi({})", get_lambda!(self))
     }
 }

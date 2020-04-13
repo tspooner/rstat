@@ -1,128 +1,134 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
+    params::{Loc, Scale},
     prelude::*,
 };
-use failure::Error;
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
-#[derive(Debug, Clone, Copy)]
-pub struct Triangular {
-    pub a: f64,
-    pub b: f64,
-    pub c: f64,
+params! {
+    Params {
+        a: Loc<f64>,
+        a2c: Scale<f64>,
+        c2b: Scale<f64>
+    }
+}
+
+impl Params {
+    pub fn symmetric(a: f64, b: f64) -> Result<Params, failure::Error> {
+        let d = (b - a) / 2.0;
+
+        Params::new(a, d, d)
+    }
+
+    #[inline(always)]
+    pub fn c(&self) -> f64 { self.a.0 + self.a2c.0 }
+
+    #[inline(always)]
+    pub fn b(&self) -> f64 { self.c() + self.c2b.0 }
+}
+
+new_dist!(Triangular<Params>);
+
+macro_rules! get_params {
+    ($self:ident) => { ($self.0.a.0, $self.0.b(), $self.0.c()) }
 }
 
 impl Triangular {
-    pub fn new(a: f64, b: f64, c: f64) -> Result<Triangular, Error> {
-        let a = assert_constraint!(a <= b)?;
-        let b = assert_constraint!(b <= c)?;
-
-        Ok(Triangular::new_unchecked(a, b, c))
+    pub fn new(a: f64, a2c: f64, c2b: f64) -> Result<Triangular, failure::Error> {
+        Params::new(a, a2c, c2b).map(|p| Triangular(p))
     }
 
-    pub fn new_unchecked(a: f64, b: f64, c: f64) -> Triangular {
-        Triangular { a, b, c }
-    }
-
-    pub fn symmetric(a: f64, b: f64) -> Result<Triangular, Error> {
-        Triangular::new(a, b, (a + b) / 2.0)
-    }
-}
-
-impl Into<rand_distr::Triangular<f64>> for Triangular {
-    fn into(self) -> rand_distr::Triangular<f64> {
-        rand_distr::Triangular::new(self.a, self.b, self.c).unwrap()
-    }
-}
-
-impl Into<rand_distr::Triangular<f64>> for &Triangular {
-    fn into(self) -> rand_distr::Triangular<f64> {
-        rand_distr::Triangular::new(self.a, self.b, self.c).unwrap()
+    pub fn new_unchecked(a: f64, a2c: f64, c2b: f64) -> Triangular {
+        Triangular(Params::new_unchecked(a, a2c, c2b))
     }
 }
 
 impl Distribution for Triangular {
     type Support = Interval;
+    type Params = Params;
 
-    fn support(&self) -> Interval {
-        Interval::bounded(self.a, self.b)
-    }
+    fn support(&self) -> Interval { Interval::bounded(self.0.a.0, self.0.b()) }
 
-    fn cdf(&self, x: f64) -> Probability {
-        if x <= self.a {
-            Probability::zero()
-        } else if x <= self.c {
-            Probability::new_unchecked(
-                (x - self.a) * (x - self.a) / (self.b - self.a) / (self.c - self.a)
-            )
-        } else if x <= self.b {
-            Probability::new_unchecked(
-                1.0 - (self.b - x) * (self.b - x) / (self.b - self.a) / (self.b - self.c)
-            )
-        } else {
-            Probability::one()
+    fn params(&self) -> Params { self.0 }
+
+    fn cdf(&self, x: &f64) -> Probability {
+        let (a, b, c) = get_params!(self);
+
+        match *x {
+            x if x <= a => Probability::zero(),
+
+            x if x <= c => Probability::new_unchecked(
+                (x - a) * (x - a) / (b - a) / (c - a)
+            ),
+
+            x if x <= b => Probability::new_unchecked(
+                1.0 - (b - x) * (b - x) / (b - a) / (b - c)
+            ),
+
+            _ => Probability::one(),
         }
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
-        use rand_distr::Distribution;
+        use rand_distr::Distribution as _;
 
-        let sampler: rand_distr::Triangular<f64> = self.into();
+        let (a, b, c) = get_params!(self);
 
-        sampler.sample(rng)
+        rand_distr::Triangular::new(a, b, c).unwrap().sample(rng)
     }
 }
 
 impl ContinuousDistribution for Triangular {
-    fn pdf(&self, x: f64) -> f64 {
-        if x <= self.a {
-            0.0
-        } else if x < self.c {
-            2.0 * (x - self.a) / (self.b - self.a) / (self.c - self.a)
-        } else if (x - self.c).abs() < 1e-7 {
-            2.0 / (self.b - self.a)
-        } else if x <= self.b {
-            2.0 * (self.b - x) / (self.b - self.a) / (self.b - self.c)
-        } else {
-            0.0
+    fn pdf(&self, x: &f64) -> f64 {
+        let (a, b, c) = get_params!(self);
+
+        match *x {
+            x if x <= a => 0.0,
+
+            x if (x - c).abs() < 1e-7 => 2.0 / (b - a),
+
+            x if x < c => 2.0 * (x - a) / (b - a) / (c - a),
+
+            x if x <= b => 2.0 * (b - x) / (b - a) / (b - c),
+
+            _ => 0.0,
         }
     }
 }
 
 impl UnivariateMoments for Triangular {
     fn mean(&self) -> f64 {
-        (self.a + self.b + self.c) / 2.0
+        let (a, b, c) = get_params!(self);
+
+        (a + b + c) / 2.0
     }
 
     fn variance(&self) -> f64 {
-        let sq_terms = self.a * self.a + self.b * self.b + self.c * self.c;
-        let cross_terms = self.a * self.b + self.a * self.c + self.b * self.c;
+        let (a, b, c) = get_params!(self);
+
+        let sq_terms = a * a + b * b + c * c;
+        let cross_terms = a * b + a * c + b * c;
 
         (sq_terms - cross_terms) / 18.0
     }
 
     fn skewness(&self) -> f64 {
-        let sq_terms = self.a * self.a + self.b * self.b + self.c * self.c;
-        let cross_terms = self.a * self.b + self.a * self.c + self.b * self.c;
+        let (a, b, c) = get_params!(self);
 
-        let numerator = 2.0f64.sqrt()
-            * (self.a + self.b - 2.0 * self.c)
-            * (2.0 * self.a - self.b - self.c)
-            * (self.a - 2.0 * self.b + self.c);
+        let sq_terms = a * a + b * b + c * c;
+        let cross_terms = a * b + a * c + b * c;
+
+        let numerator = 2.0f64.sqrt() * (a + b - 2.0 * c) * (2.0 * a - b - c) * (a - 2.0 * b + c);
         let denominator = 5.0 * (sq_terms - cross_terms).powf(THREE_HALVES);
 
         numerator / denominator
     }
 
-    fn kurtosis(&self) -> f64 {
-        TWELVE_FIFTHS
-    }
+    fn kurtosis(&self) -> f64 { TWELVE_FIFTHS }
 
-    fn excess_kurtosis(&self) -> f64 {
-        -THREE_FIFTHS
-    }
+    fn excess_kurtosis(&self) -> f64 { -THREE_FIFTHS }
 }
 
 impl Quantiles for Triangular {
@@ -131,30 +137,34 @@ impl Quantiles for Triangular {
     }
 
     fn median(&self) -> f64 {
-        let midpoint = (self.a + self.b) / 2.0;
+        let (a, b, c) = get_params!(self);
 
-        if self.c >= midpoint {
-            self.a + ((self.b - self.a) * (self.c - self.a) / 2.0).sqrt()
+        let midpoint = (a + b) / 2.0;
+
+        if c >= midpoint {
+            a + ((b - a) * (c - a) / 2.0).sqrt()
         } else {
-            self.b - ((self.b - self.a) * (self.b - self.c) / 2.0).sqrt()
+            b - ((b - a) * (b - c) / 2.0).sqrt()
         }
     }
 }
 
 impl Modes for Triangular {
     fn modes(&self) -> Vec<f64> {
-        vec![self.c]
+        vec![self.0.c()]
     }
 }
 
 impl Entropy for Triangular {
     fn entropy(&self) -> f64 {
-        1.0 + ((self.b - self.a) / 2.0).ln()
+        1.0 + ((self.0.b() - self.0.a.0) / 2.0).ln()
     }
 }
 
 impl fmt::Display for Triangular {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Triangular({}, {}, {})", self.a, self.b, self.c)
+        let (a, b, c) = get_params!(self);
+
+        write!(f, "Triangular({}, {}, {})", a, b, c)
     }
 }

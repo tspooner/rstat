@@ -1,6 +1,9 @@
 use ndarray::{s, Array1, Array2};
 
+/// Type alias for 1-dimensional arrays.
 pub type Vector<T> = Array1<T>;
+
+/// Type alias for 2-dimensional arrays.
 pub type Matrix<T> = Array2<T>;
 
 /// Perform a Cholesky decomposition.

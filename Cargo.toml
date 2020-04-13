@@ -15,10 +15,11 @@ documentation = "https://docs.rs/rstat"
 
 edition = "2018"
 
+[package.metadata.docs.rs]
+rustdoc-args = [ "--html-in-header", "katex.html" ]
+
 [features]
 default = []
-
-backend = ["ndarray-linalg"]
 
 [dependencies]
 failure = "0.1"
@@ -27,11 +28,11 @@ rand = "0.7"
 rand_distr = "0.2"
 
 num = "0.2"
-spaces = "5.0"
 special-fun = "0.2"
+
+spaces = "5.0"
 
 ndarray = "0.13"
 ndarray-linalg = { version = "0.12", optional = true }
 
-[dev-dependencies]
-ndarray-linalg = { version = "0.12", features = ["openblas"] }
+serde = { version = "1.0", optional = true, default-features = false, features = ["derive"] }

@@ -1,4 +1,8 @@
-use crate::{fitting::MLE, prelude::*};
+use crate::{
+    fitting::MLE,
+    prelude::*,
+    univariate::binomial::Binomial,
+};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
@@ -13,34 +17,33 @@ pub struct Bernoulli {
 
 impl Bernoulli {
     pub fn new(p: Probability) -> Bernoulli {
+        let pf64 = p.unwrap();
+
         Bernoulli {
             p: p,
             q: !p,
 
-            variance: (p * !p).into(),
+            variance: pf64 * (1.0 - pf64),
         }
     }
 }
 
-impl Into<rand_distr::Bernoulli> for Bernoulli {
-    fn into(self) -> rand_distr::Bernoulli {
-        rand_distr::Bernoulli::new(self.p.unwrap()).unwrap()
-    }
-}
-
-impl Into<rand_distr::Bernoulli> for &Bernoulli {
-    fn into(self) -> rand_distr::Bernoulli {
-        rand_distr::Bernoulli::new(self.p.unwrap()).unwrap()
+impl From<Probability> for Bernoulli {
+    fn from(p: Probability) -> Bernoulli {
+        Bernoulli::new(p)
     }
 }
 
 impl Distribution for Bernoulli {
     type Support = Binary;
+    type Params = Probability;
 
     fn support(&self) -> Binary { Binary }
 
-    fn cdf(&self, k: bool) -> Probability {
-        if k { Probability::one() } else { Probability::zero() }
+    fn params(&self) -> Probability { self.p }
+
+    fn cdf(&self, k: &bool) -> Probability {
+        if *k { Probability::one() } else { Probability::zero() }
     }
 
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
@@ -49,7 +52,7 @@ impl Distribution for Bernoulli {
 }
 
 impl DiscreteDistribution for Bernoulli {
-    fn pmf(&self, k: bool) -> Probability {
+    fn pmf(&self, k: &bool) -> Probability {
         match k {
             true => self.p,
             false => self.q,
@@ -123,14 +126,27 @@ impl FisherInformation for Bernoulli {
     }
 }
 
-impl MLE for Bernoulli {
-    fn fit_mle(xs: Vec<bool>) -> Self {
-        let n = xs.len() as f64;
-        let p = Probability::new_unchecked(
-            xs.into_iter().fold(0, |acc, x| acc + x as u64) as f64 / n
-        );
+impl Convolution<Bernoulli> for Bernoulli {
+    type Output = Binomial;
 
-        Bernoulli::new(p)
+    fn convolve(self, rv: Bernoulli) -> Result<Binomial, failure::Error> {
+        let p1 = self.p;
+        let p2 = rv.p;
+
+        assert_constraint!(p1 == p2)?;
+
+        Ok(Binomial::new_unchecked(2, self.p))
+    }
+}
+
+impl MLE for Bernoulli {
+    fn fit_mle(xs: &[bool]) -> Result<Self, failure::Error> {
+        let n = xs.len() as f64;
+        let p = Probability::new(
+            xs.iter().fold(0, |acc, &x| acc + x as u64) as f64 / n
+        )?;
+
+        Ok(Bernoulli::new(p))
     }
 }
 
