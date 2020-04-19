@@ -16,7 +16,7 @@ rstat = "0.4"
 ```
 
 ### Feature `serde`
-`rstat` support serialisation via the `serde` feature. This activates both
+`rstat` supports serialisation via the `serde` feature. This activates both
 `serde` itself, `ndarray/serde` and `spaces/serialize`.
 
 ## Contributing
