@@ -5,8 +5,12 @@ use rand::Rng;
 use spaces::{discrete::Ordinal, ProductSpace};
 use std::fmt;
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Params {
     pub n: Count<usize>,
     pub ps: SimplexVector,

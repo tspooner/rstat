@@ -3,8 +3,12 @@ use failure::{Error, Fail};
 use rand::Rng;
 use spaces::{Space, Union};
 
-#[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
 #[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Params<CP> {
     pub ps: SimplexVector,
     pub component_params: Vec<CP>,

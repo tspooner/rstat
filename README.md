@@ -8,11 +8,16 @@
 > Probability distributions and _statistics_ in Rust with
 > integrated _fitting_ routines, _convolution_ support and _mixtures_.
 
-## Installation
+## Usage
+Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
 rstat = "0.4"
 ```
+
+### Feature `serde`
+`rstat` support serialisation via the `serde` feature. This activates both
+`serde` itself, `ndarray/serde` and `spaces/serialize`.
 
 ## Contributing
 Pull requests are welcome. For major changes, please open an issue first to

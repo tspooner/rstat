@@ -3,7 +3,6 @@ use super::{
     Param,
 };
 use crate::linalg::Vector;
-use num::{Integer, One, Signed, Unsigned, Zero};
 
 #[macro_export]
 macro_rules! param {

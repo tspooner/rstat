@@ -1,8 +1,5 @@
 use crate::{
-    params::{
-        constraints::{self, Constraints, UnsatisfiedConstraintError},
-        Param,
-    },
+    params::{constraints::Constraints, Param},
     univariate::uniform::Uniform,
     Distribution,
     Probability,
@@ -13,6 +10,11 @@ use std::ops;
 
 /// Utility for sampling from a unit \\(K\\)-simplex.
 #[derive(Clone, Copy, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct UnitSimplex(usize);
 
 impl UnitSimplex {
@@ -78,6 +80,11 @@ pub enum SimplexError {
 /// Probability vector constrainted to the [unit
 /// simplex](struct.UnitSimplex.html).
 #[derive(Clone, Debug)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct SimplexVector(Vec<f64>);
 
 impl SimplexVector {

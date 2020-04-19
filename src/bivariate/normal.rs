@@ -116,7 +116,7 @@ impl Distribution for Normal {
 
     fn params(&self) -> Params { self.0 }
 
-    fn cdf(&self, x: &[f64; 2]) -> Probability { unimplemented!() }
+    fn cdf(&self, _: &[f64; 2]) -> Probability { unimplemented!() }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> [f64; 2] {
         let z1: f64 = rng.sample(RandSN);
