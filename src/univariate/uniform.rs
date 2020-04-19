@@ -1,33 +1,40 @@
 use crate::{
     consts::{NINE_FIFTHS, SIX_FIFTHS},
-    params::{Loc, Scale},
+    params::{
+        constraints::{All, Constraint, Positive, UnsatisfiedConstraintError},
+        Loc,
+        Scale,
+    },
     prelude::*,
 };
 use rand::Rng;
-use spaces::{
-    real::Interval as RealInterval,
-    discrete::Interval as DiscreteInterval,
-};
+use spaces::{discrete::Interval as DiscreteInterval, real::Interval as RealInterval};
 use std::fmt;
 
-#[cfg_attr(any(feature = "test", feature = "serde"), derive(Serialize, Deserialize))]
 #[derive(Debug, Clone, Copy)]
-pub struct Params<T: num::Zero + num::One + PartialOrd + Copy> {
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+pub struct Params<T> {
     pub lb: Loc<T>,
     pub width: Scale<T>,
 }
 
-impl<T: num::Zero + num::One + PartialOrd + Copy> Params<T> {
-    pub fn new(lb: T, width: T) -> Result<Params<T>, failure::Error>
-    where
-        T: fmt::Debug + fmt::Display + Send + Sync + 'static,
-    {
+impl<T> Params<T>
+where All<Positive>: Constraint<T>
+{
+    pub fn new(lb: T, width: T) -> Result<Params<T>, UnsatisfiedConstraintError<T>>
+    where T: fmt::Debug {
         Ok(Params {
             lb: Loc::new(lb)?,
             width: Scale::new(width)?,
         })
     }
+}
 
+impl<T> Params<T> {
     pub fn new_unchecked(lb: T, width: T) -> Params<T> {
         Params {
             lb: Loc(lb),
@@ -35,24 +42,32 @@ impl<T: num::Zero + num::One + PartialOrd + Copy> Params<T> {
         }
     }
 
-    #[inline(always)] pub fn lb(&self) -> &Loc<T> { &self.lb }
+    #[inline(always)]
+    pub fn lb(&self) -> &Loc<T> { &self.lb }
 
-    #[inline(always)] pub fn width(&self) -> &Scale<T> { &self.width }
+    #[inline(always)]
+    pub fn width(&self) -> &Scale<T> { &self.width }
 }
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.params.lb.0, $self.params.lb.0 + $self.params.width.0) }
+    ($self:ident) => {
+        ($self.params.lb.0, $self.params.lb.0 + $self.params.width.0)
+    };
 }
 
 #[derive(Debug, Clone, Copy)]
-pub struct Uniform<T: num::Zero + num::One + PartialOrd + Copy> {
+pub struct Uniform<T>
+where
+    Loc<T>: Param,
+    Scale<T>: Param,
+{
     params: Params<T>,
     prob: f64,
 }
 
 // Continuous:
 impl Uniform<f64> {
-    pub fn new(lb: f64, width: f64) -> Result<Uniform<f64>, failure::Error> {
+    pub fn new(lb: f64, width: f64) -> Result<Uniform<f64>, UnsatisfiedConstraintError<f64>> {
         Params::new(lb, width).map(|p| Uniform {
             prob: 1.0 / p.width.0,
             params: p,
@@ -130,9 +145,7 @@ impl ContinuousDistribution for Uniform<f64> {
 }
 
 impl UnivariateMoments for Uniform<f64> {
-    fn mean(&self) -> f64 {
-        self.params.lb.0 + self.params.width.0 / 2.0
-    }
+    fn mean(&self) -> f64 { self.params.lb.0 + self.params.width.0 / 2.0 }
 
     fn variance(&self) -> f64 {
         let width = self.params.width.0;
@@ -148,19 +161,13 @@ impl UnivariateMoments for Uniform<f64> {
 }
 
 impl Quantiles for Uniform<f64> {
-    fn quantile(&self, p: Probability) -> f64 {
-        self.params.lb.0 + p * self.params.width.0
-    }
+    fn quantile(&self, p: Probability) -> f64 { self.params.lb.0 + p * self.params.width.0 }
 
-    fn median(&self) -> f64 {
-        self.params.lb.0 + self.params.width.0 / 2.0
-    }
+    fn median(&self) -> f64 { self.params.lb.0 + self.params.width.0 / 2.0 }
 }
 
-impl Entropy for Uniform<f64> {
-    fn entropy(&self) -> f64 {
-        self.params.width.0.ln()
-    }
+impl ShannonEntropy for Uniform<f64> {
+    fn shannon_entropy(&self) -> f64 { self.params.width.0.ln() }
 }
 
 impl fmt::Display for Uniform<f64> {
@@ -173,7 +180,7 @@ impl fmt::Display for Uniform<f64> {
 
 // Discrete:
 impl Uniform<i64> {
-    pub fn new(lb: i64, width: u64) -> Result<Uniform<i64>, failure::Error> {
+    pub fn new(lb: i64, width: u64) -> Result<Uniform<i64>, UnsatisfiedConstraintError<i64>> {
         Params::new(lb, width as i64).map(|p| Uniform {
             prob: 1.0 / (p.width.0 + 1) as f64,
             params: p,
@@ -198,7 +205,6 @@ impl Uniform<i64> {
     #[inline]
     pub fn span(&self) -> u64 { (self.params.width.0 + 1) as u64 }
 }
-
 
 impl Distribution for Uniform<i64> {
     type Support = DiscreteInterval;
@@ -248,9 +254,7 @@ impl DiscreteDistribution for Uniform<i64> {
 }
 
 impl UnivariateMoments for Uniform<i64> {
-    fn mean(&self) -> f64 {
-        self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0
-    }
+    fn mean(&self) -> f64 { self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0 }
 
     fn variance(&self) -> f64 {
         let n = self.span() as f64;
@@ -275,15 +279,11 @@ impl Quantiles for Uniform<i64> {
         self.params.lb.0 as f64 + (p * n).floor()
     }
 
-    fn median(&self) -> f64 {
-        self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0
-    }
+    fn median(&self) -> f64 { self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0 }
 }
 
-impl Entropy for Uniform<i64> {
-    fn entropy(&self) -> f64 {
-        ((self.params.width.0 + 1) as f64).ln()
-    }
+impl ShannonEntropy for Uniform<i64> {
+    fn shannon_entropy(&self) -> f64 { ((self.params.width.0 + 1) as f64).ln() }
 }
 
 impl fmt::Display for Uniform<i64> {

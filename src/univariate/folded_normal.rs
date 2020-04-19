@@ -17,7 +17,9 @@ locscale_params! {
 new_dist!(FoldedNormal<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.sigma.0)
+    };
 }
 
 impl FoldedNormal {
@@ -33,9 +35,7 @@ impl FoldedNormal {
         FoldedNormal(Params::new_unchecked(0.0, scale.0))
     }
 
-    pub fn standard() -> FoldedNormal {
-        FoldedNormal(Params::new_unchecked(0.0, 1.0))
-    }
+    pub fn standard() -> FoldedNormal { FoldedNormal(Params::new_unchecked(0.0, 1.0)) }
 
     #[inline(always)]
     pub fn precision(&self) -> f64 {
@@ -63,10 +63,9 @@ impl Distribution for FoldedNormal {
         let (mu, sigma) = get_params!(self);
         let sqrt_2: f64 = 2.0f64.sqrt();
 
-        Probability::new_unchecked(0.5 * (
-            ((x + mu) / sigma / sqrt_2).erf() +
-            ((x - mu) / sigma / sqrt_2).erf()
-        ))
+        Probability::new_unchecked(
+            0.5 * (((x + mu) / sigma / sqrt_2).erf() + ((x - mu) / sigma / sqrt_2).erf()),
+        )
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -74,7 +73,10 @@ impl Distribution for FoldedNormal {
 
         let (mu, sigma) = get_params!(self);
 
-        rand_distr::Normal::new(mu, sigma).unwrap().sample(rng).abs()
+        rand_distr::Normal::new(mu, sigma)
+            .unwrap()
+            .sample(rng)
+            .abs()
     }
 }
 
@@ -118,7 +120,11 @@ impl Modes for FoldedNormal {
     fn modes(&self) -> Vec<f64> {
         let (mu, sigma) = get_params!(self);
 
-        if mu < sigma { vec![0.0] } else { vec![mu] }
+        if mu < sigma {
+            vec![0.0]
+        } else {
+            vec![mu]
+        }
     }
 }
 

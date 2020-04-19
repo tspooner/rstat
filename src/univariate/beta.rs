@@ -13,7 +13,9 @@ shape_params! {
 new_dist!(Beta<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
+    ($self:ident) => {
+        ($self.0.alpha.0, $self.0.beta.0)
+    };
 }
 
 impl Beta {
@@ -27,9 +29,7 @@ impl Beta {
 }
 
 impl Default for Beta {
-    fn default() -> Beta {
-        Beta(Params::new_unchecked(1.0, 1.0))
-    }
+    fn default() -> Beta { Beta(Params::new_unchecked(1.0, 1.0)) }
 }
 
 impl Distribution for Beta {
@@ -105,9 +105,7 @@ impl UnivariateMoments for Beta {
 }
 
 impl Quantiles for Beta {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (a, b) = get_params!(self);
@@ -144,16 +142,14 @@ impl Modes for Beta {
     }
 }
 
-impl Entropy for Beta {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Beta {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (a, b) = get_params!(self);
         let apb = a + b;
 
-        a.logbeta(b)
-            - (a - 1.0) * a.digamma()
-            - (b - 1.0) * b.digamma()
+        a.logbeta(b) - (a - 1.0) * a.digamma() - (b - 1.0) * b.digamma()
             + (apb - 2.0) * apb.digamma()
     }
 }

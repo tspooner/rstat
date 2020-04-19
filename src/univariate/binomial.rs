@@ -1,14 +1,9 @@
-use crate::{
-    consts::PI_E,
-    params::Count,
-    prelude::*,
-    univariate::bernoulli::Bernoulli,
-};
+use super::choose;
+use crate::{consts::PI_E, params::Count, prelude::*, univariate::bernoulli::Bernoulli};
 use ndarray::Array2;
 use rand;
 use spaces::discrete::Ordinal;
 use std::fmt;
-use super::choose;
 
 params! {
     Params {
@@ -24,7 +19,9 @@ pub struct Binomial {
 }
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.params.n.0, $self.params.p) }
+    ($self:ident) => {
+        ($self.params.n.0, $self.params.p)
+    };
 }
 
 impl Binomial {
@@ -44,9 +41,7 @@ impl Binomial {
 }
 
 impl From<Params> for Binomial {
-    fn from(params: Params) -> Binomial {
-        Binomial::new_unchecked(params.n.0, params.p)
-    }
+    fn from(params: Params) -> Binomial { Binomial::new_unchecked(params.n.0, params.p) }
 }
 
 impl Distribution for Binomial {
@@ -104,9 +99,7 @@ impl UnivariateMoments for Binomial {
         p * q * n as f64
     }
 
-    fn skewness(&self) -> f64 {
-        (1.0 - self.params.p * 2.0) / self.variance().sqrt()
-    }
+    fn skewness(&self) -> f64 { (1.0 - self.params.p * 2.0) / self.variance().sqrt() }
 
     fn kurtosis(&self) -> f64 {
         let (n, p) = get_params!(self);
@@ -117,13 +110,9 @@ impl UnivariateMoments for Binomial {
 }
 
 impl Quantiles for Binomial {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
-    fn median(&self) -> f64 {
-        self.mean().round()
-    }
+    fn median(&self) -> f64 { self.mean().round() }
 }
 
 impl Modes for Binomial {
@@ -134,10 +123,8 @@ impl Modes for Binomial {
     }
 }
 
-impl Entropy for Binomial {
-    fn entropy(&self) -> f64 {
-        (2.0 * PI_E * self.variance()).log2() / 2.0
-    }
+impl ShannonEntropy for Binomial {
+    fn shannon_entropy(&self) -> f64 { (2.0 * PI_E * self.variance()).log2() / 2.0 }
 }
 
 impl FisherInformation for Binomial {

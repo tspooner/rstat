@@ -16,8 +16,12 @@ pub use self::common::*;
 #[macro_export]
 macro_rules! params {
     (@munch () -> {$(#[$attr:meta])* $name:ident $(($id:ident: $ty:ident<$($ity:ident),*>))*}) => {
-        #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
         #[derive(Debug, Clone)]
+        #[cfg_attr(
+            feature = "serde",
+            derive(Serialize, Deserialize),
+            serde(crate = "serde_crate")
+        )]
         $(#[$attr])*
         pub struct $name {
             $(pub $id: $ty<$($ity),*>),*

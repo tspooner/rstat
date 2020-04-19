@@ -24,7 +24,9 @@ pub struct InvNormal {
 }
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.params.mu.0, $self.params.lambda.0) }
+    ($self:ident) => {
+        ($self.params.mu.0, $self.params.lambda.0)
+    };
 }
 
 impl InvNormal {
@@ -68,9 +70,7 @@ impl Distribution for InvNormal {
         let inner_term = lox_sqrt * (xom - 1.0);
 
         let term1 = self.std_norm.cdf(&inner_term).unwrap();
-        let term2 =
-            (2.0 * lambda / mu).exp()
-            * self.std_norm.cdf(&(&inner_term)).unwrap();
+        let term2 = (2.0 * lambda / mu).exp() * self.std_norm.cdf(&(&inner_term)).unwrap();
 
         Probability::new_unchecked(term1 + term2)
     }
@@ -81,12 +81,16 @@ impl Distribution for InvNormal {
         let nu = self.std_norm.sample(rng);
 
         let y = nu * nu;
-        let x = mu + mu * mu * y / 2.0 / lambda -
-            mu / 2.0 / lambda * (4.0 * mu * lambda * y + mu * mu * y * y).sqrt();
+        let x = mu + mu * mu * y / 2.0 / lambda
+            - mu / 2.0 / lambda * (4.0 * mu * lambda * y + mu * mu * y * y).sqrt();
 
         let z = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
 
-        if z < mu / (mu + x) { x } else { mu * mu / x }
+        if z < mu / (mu + x) {
+            x
+        } else {
+            mu * mu / x
+        }
     }
 }
 
@@ -135,10 +139,8 @@ impl Modes for InvNormal {
     }
 }
 
-impl Entropy for InvNormal {
-    fn entropy(&self) -> f64 {
-        (PI_E_2 * self.variance()).ln() / 2.0
-    }
+impl ShannonEntropy for InvNormal {
+    fn shannon_entropy(&self) -> f64 { (PI_E_2 * self.variance()).ln() / 2.0 }
 }
 
 impl fmt::Display for InvNormal {

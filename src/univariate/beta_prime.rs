@@ -13,7 +13,9 @@ shape_params! {
 new_dist!(BetaPrime<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
+    ($self:ident) => {
+        ($self.0.alpha.0, $self.0.beta.0)
+    };
 }
 
 impl BetaPrime {
@@ -27,9 +29,7 @@ impl BetaPrime {
 }
 
 impl Default for BetaPrime {
-    fn default() -> BetaPrime {
-        BetaPrime(Params::new_unchecked(1.0, 1.0))
-    }
+    fn default() -> BetaPrime { BetaPrime(Params::new_unchecked(1.0, 1.0)) }
 }
 
 impl Distribution for BetaPrime {
@@ -48,9 +48,7 @@ impl Distribution for BetaPrime {
         Probability::new_unchecked((x / (1.0 + x)).betainc(alpha, beta))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for BetaPrime {
@@ -124,16 +122,14 @@ impl Modes for BetaPrime {
     }
 }
 
-impl Entropy for BetaPrime {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for BetaPrime {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (a, b) = get_params!(self);
         let apb = a + b;
 
-        a.logbeta(b)
-            - (a - 1.0) * a.digamma()
-            - (b - 1.0) * b.digamma()
+        a.logbeta(b) - (a - 1.0) * a.digamma() - (b - 1.0) * b.digamma()
             + (apb - 2.0) * apb.digamma()
     }
 }

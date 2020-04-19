@@ -16,7 +16,9 @@ locscale_params! {
 new_dist!(Cauchy<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.x0.0, $self.0.gamma.0) }
+    ($self:ident) => {
+        ($self.0.x0.0, $self.0.gamma.0)
+    };
 }
 
 impl Cauchy {
@@ -29,9 +31,7 @@ impl Cauchy {
     }
 
     #[inline(always)]
-    pub fn fwhm(&self) -> f64 {
-        2.0 * self.0.gamma.0
-    }
+    pub fn fwhm(&self) -> f64 { 2.0 * self.0.gamma.0 }
 
     #[inline(always)]
     fn z(&self, x: f64) -> f64 {
@@ -42,9 +42,7 @@ impl Cauchy {
 }
 
 impl Default for Cauchy {
-    fn default() -> Cauchy {
-        Cauchy(Params::new_unchecked(0.0, 1.0))
-    }
+    fn default() -> Cauchy { Cauchy(Params::new_unchecked(0.0, 1.0)) }
 }
 
 impl Distribution for Cauchy {
@@ -90,8 +88,8 @@ impl Modes for Cauchy {
     fn modes(&self) -> Vec<f64> { vec![self.0.x0.0] }
 }
 
-impl Entropy for Cauchy {
-    fn entropy(&self) -> f64 { (4.0 * PI * self.0.gamma.0).ln() }
+impl ShannonEntropy for Cauchy {
+    fn shannon_entropy(&self) -> f64 { (4.0 * PI * self.0.gamma.0).ln() }
 }
 
 impl Convolution<Cauchy> for Cauchy {

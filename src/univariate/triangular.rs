@@ -32,7 +32,9 @@ impl Params {
 new_dist!(Triangular<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.a.0, $self.0.b(), $self.0.c()) }
+    ($self:ident) => {
+        ($self.0.a.0, $self.0.b(), $self.0.c())
+    };
 }
 
 impl Triangular {
@@ -59,13 +61,9 @@ impl Distribution for Triangular {
         match *x {
             x if x <= a => Probability::zero(),
 
-            x if x <= c => Probability::new_unchecked(
-                (x - a) * (x - a) / (b - a) / (c - a)
-            ),
+            x if x <= c => Probability::new_unchecked((x - a) * (x - a) / (b - a) / (c - a)),
 
-            x if x <= b => Probability::new_unchecked(
-                1.0 - (b - x) * (b - x) / (b - a) / (b - c)
-            ),
+            x if x <= b => Probability::new_unchecked(1.0 - (b - x) * (b - x) / (b - a) / (b - c)),
 
             _ => Probability::one(),
         }
@@ -132,9 +130,7 @@ impl UnivariateMoments for Triangular {
 }
 
 impl Quantiles for Triangular {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (a, b, c) = get_params!(self);
@@ -150,15 +146,11 @@ impl Quantiles for Triangular {
 }
 
 impl Modes for Triangular {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.0.c()]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.c()] }
 }
 
-impl Entropy for Triangular {
-    fn entropy(&self) -> f64 {
-        1.0 + ((self.0.b() - self.0.a.0) / 2.0).ln()
-    }
+impl ShannonEntropy for Triangular {
+    fn shannon_entropy(&self) -> f64 { 1.0 + ((self.0.b() - self.0.a.0) / 2.0).ln() }
 }
 
 impl fmt::Display for Triangular {

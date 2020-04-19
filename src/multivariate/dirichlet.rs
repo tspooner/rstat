@@ -38,9 +38,7 @@ impl Dirichlet {
 }
 
 impl From<Concentrations> for Dirichlet {
-    fn from(alphas: Concentrations) -> Dirichlet {
-        Dirichlet::new_unchecked(alphas.0)
-    }
+    fn from(alphas: Concentrations) -> Dirichlet { Dirichlet::new_unchecked(alphas.0) }
 }
 
 impl Distribution for Dirichlet {
@@ -62,26 +60,28 @@ impl Distribution for Dirichlet {
 
         let mut sum = 0.0f64;
 
-        (self.alphas.0.iter().map(|&alpha| {
-            let sample = rng.sample(GammaSampler::new(alpha, 1.0).unwrap());
-            sum += sample;
-            sample
-        }).collect::<Vector<f64>>() / sum).into_raw_vec()
+        (self
+            .alphas
+            .0
+            .iter()
+            .map(|&alpha| {
+                let sample = rng.sample(GammaSampler::new(alpha, 1.0).unwrap());
+                sum += sample;
+                sample
+            })
+            .collect::<Vector<f64>>()
+            / sum)
+            .into_raw_vec()
     }
 }
 
 impl ContinuousDistribution for Dirichlet {
-    fn pdf(&self, xs: &Vec<f64>) -> f64 {
-        self.log_pdf(xs).exp()
-    }
+    fn pdf(&self, xs: &Vec<f64>) -> f64 { self.log_pdf(xs).exp() }
 
     fn log_pdf(&self, xs: &Vec<f64>) -> f64 {
         let n = self.alphas.0.len();
 
-        assert!(
-            xs.len() == n,
-            format!("Input `xs` must have length {}.", n)
-        );
+        assert!(xs.len() == n, format!("Input `xs` must have length {}.", n));
 
         xs.iter()
             .zip(self.alphas.0.iter())
@@ -118,12 +118,14 @@ impl Modes for Dirichlet {
     fn modes(&self) -> Vec<Vec<f64>> {
         let k = self.alphas.0.len() as f64;
 
-        vec![self.alphas.0.mapv(|a| (a - 1.0) / (self.alpha0 - k)).into_raw_vec()]
+        vec![self
+            .alphas
+            .0
+            .mapv(|a| (a - 1.0) / (self.alpha0 - k))
+            .into_raw_vec()]
     }
 }
 
 impl fmt::Display for Dirichlet {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Dir({})", self.alphas.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Dir({})", self.alphas.0) }
 }

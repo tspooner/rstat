@@ -1,8 +1,4 @@
-use crate::{
-    fitting::MLE,
-    prelude::*,
-    univariate::binomial::Binomial,
-};
+use crate::{fitting::MLE, prelude::*, univariate::binomial::Binomial};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
@@ -29,9 +25,7 @@ impl Bernoulli {
 }
 
 impl From<Probability> for Bernoulli {
-    fn from(p: Probability) -> Bernoulli {
-        Bernoulli::new(p)
-    }
+    fn from(p: Probability) -> Bernoulli { Bernoulli::new(p) }
 }
 
 impl Distribution for Bernoulli {
@@ -43,12 +37,14 @@ impl Distribution for Bernoulli {
     fn params(&self) -> Probability { self.p }
 
     fn cdf(&self, k: &bool) -> Probability {
-        if *k { Probability::one() } else { Probability::zero() }
+        if *k {
+            Probability::one()
+        } else {
+            Probability::zero()
+        }
     }
 
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
-        rng.gen_bool(self.p.into())
-    }
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool { rng.gen_bool(self.p.into()) }
 }
 
 impl DiscreteDistribution for Bernoulli {
@@ -63,27 +59,17 @@ impl DiscreteDistribution for Bernoulli {
 impl UnivariateMoments for Bernoulli {
     fn mean(&self) -> f64 { self.p.into() }
 
-    fn variance(&self) -> f64 {
-        self.variance
-    }
+    fn variance(&self) -> f64 { self.variance }
 
-    fn skewness(&self) -> f64 {
-        (1.0 - 2.0 * self.p.unwrap()) / self.variance.sqrt()
-    }
+    fn skewness(&self) -> f64 { (1.0 - 2.0 * self.p.unwrap()) / self.variance.sqrt() }
 
-    fn kurtosis(&self) -> f64 {
-        1.0 / self.variance - 6.0
-    }
+    fn kurtosis(&self) -> f64 { 1.0 / self.variance - 6.0 }
 
-    fn excess_kurtosis(&self) -> f64 {
-        1.0 / self.variance - 9.0
-    }
+    fn excess_kurtosis(&self) -> f64 { 1.0 / self.variance - 9.0 }
 }
 
 impl Quantiles for Bernoulli {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         match self.p.unwrap() {
@@ -107,23 +93,21 @@ impl Modes for Bernoulli {
     }
 }
 
-impl Entropy for Bernoulli {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Bernoulli {
+    fn shannon_entropy(&self) -> f64 {
         let p: f64 = self.p.into();
         let q: f64 = self.q.into();
 
         if q.abs() < 1e-7 || (q - 1.0).abs() < 1e-7 {
             0.0
         } else {
-            -q * q.ln() - p*p.ln()
+            -q * q.ln() - p * p.ln()
         }
     }
 }
 
 impl FisherInformation for Bernoulli {
-    fn fisher_information(&self) -> Array2<f64> {
-        Array2::from_elem((1, 1), 1.0 / self.variance)
-    }
+    fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), 1.0 / self.variance) }
 }
 
 impl Convolution<Bernoulli> for Bernoulli {
@@ -142,16 +126,12 @@ impl Convolution<Bernoulli> for Bernoulli {
 impl MLE for Bernoulli {
     fn fit_mle(xs: &[bool]) -> Result<Self, failure::Error> {
         let n = xs.len() as f64;
-        let p = Probability::new(
-            xs.iter().fold(0, |acc, &x| acc + x as u64) as f64 / n
-        )?;
+        let p = Probability::new(xs.iter().fold(0, |acc, &x| acc + x as u64) as f64 / n)?;
 
         Ok(Bernoulli::new(p))
     }
 }
 
 impl fmt::Display for Bernoulli {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Ber({})", self.p)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Ber({})", self.p) }
 }

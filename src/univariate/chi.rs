@@ -1,7 +1,4 @@
-use crate::{
-    consts::THREE_HALVES,
-    prelude::*,
-};
+use crate::{consts::THREE_HALVES, prelude::*};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -11,17 +8,15 @@ pub use crate::params::DOF;
 new_dist!(Chi<DOF<usize>>);
 
 macro_rules! get_k {
-    ($self:ident) => { ($self.0).0 as f64 }
+    ($self:ident) => {
+        ($self.0).0 as f64
+    };
 }
 
 impl Chi {
-    pub fn new(dof: usize) -> Result<Chi, failure::Error> {
-        Ok(Chi(DOF::new(dof)?))
-    }
+    pub fn new(dof: usize) -> Result<Chi, failure::Error> { Ok(Chi(DOF::new(dof)?)) }
 
-    pub fn new_unchecked(dof: usize) -> Chi {
-        Chi(DOF(dof))
-    }
+    pub fn new_unchecked(dof: usize) -> Chi { Chi(DOF(dof)) }
 
     #[inline(always)]
     pub fn k(&self) -> f64 { get_k!(self) }
@@ -41,9 +36,7 @@ impl Distribution for Chi {
         Probability::new_unchecked((get_k!(self) / 2.0).gammainc(x * x / 2.0))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Chi {
@@ -92,9 +85,7 @@ impl UnivariateMoments for Chi {
 }
 
 impl Quantiles for Chi {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let k = get_k!(self);
@@ -115,8 +106,8 @@ impl Modes for Chi {
     }
 }
 
-impl Entropy for Chi {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Chi {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let k = get_k!(self);
@@ -127,7 +118,5 @@ impl Entropy for Chi {
 }
 
 impl fmt::Display for Chi {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Chi({})", self.k())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Chi({})", self.k()) }
 }

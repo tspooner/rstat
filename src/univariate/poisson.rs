@@ -1,5 +1,6 @@
+use super::factorial;
 use crate::{
-    consts::{PI_E_2, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, NINETEEN_OVER_360},
+    consts::{NINETEEN_OVER_360, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, PI_E_2},
     fitting::MLE,
     prelude::*,
 };
@@ -7,24 +8,21 @@ use ndarray::Array2;
 use rand::Rng;
 use spaces::discrete::Naturals;
 use std::fmt;
-use super::factorial;
 
 pub use crate::params::Rate;
 
 new_dist!(Poisson<Rate<f64>>);
 
 macro_rules! get_lambda {
-    ($self:ident) => { ($self.0).0 }
+    ($self:ident) => {
+        ($self.0).0
+    };
 }
 
 impl Poisson {
-    pub fn new(lambda: f64) -> Result<Poisson, failure::Error> {
-        Ok(Poisson(Rate::new(lambda)?))
-    }
+    pub fn new(lambda: f64) -> Result<Poisson, failure::Error> { Ok(Poisson(Rate::new(lambda)?)) }
 
-    pub fn new_unchecked(lambda: f64) -> Poisson {
-        Poisson(Rate(lambda))
-    }
+    pub fn new_unchecked(lambda: f64) -> Poisson { Poisson(Rate(lambda)) }
 }
 
 impl Distribution for Poisson {
@@ -35,14 +33,14 @@ impl Distribution for Poisson {
 
     fn params(&self) -> Rate<f64> { self.0 }
 
-    fn cdf(&self, _: &u64) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, _: &u64) -> Probability { unimplemented!() }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
         use rand_distr::Distribution as _;
 
-        rand_distr::Poisson::<f64>::new(get_lambda!(self)).unwrap().sample(rng)
+        rand_distr::Poisson::<f64>::new(get_lambda!(self))
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -66,9 +64,7 @@ impl UnivariateMoments for Poisson {
 }
 
 impl Quantiles for Poisson {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let l = get_lambda!(self);
@@ -78,24 +74,22 @@ impl Quantiles for Poisson {
 }
 
 impl Modes for Poisson {
-    fn modes(&self) -> Vec<u64> {
-        vec![get_lambda!(self).floor() as u64]
-    }
+    fn modes(&self) -> Vec<u64> { vec![get_lambda!(self).floor() as u64] }
 }
 
-impl Entropy for Poisson {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Poisson {
+    fn shannon_entropy(&self) -> f64 {
         let l = get_lambda!(self);
 
-        (PI_E_2 * l).ln() / 2.0 - ONE_TWELTH / l -
-            ONE_TWENTY_FOURTH / l / l - NINETEEN_OVER_360 / l / l / l
+        (PI_E_2 * l).ln() / 2.0
+            - ONE_TWELTH / l
+            - ONE_TWENTY_FOURTH / l / l
+            - NINETEEN_OVER_360 / l / l / l
     }
 }
 
 impl FisherInformation for Poisson {
-    fn fisher_information(&self) -> Array2<f64> {
-        Array2::from_elem((1, 1), get_lambda!(self))
-    }
+    fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), get_lambda!(self)) }
 }
 
 impl Convolution<Poisson> for Poisson {

@@ -1,11 +1,11 @@
 use crate::{
-    prelude::*,
-    linalg::{Vector, Matrix},
+    linalg::{Matrix, Vector},
     multivariate::normal::Normal,
+    prelude::*,
 };
 use failure::Error;
 use rand::Rng;
-use spaces::{ProductSpace, real::Reals};
+use spaces::{real::Reals, ProductSpace};
 use std::fmt;
 
 pub use super::normal::Params;
@@ -46,37 +46,27 @@ impl LogNormal<f64> {
         Normal::homogeneous(n, mu, sigma).map(LogNormal)
     }
 
-    pub fn homogenous_unchecked(n: usize, mu: f64, sigma: f64) -> Self {
-        LogNormal(Normal::homogenous_unchecked(n, mu, sigma))
+    pub fn homogeneous_unchecked(n: usize, mu: f64, sigma: f64) -> Self {
+        LogNormal(Normal::homogeneous_unchecked(n, mu, sigma))
     }
 
-    pub fn standard(n: usize) -> Result<Self, Error> {
-        Normal::standard(n).map(LogNormal)
-    }
+    pub fn standard(n: usize) -> Result<Self, Error> { Normal::standard(n).map(LogNormal) }
 
-    pub fn standard_unchecked(n: usize) -> Self {
-        LogNormal(Normal::standard_unchecked(n))
-    }
+    pub fn standard_unchecked(n: usize) -> Self { LogNormal(Normal::standard_unchecked(n)) }
 }
 
 impl<S> From<Normal<S>> for LogNormal<S> {
-    fn from(normal: Normal<S>) -> LogNormal<S> {
-        LogNormal(normal)
-    }
+    fn from(normal: Normal<S>) -> LogNormal<S> { LogNormal(normal) }
 }
 
 impl<S> From<Params<S>> for LogNormal<S>
-where
-    Normal<S>: From<Params<S>>,
+where Normal<S>: From<Params<S>>
 {
-    fn from(params: Params<S>) -> LogNormal<S> {
-        LogNormal(params.into())
-    }
+    fn from(params: Params<S>) -> LogNormal<S> { LogNormal(params.into()) }
 }
 
 impl<S> Distribution for LogNormal<S>
-where
-    Normal<S>: From<Params<S>> + Distribution<Support = ProductSpace<Reals>, Params = Params<S>>,
+where Normal<S>: From<Params<S>> + Distribution<Support = ProductSpace<Reals>, Params = Params<S>>
 {
     type Support = ProductSpace<Reals>;
     type Params = Params<S>;
@@ -140,6 +130,10 @@ where
 
 impl<S: fmt::Display> fmt::Display for LogNormal<S> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LogNormal({}, {})", self.0.params.mu.0, self.0.params.sigma.0)
+        write!(
+            f,
+            "LogNormal({}, {})",
+            self.0.params.mu.0, self.0.params.sigma.0
+        )
     }
 }

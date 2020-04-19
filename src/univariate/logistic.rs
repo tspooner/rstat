@@ -16,7 +16,9 @@ locscale_params! {
 new_dist!(Logistic<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.s.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.s.0)
+    };
 }
 
 impl Logistic {
@@ -24,9 +26,7 @@ impl Logistic {
         Params::new(mu, s).map(|p| Logistic(p))
     }
 
-    pub fn new_unchecked(mu: f64, s: f64) -> Logistic {
-        Logistic(Params::new_unchecked(mu, s))
-    }
+    pub fn new_unchecked(mu: f64, s: f64) -> Logistic { Logistic(Params::new_unchecked(mu, s)) }
 
     #[inline(always)]
     fn z(&self, x: f64) -> f64 {
@@ -48,9 +48,7 @@ impl Distribution for Logistic {
         Probability::new_unchecked(1.0 / (1.0 + (-self.z(*x)).exp()))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Logistic {
@@ -75,9 +73,7 @@ impl UnivariateMoments for Logistic {
 }
 
 impl Quantiles for Logistic {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { self.0.mu.0 }
 }
@@ -86,8 +82,8 @@ impl Modes for Logistic {
     fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
-impl Entropy for Logistic {
-    fn entropy(&self) -> f64 { self.0.s.0.ln() + 2.0 }
+impl ShannonEntropy for Logistic {
+    fn shannon_entropy(&self) -> f64 { self.0.s.0.ln() + 2.0 }
 }
 
 impl fmt::Display for Logistic {

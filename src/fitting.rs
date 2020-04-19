@@ -1,6 +1,6 @@
 use crate::Distribution;
-use spaces::Space;
 use failure::Fail;
+use spaces::Space;
 
 #[derive(Debug, Fail)]
 pub enum FittingError {
@@ -8,7 +8,10 @@ pub enum FittingError {
     InsufficientData(usize),
 }
 
-/// Trait for [distributions](trait.Distribution.html) implementing maximum likelihood estimation.
-pub trait MLE: Distribution where Self: Sized {
+/// Trait for [distributions](trait.Distribution.html) implementing maximum
+/// likelihood estimation.
+pub trait MLE: Distribution
+where Self: Sized
+{
     fn fit_mle(samples: &[<Self::Support as Space>::Value]) -> Result<Self, failure::Error>;
 }

@@ -13,7 +13,9 @@ shape_params! {
 new_dist!(InvGamma<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
+    ($self:ident) => {
+        ($self.0.alpha.0, $self.0.beta.0)
+    };
 }
 
 impl InvGamma {
@@ -46,9 +48,7 @@ impl Distribution for InvGamma {
         Probability::new_unchecked(alpha.gammainc(beta / x) / alpha.gamma())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for InvGamma {
@@ -65,7 +65,7 @@ impl UnivariateMoments for InvGamma {
     fn mean(&self) -> f64 {
         match self.0.alpha.0 {
             alpha if alpha <= 1.0 => undefined!("Mean is undefined for alpha <= 1."),
-            alpha => self.0.beta.0 / (alpha - 1.0)
+            alpha => self.0.beta.0 / (alpha - 1.0),
         }
     }
 
@@ -77,21 +77,21 @@ impl UnivariateMoments for InvGamma {
                 let beta = self.0.beta.0;
 
                 beta * beta / am1 / am1 / (alpha - 2.0)
-            }
+            },
         }
     }
 
     fn skewness(&self) -> f64 {
         match self.0.alpha.0 {
             alpha if alpha <= 3.0 => undefined!("Skewness is undefined for alpha <= 3."),
-            alpha => 4.0 * (alpha - 2.0).sqrt() / (alpha - 3.0)
+            alpha => 4.0 * (alpha - 2.0).sqrt() / (alpha - 3.0),
         }
     }
 
     fn excess_kurtosis(&self) -> f64 {
         match self.0.alpha.0 {
             alpha if alpha <= 4.0 => undefined!("Kurtosis is undefined for alpha <= 4."),
-            alpha => (30.0 * alpha - 66.0) / (alpha - 3.0) / (alpha - 4.0)
+            alpha => (30.0 * alpha - 66.0) / (alpha - 3.0) / (alpha - 4.0),
         }
     }
 }
@@ -104,8 +104,8 @@ impl Modes for InvGamma {
     }
 }
 
-impl Entropy for InvGamma {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for InvGamma {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (alpha, beta) = get_params!(self);

@@ -1,7 +1,4 @@
-use crate::{
-    consts::PI,
-    prelude::*,
-};
+use crate::{consts::PI, prelude::*};
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -11,7 +8,9 @@ pub use crate::params::Loc;
 new_dist!(StudentT<Loc<f64>>);
 
 macro_rules! get_nu {
-    ($self:ident) => { ($self.0).0 }
+    ($self:ident) => {
+        ($self.0).0
+    };
 }
 
 impl Distribution for StudentT {
@@ -30,14 +29,16 @@ impl Distribution for StudentT {
         let hyp2f1 = 0.5f64.hyp2f1(np1o2, 3.0 / 2.0, -x * x / nu);
 
         Probability::new_unchecked(
-            0.5 + x * np1o2.gamma() * hyp2f1 / (nu * PI).sqrt() * (nu / 2.0).gamma()
+            0.5 + x * np1o2.gamma() * hyp2f1 / (nu * PI).sqrt() * (nu / 2.0).gamma(),
         )
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand_distr::Distribution as _;
 
-        rand_distr::StudentT::new(get_nu!(self)).unwrap().sample(rng)
+        rand_distr::StudentT::new(get_nu!(self))
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -96,9 +97,7 @@ impl UnivariateMoments for StudentT {
 }
 
 impl Quantiles for StudentT {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { 0.0 }
 }
@@ -107,8 +106,8 @@ impl Modes for StudentT {
     fn modes(&self) -> Vec<f64> { vec![0.0] }
 }
 
-impl Entropy for StudentT {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for StudentT {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let nu = get_nu!(self);

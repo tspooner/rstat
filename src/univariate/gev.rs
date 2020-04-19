@@ -19,7 +19,9 @@ params! {
 new_dist!(GeneralisedExtremeValue<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0, $self.0.zeta.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.sigma.0, $self.0.zeta.0)
+    };
 }
 
 impl GeneralisedExtremeValue {
@@ -34,9 +36,7 @@ impl GeneralisedExtremeValue {
 
 impl GeneralisedExtremeValue {
     #[inline]
-    fn g_func(&self, k: f64) -> f64 {
-        (1.0 - k * self.0.zeta.0).gamma()
-    }
+    fn g_func(&self, k: f64) -> f64 { (1.0 - k * self.0.zeta.0).gamma() }
 
     fn t_func(&self, x: f64) -> f64 {
         let (mu, sigma, zeta) = get_params!(self);
@@ -60,7 +60,10 @@ impl Distribution for GeneralisedExtremeValue {
 
         let (mu, sigma, zeta) = get_params!(self);
 
-        match zeta.partial_cmp(&0.0).expect("Invalid value provided for `zeta`.") {
+        match zeta
+            .partial_cmp(&0.0)
+            .expect("Invalid value provided for `zeta`.")
+        {
             Less => Interval::right_bounded(mu - sigma / zeta),
             Equal => Interval::unbounded(),
             Greater => Interval::left_bounded(mu - sigma / zeta),
@@ -69,13 +72,9 @@ impl Distribution for GeneralisedExtremeValue {
 
     fn params(&self) -> Params { self.0 }
 
-    fn cdf(&self, x: &f64) -> Probability {
-        Probability::new_unchecked((-self.t_func(*x)).exp())
-    }
+    fn cdf(&self, x: &f64) -> Probability { Probability::new_unchecked((-self.t_func(*x)).exp()) }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for GeneralisedExtremeValue {
@@ -157,9 +156,7 @@ impl UnivariateMoments for GeneralisedExtremeValue {
 }
 
 impl Quantiles for GeneralisedExtremeValue {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (mu, sigma, zeta) = get_params!(self);
@@ -184,8 +181,8 @@ impl Modes for GeneralisedExtremeValue {
     }
 }
 
-impl Entropy for GeneralisedExtremeValue {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for GeneralisedExtremeValue {
+    fn shannon_entropy(&self) -> f64 {
         let euler = -1.0f64.digamma();
 
         self.0.sigma.0.ln() + euler * self.0.zeta.0 + euler + 1.0

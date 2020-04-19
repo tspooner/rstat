@@ -1,7 +1,4 @@
-use crate::{
-    prelude::*,
-    univariate::exponential::Exponential,
-};
+use crate::{prelude::*, univariate::exponential::Exponential};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -16,7 +13,9 @@ shape_params! {
 new_dist!(Gamma<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.alpha.0, $self.0.beta.0) }
+    ($self:ident) => {
+        ($self.0.alpha.0, $self.0.beta.0)
+    };
 }
 
 impl Gamma {
@@ -89,13 +88,9 @@ impl UnivariateMoments for Gamma {
         a / b / b
     }
 
-    fn skewness(&self) -> f64 {
-        2.0 / self.0.alpha.0.sqrt()
-    }
+    fn skewness(&self) -> f64 { 2.0 / self.0.alpha.0.sqrt() }
 
-    fn excess_kurtosis(&self) -> f64 {
-        6.0 / self.0.alpha.0
-    }
+    fn excess_kurtosis(&self) -> f64 { 6.0 / self.0.alpha.0 }
 }
 
 impl Modes for Gamma {
@@ -107,8 +102,8 @@ impl Modes for Gamma {
     }
 }
 
-impl Entropy for Gamma {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Gamma {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (a, b) = get_params!(self);

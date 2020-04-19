@@ -8,17 +8,15 @@ pub use crate::params::DOF;
 new_dist!(ChiSq<DOF<usize>>);
 
 macro_rules! get_k {
-    ($self:ident) => { ($self.0).0 as f64 }
+    ($self:ident) => {
+        ($self.0).0 as f64
+    };
 }
 
 impl ChiSq {
-    pub fn new(dof: usize) -> Result<ChiSq, failure::Error> {
-        Ok(ChiSq(DOF::new(dof)?))
-    }
+    pub fn new(dof: usize) -> Result<ChiSq, failure::Error> { Ok(ChiSq(DOF::new(dof)?)) }
 
-    pub fn new_unchecked(dof: usize) -> ChiSq {
-        ChiSq(DOF(dof))
-    }
+    pub fn new_unchecked(dof: usize) -> ChiSq { ChiSq(DOF(dof)) }
 
     #[inline(always)]
     pub fn k(&self) -> f64 { get_k!(self) }
@@ -44,7 +42,9 @@ impl Distribution for ChiSq {
     fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand_distr::Distribution as _;
 
-        rand_distr::ChiSquared::new(get_k!(self)).unwrap().sample(rng)
+        rand_distr::ChiSquared::new(get_k!(self))
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -63,23 +63,15 @@ impl ContinuousDistribution for ChiSq {
 impl UnivariateMoments for ChiSq {
     fn mean(&self) -> f64 { get_k!(self) }
 
-    fn variance(&self) -> f64 {
-        (2 * (self.0).0) as f64
-    }
+    fn variance(&self) -> f64 { (2 * (self.0).0) as f64 }
 
-    fn skewness(&self) -> f64 {
-        (8.0 / get_k!(self)).sqrt()
-    }
+    fn skewness(&self) -> f64 { (8.0 / get_k!(self)).sqrt() }
 
-    fn excess_kurtosis(&self) -> f64 {
-        12.0 / get_k!(self)
-    }
+    fn excess_kurtosis(&self) -> f64 { 12.0 / get_k!(self) }
 }
 
 impl Quantiles for ChiSq {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let k = get_k!(self);
@@ -89,13 +81,11 @@ impl Quantiles for ChiSq {
 }
 
 impl Modes for ChiSq {
-    fn modes(&self) -> Vec<f64> {
-        vec![((self.0).0.max(2) - 2) as f64]
-    }
+    fn modes(&self) -> Vec<f64> { vec![((self.0).0.max(2) - 2) as f64] }
 }
 
-impl Entropy for ChiSq {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for ChiSq {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let k = get_k!(self);
@@ -119,7 +109,5 @@ impl Convolution<ChiSq> for ChiSq {
 }
 
 impl fmt::Display for ChiSq {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "ChiSq({})", self.k())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "ChiSq({})", self.k()) }
 }

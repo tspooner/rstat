@@ -8,8 +8,8 @@ pub type Matrix<T> = Array2<T>;
 
 /// Perform a Cholesky decomposition.
 ///
-/// This function is unsafe because it assumes the given matrix is square, symmetric, and
-/// positive-definite.
+/// This function is unsafe because it assumes the given matrix is square,
+/// symmetric, and positive-definite.
 #[allow(non_snake_case)]
 pub unsafe fn cholesky(A: &Matrix<f64>) -> Matrix<f64> {
     let n = A.nrows();
@@ -32,8 +32,8 @@ pub unsafe fn cholesky(A: &Matrix<f64>) -> Matrix<f64> {
 
 /// Compute the inverse of a nonsingular lower triangular matrix.
 ///
-/// This function is unsafe because it does not check that the matrix is triangular, lower
-/// triangular or nonsingular.
+/// This function is unsafe because it does not check that the matrix is
+/// triangular, lower triangular or nonsingular.
 #[allow(non_snake_case)]
 pub unsafe fn inverse_lt(L: &Matrix<f64>) -> Matrix<f64> {
     let n = L.nrows();
@@ -43,7 +43,9 @@ pub unsafe fn inverse_lt(L: &Matrix<f64>) -> Matrix<f64> {
         X[(k, k)] = 1.0 / L[(k, k)];
 
         for i in (k + 1)..n {
-            let z = L.slice(s!(i, k..=(i-1))).dot(&X.slice(s!(k..=(i-1), k)));
+            let z = L
+                .slice(s!(i, k..=(i - 1)))
+                .dot(&X.slice(s!(k..=(i - 1), k)));
 
             X[(i, k)] = -z / L[(i, i)];
         }
@@ -54,22 +56,18 @@ pub unsafe fn inverse_lt(L: &Matrix<f64>) -> Matrix<f64> {
 
 #[cfg(test)]
 mod tests {
-    use ndarray::arr2;
     use super::*;
+    use ndarray::arr2;
 
     #[test]
     fn test_choleksy() {
         let m = arr2(&[
             [4.0, 12.0, -16.0],
             [12.0, 37.0, -43.0],
-            [-16.0, -43.0, 98.0]
+            [-16.0, -43.0, 98.0],
         ]);
         let lt = unsafe { cholesky(&m) };
-        let expected = arr2(&[
-            [2.0, 0.0, 0.0],
-            [6.0, 1.0, 0.0],
-            [-8.0, 5.0, 3.0]
-        ]);
+        let expected = arr2(&[[2.0, 0.0, 0.0], [6.0, 1.0, 0.0], [-8.0, 5.0, 3.0]]);
 
         assert!((lt - expected).fold(0.0, |s, x| s + x.abs()) < 1e-5);
     }
@@ -79,14 +77,14 @@ mod tests {
         let m = arr2(&[
             [4.0, 12.0, -16.0],
             [12.0, 37.0, -43.0],
-            [-16.0, -43.0, 98.0]
+            [-16.0, -43.0, 98.0],
         ]);
         let lt = unsafe { cholesky(&m) };
         let lt_inv = unsafe { inverse_lt(&lt) };
         let expected = arr2(&[
             [1.0 / 2.0, 0.0, 0.0],
             [-3.0, 1.0, 0.0],
-            [19.0 / 3.0, -5.0 / 3.0, 1.0 / 3.0]
+            [19.0 / 3.0, -5.0 / 3.0, 1.0 / 3.0],
         ]);
 
         assert!((lt_inv - expected).fold(0.0, |s, x| s + x.abs()) < 1e-5);

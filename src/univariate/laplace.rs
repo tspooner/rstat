@@ -1,7 +1,4 @@
-use crate::{
-    consts::E,
-    prelude::*,
-};
+use crate::{consts::E, prelude::*};
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
@@ -16,7 +13,9 @@ locscale_params! {
 new_dist!(Laplace<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.b.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.b.0)
+    };
 }
 
 impl Laplace {
@@ -24,9 +23,7 @@ impl Laplace {
         Params::new(mu, b).map(|p| Laplace(p))
     }
 
-    pub fn new_unchecked(mu: f64, b: f64) -> Laplace {
-        Laplace(Params::new_unchecked(mu, b))
-    }
+    pub fn new_unchecked(mu: f64, b: f64) -> Laplace { Laplace(Params::new_unchecked(mu, b)) }
 }
 
 impl Distribution for Laplace {
@@ -59,7 +56,10 @@ impl ContinuousDistribution for Laplace {
 
         let (mu, b) = get_params!(self);
 
-        match x.partial_cmp(&mu).expect("Invalid value provided for `mu`.") {
+        match x
+            .partial_cmp(&mu)
+            .expect("Invalid value provided for `mu`.")
+        {
             Less | Equal => ((x - mu) / b).exp() / 2.0,
             Greater => 1.0 - ((mu - x) / b).exp() / 2.0,
         }
@@ -79,23 +79,17 @@ impl UnivariateMoments for Laplace {
 }
 
 impl Quantiles for Laplace {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { self.0.mu.0 }
 }
 
 impl Modes for Laplace {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.0.mu.0]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
-impl Entropy for Laplace {
-    fn entropy(&self) -> f64 {
-        (2.0 * self.0.b.0 * E).ln()
-    }
+impl ShannonEntropy for Laplace {
+    fn shannon_entropy(&self) -> f64 { (2.0 * self.0.b.0 * E).ln() }
 }
 
 impl fmt::Display for Laplace {

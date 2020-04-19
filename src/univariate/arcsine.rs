@@ -12,15 +12,15 @@ locscale_params! {
 
 impl Params {
     #[inline(always)]
-    pub fn b(&self) -> crate::params::Loc<f64> {
-        crate::params::Loc(self.a.0 + self.w.0)
-    }
+    pub fn b(&self) -> crate::params::Loc<f64> { crate::params::Loc(self.a.0 + self.w.0) }
 }
 
 new_dist!(Arcsine<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.a.0, $self.0.b().0) }
+    ($self:ident) => {
+        ($self.0.a.0, $self.0.b().0)
+    };
 }
 
 impl Arcsine {
@@ -28,15 +28,11 @@ impl Arcsine {
         Params::new(a, w).map(|p| Arcsine(p))
     }
 
-    pub fn new_unchecked(a: f64, w: f64) -> Arcsine {
-        Arcsine(Params::new_unchecked(a, w))
-    }
+    pub fn new_unchecked(a: f64, w: f64) -> Arcsine { Arcsine(Params::new_unchecked(a, w)) }
 }
 
 impl Default for Arcsine {
-    fn default() -> Arcsine {
-        Arcsine(Params::new_unchecked(0.0, 1.0))
-    }
+    fn default() -> Arcsine { Arcsine(Params::new_unchecked(0.0, 1.0)) }
 }
 
 impl Distribution for Arcsine {
@@ -60,9 +56,7 @@ impl Distribution for Arcsine {
         Probability::new_unchecked(TWO_OVER_PI * xab.sqrt().asin())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Arcsine {
@@ -95,9 +89,7 @@ impl UnivariateMoments for Arcsine {
 }
 
 impl Quantiles for Arcsine {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { self.mean() }
 }
@@ -110,8 +102,8 @@ impl Modes for Arcsine {
     }
 }
 
-impl Entropy for Arcsine {
-    fn entropy(&self) -> f64 { PI_OVER_4.ln() }
+impl ShannonEntropy for Arcsine {
+    fn shannon_entropy(&self) -> f64 { PI_OVER_4.ln() }
 }
 
 impl fmt::Display for Arcsine {
@@ -122,10 +114,9 @@ impl fmt::Display for Arcsine {
     }
 }
 
-
 #[cfg(test)]
 mod tests {
-    use super::{Arcsine, UnivariateMoments, Quantiles, Modes};
+    use super::{Arcsine, Modes, Quantiles, UnivariateMoments};
 
     #[test]
     fn test_mean() {

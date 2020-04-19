@@ -18,7 +18,9 @@ params! {
 new_dist!(GeneralisedPareto<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0, $self.0.zeta.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.sigma.0, $self.0.zeta.0)
+    };
 }
 
 impl GeneralisedPareto {
@@ -40,7 +42,10 @@ impl Distribution for GeneralisedPareto {
 
         let (mu, sigma, zeta) = get_params!(self);
 
-        match zeta.partial_cmp(&0.0).expect("Invalid value provided for `zeta`.") {
+        match zeta
+            .partial_cmp(&0.0)
+            .expect("Invalid value provided for `zeta`.")
+        {
             Less => Interval::bounded(mu, mu - sigma / zeta),
             Equal | Greater => Interval::left_bounded(mu),
         }
@@ -55,9 +60,7 @@ impl Distribution for GeneralisedPareto {
         Probability::new_unchecked(1.0 - (1.0 + zeta * z).powf(-1.0 / zeta))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for GeneralisedPareto {
@@ -108,16 +111,15 @@ impl UnivariateMoments for GeneralisedPareto {
             undefined!("Skewness is undefined for zeta <= 1/3.")
         } else {
             3.0 * (1.0 - 2.0 * zeta) * (2.0 * zeta * zeta + zeta + 3.0)
-                / (1.0 - 3.0 * zeta) / (1.0 - 4.0 * zeta)
+                / (1.0 - 3.0 * zeta)
+                / (1.0 - 4.0 * zeta)
                 - 3.0
         }
     }
 }
 
 impl Quantiles for GeneralisedPareto {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (mu, sigma, zeta) = get_params!(self);
@@ -126,10 +128,8 @@ impl Quantiles for GeneralisedPareto {
     }
 }
 
-impl Entropy for GeneralisedPareto {
-    fn entropy(&self) -> f64 {
-        self.0.sigma.0.ln() + self.0.zeta.0 + 1.0
-    }
+impl ShannonEntropy for GeneralisedPareto {
+    fn shannon_entropy(&self) -> f64 { self.0.sigma.0.ln() + self.0.zeta.0 + 1.0 }
 }
 
 impl fmt::Display for GeneralisedPareto {

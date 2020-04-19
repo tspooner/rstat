@@ -9,7 +9,9 @@ pub use crate::params::Rate;
 new_dist!(Exponential<Rate<f64>>);
 
 macro_rules! get_lambda {
-    ($self:ident) => { ($self.0).0 }
+    ($self:ident) => {
+        ($self.0).0
+    };
 }
 
 impl Exponential {
@@ -17,9 +19,7 @@ impl Exponential {
         Ok(Exponential(Rate::new(lambda)?))
     }
 
-    pub fn new_unchecked(lambda: f64) -> Exponential {
-        Exponential(Rate(lambda))
-    }
+    pub fn new_unchecked(lambda: f64) -> Exponential { Exponential(Rate(lambda)) }
 
     #[inline(always)]
     pub fn lambda(&self) -> f64 { get_lambda!(self) }
@@ -76,23 +76,17 @@ impl UnivariateMoments for Exponential {
 }
 
 impl Quantiles for Exponential {
-    fn quantile(&self, p: Probability) -> f64 {
-        -(p.not().unwrap()) / get_lambda!(self)
-    }
+    fn quantile(&self, p: Probability) -> f64 { -(p.not().unwrap()) / get_lambda!(self) }
 
-    fn median(&self) -> f64 {
-        self.mean() * 2.0f64.ln()
-    }
+    fn median(&self) -> f64 { self.mean() * 2.0f64.ln() }
 }
 
 impl Modes for Exponential {
     fn modes(&self) -> Vec<f64> { vec![0.0] }
 }
 
-impl Entropy for Exponential {
-    fn entropy(&self) -> f64 {
-        1.0 - get_lambda!(self).ln()
-    }
+impl ShannonEntropy for Exponential {
+    fn shannon_entropy(&self) -> f64 { 1.0 - get_lambda!(self).ln() }
 }
 
 impl FisherInformation for Exponential {
@@ -104,7 +98,5 @@ impl FisherInformation for Exponential {
 }
 
 impl fmt::Display for Exponential {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Exp({})", self.lambda())
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Exp({})", self.lambda()) }
 }

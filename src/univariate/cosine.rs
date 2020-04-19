@@ -1,5 +1,5 @@
 use crate::{
-    consts::{ONE_THIRD, PI, PI2, PI4, ONE_OVER_PI, TWO_OVER_PI2},
+    consts::{ONE_OVER_PI, ONE_THIRD, PI, PI2, PI4, TWO_OVER_PI2},
     prelude::*,
 };
 use rand::Rng;
@@ -16,7 +16,9 @@ locscale_params! {
 new_dist!(Cosine<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.s.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.s.0)
+    };
 }
 
 impl Cosine {
@@ -24,9 +26,7 @@ impl Cosine {
         Params::new(mu, s).map(|p| Cosine(p))
     }
 
-    pub fn new_unchecked(mu: f64, s: f64) -> Cosine {
-        Cosine(Params::new_unchecked(mu, s))
-    }
+    pub fn new_unchecked(mu: f64, s: f64) -> Cosine { Cosine(Params::new_unchecked(mu, s)) }
 
     #[inline]
     fn z(&self, x: f64) -> f64 {
@@ -36,9 +36,7 @@ impl Cosine {
     }
 
     #[inline]
-    fn hvc(&self, x: f64) -> f64 {
-        ((self.z(x) * PI).cos() + 1.0) / 2.0
-    }
+    fn hvc(&self, x: f64) -> f64 { ((self.z(x) * PI).cos() + 1.0) / 2.0 }
 }
 
 impl Distribution for Cosine {
@@ -59,9 +57,7 @@ impl Distribution for Cosine {
         Probability::new_unchecked(0.5 * (1.0 + z + ONE_OVER_PI * (z * PI).sin()))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Cosine {
@@ -77,9 +73,7 @@ impl UnivariateMoments for Cosine {
         s * s * (ONE_THIRD - TWO_OVER_PI2)
     }
 
-    fn skewness(&self) -> f64 {
-        0.0
-    }
+    fn skewness(&self) -> f64 { 0.0 }
 
     fn excess_kurtosis(&self) -> f64 {
         let v = PI2 - 6.0;
@@ -89,9 +83,7 @@ impl UnivariateMoments for Cosine {
 }
 
 impl Quantiles for Cosine {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { self.0.mu.0 }
 }

@@ -17,7 +17,9 @@ params! {
 new_dist!(Weibull<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.lambda.0, $self.0.k.0) }
+    ($self:ident) => {
+        ($self.0.lambda.0, $self.0.k.0)
+    };
 }
 
 impl Weibull {
@@ -88,9 +90,7 @@ impl UnivariateMoments for Weibull {
         let lambda = self.0.lambda.0;
 
         let numerator =
-            self.gamma_i(3.0) * lambda * lambda * lambda
-            - 3.0 * mu * var
-            - mu * mu * mu;
+            self.gamma_i(3.0) * lambda * lambda * lambda - 3.0 * mu * var - mu * mu * mu;
         let denominator = var.powf(THREE_HALVES);
 
         numerator / denominator
@@ -121,8 +121,8 @@ impl UnivariateMoments for Weibull {
         // let var = self.variance();
         // let skewness = self.skewness();
 
-        // let numerator = self.lambda * self.lambda * self.lambda * self.lambda * gamma_4 -
-        // 4.0 * skewness * var.powf(THREE_HALVES) * mu -
+        // let numerator = self.lambda * self.lambda * self.lambda * self.lambda
+        // * gamma_4 - 4.0 * skewness * var.powf(THREE_HALVES) * mu -
         // 6.0 * mu2 * var - mu2 * mu2;
         // let denominator = var * var;
 
@@ -131,9 +131,7 @@ impl UnivariateMoments for Weibull {
 }
 
 impl Quantiles for Weibull {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (lambda, k) = get_params!(self);
@@ -154,8 +152,8 @@ impl Modes for Weibull {
     }
 }
 
-impl Entropy for Weibull {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Weibull {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (lambda, k) = get_params!(self);

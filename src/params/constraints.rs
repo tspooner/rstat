@@ -1,38 +1,41 @@
 use crate::prelude::*;
 use failure::{Backtrace, Fail};
-use num::{Zero, zero, PrimInt};
-use std::{fmt::{self, Debug, Display}, ops::Deref};
+use num::{zero, PrimInt, Zero};
+use std::{
+    fmt::{self, Debug, Display},
+    ops::Deref,
+};
 
 #[macro_export]
 macro_rules! assert_constraint {
     ($x:ident+) => {
-        $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::Positive, $x
-        )
+        $crate::params::constraints::Constraint::check($crate::params::constraints::Positive, $x)
     };
     ($x:ident == $t:tt) => {
-        $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::Equal($t), $x
-        )
+        $crate::params::constraints::Constraint::check($crate::params::constraints::Equal($t), $x)
     };
     ($x:ident < $t:tt) => {
         $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::LessThan($t), $x
+            $crate::params::constraints::LessThan($t),
+            $x,
         )
     };
     ($x:ident <= $t:tt) => {
         $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::LessThanOrEqual($t), $x
+            $crate::params::constraints::LessThanOrEqual($t),
+            $x,
         )
     };
     ($x:tt > $t:tt) => {
         $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::GreaterThan($t), $x
+            $crate::params::constraints::GreaterThan($t),
+            $x,
         )
     };
     ($x:ident >= $t:tt) => {
         $crate::params::constraints::Constraint::check(
-            $crate::params::constraints::GreaterThanOrEqual($t), $x
+            $crate::params::constraints::GreaterThanOrEqual($t),
+            $x,
         )
     };
 }
@@ -90,12 +93,14 @@ impl<T: Debug> Display for UnsatisfiedConstraintError<T> {
     fn fmt(&self, f: &mut std::fmt::Formatter) -> std::result::Result<(), std::fmt::Error> {
         if let Some(ref target) = self.target {
             write!(
-                f, "Constraint {} on {:?} is unsatisfied for value {:?}.",
+                f,
+                "Constraint {} on {:?} is unsatisfied for value {:?}.",
                 self.constraint, target, self.value
             )
         } else {
             write!(
-                f, "Constraint {} is unsatisfied for value {:?}.",
+                f,
+                "Constraint {} is unsatisfied for value {:?}.",
                 self.constraint, self.value
             )
         }
@@ -104,7 +109,6 @@ impl<T: Debug> Display for UnsatisfiedConstraintError<T> {
 
 pub(crate) type Result<T> = std::result::Result<T, UnsatisfiedConstraintError<T>>;
 
-///
 pub trait Constraint<T>: Display + Debug + Send + Sync {
     fn is_satisfied_by(&self, value: &T) -> bool;
 
@@ -124,19 +128,15 @@ pub trait Constraint<T>: Display + Debug + Send + Sync {
 pub type Constraints<T> = Vec<Box<dyn Constraint<T>>>;
 
 impl<T, C: Constraint<T> + ?Sized> Constraint<T> for Box<C> {
-    fn is_satisfied_by(&self, value: &T) -> bool {
-        self.deref().is_satisfied_by(value)
-    }
+    fn is_satisfied_by(&self, value: &T) -> bool { self.deref().is_satisfied_by(value) }
 }
 
 macro_rules! impl_display {
     ($type:ty) => {
         impl Display for $type {
-            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-                write!(f, stringify!($type))
-            }
+            fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, stringify!($type)) }
         }
-    }
+    };
 }
 
 macro_rules! impl_constraint {
@@ -156,14 +156,38 @@ macro_rules! impl_constraint {
     }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct All<C>(pub C);
 
 impl<C: Display> Display for All<C> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "All({})", self.0)
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "All({})", self.0) }
+}
+
+impl<C: Constraint<f64>> Constraint<f64> for All<C> {
+    fn check(self, value: f64) -> Result<f64>
+    where Self: Sized + 'static {
+        self.0.check(value)
     }
+
+    fn is_satisfied_by(&self, value: &f64) -> bool { self.0.is_satisfied_by(value) }
+}
+
+impl<C: Constraint<i64>> Constraint<i64> for All<C> {
+    fn check(self, value: i64) -> Result<i64>
+    where Self: Sized + 'static {
+        self.0.check(value)
+    }
+
+    fn is_satisfied_by(&self, value: &i64) -> bool { self.0.is_satisfied_by(value) }
+}
+
+impl<C: Constraint<usize>> Constraint<usize> for All<C> {
+    fn check(self, value: usize) -> Result<usize>
+    where Self: Sized + 'static {
+        self.0.check(value)
+    }
+
+    fn is_satisfied_by(&self, value: &usize) -> bool { self.0.is_satisfied_by(value) }
 }
 
 impl<T, C: Constraint<T>> Constraint<Vec<T>> for All<C> {
@@ -174,7 +198,7 @@ impl<T, C: Constraint<T>> Constraint<Vec<T>> for All<C> {
     {
         for v in value.iter() {
             if !self.0.is_satisfied_by(v) {
-                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)))
+                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
             }
         }
 
@@ -182,6 +206,26 @@ impl<T, C: Constraint<T>> Constraint<Vec<T>> for All<C> {
     }
 
     fn is_satisfied_by(&self, value: &Vec<T>) -> bool {
+        value.iter().all(|v| self.0.is_satisfied_by(v))
+    }
+}
+
+impl<T, C: Constraint<T>> Constraint<[T; 2]> for All<C> {
+    fn check(self, value: [T; 2]) -> Result<[T; 2]>
+    where
+        [T; 2]: Debug,
+        Self: Sized + 'static,
+    {
+        for v in value.iter() {
+            if !self.0.is_satisfied_by(v) {
+                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
+            }
+        }
+
+        Ok(value)
+    }
+
+    fn is_satisfied_by(&self, value: &[T; 2]) -> bool {
         value.iter().all(|v| self.0.is_satisfied_by(v))
     }
 }
@@ -194,7 +238,7 @@ impl<T, C: Constraint<T>> Constraint<Vector<T>> for All<C> {
     {
         for v in value.iter() {
             if !self.0.is_satisfied_by(v) {
-                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)))
+                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
             }
         }
 
@@ -214,7 +258,7 @@ impl<T, C: Constraint<T>> Constraint<Matrix<T>> for All<C> {
     {
         for v in value.iter() {
             if !self.0.is_satisfied_by(&v) {
-                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)))
+                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
             }
         }
 
@@ -226,23 +270,17 @@ impl<T, C: Constraint<T>> Constraint<Matrix<T>> for All<C> {
     }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Not<C>(pub C);
 
 impl<C: Display> Display for Not<C> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Not({})", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Not({})", self.0) }
 }
 
 impl<T, C: Constraint<T>> Constraint<T> for Not<C> {
-    fn is_satisfied_by(&self, value: &T) -> bool {
-        !self.0.is_satisfied_by(value)
-    }
+    fn is_satisfied_by(&self, value: &T) -> bool { !self.0.is_satisfied_by(value) }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Or<C1, C2>(pub (C1, C2));
 
@@ -268,7 +306,6 @@ impl<T, C1: Constraint<T>, C2: Constraint<T>> Constraint<T> for Or<C1, C2> {
     }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct And<C1, C2>(pub (C1, C2));
 
@@ -294,43 +331,35 @@ impl<T, C1: Constraint<T>, C2: Constraint<T>> Constraint<T> for And<C1, C2> {
     }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct Equal<T: PartialEq>(pub T);
+pub struct Equal<T>(pub T);
 
 impl<T: PartialEq + Debug> Display for Equal<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Equal({:?})", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Equal({:?})", self.0) }
 }
 
 impl<T: PartialEq + Send + Sync + Debug> Constraint<T> for Equal<T> {
     fn is_satisfied_by(&self, value: &T) -> bool { value == &self.0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct LessThan<T: PartialOrd>(pub T);
+pub struct LessThan<T>(pub T);
 
 impl<T: PartialOrd + Debug> Display for LessThan<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "LessThan({:?})", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "LessThan({:?})", self.0) }
 }
 
 impl<T: PartialOrd + Send + Sync + Debug> Constraint<T> for LessThan<T> {
     fn is_satisfied_by(&self, value: &T) -> bool { value < &self.0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Negative;
 
 impl_constraint!(Negative<PartialOrd + Zero>; self, value, { value < &zero() });
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct LessThanOrEqual<T: PartialOrd>(pub T);
+pub struct LessThanOrEqual<T>(pub T);
 
 impl<T: PartialOrd + Debug> Display for LessThanOrEqual<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -342,35 +371,29 @@ impl<T: PartialOrd + Send + Sync + Debug> Constraint<T> for LessThanOrEqual<T> {
     fn is_satisfied_by(&self, value: &T) -> bool { value <= &self.0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct NonPositive;
 
 impl_constraint!(NonPositive<PartialOrd + Zero>; self, value, { value <= &zero() });
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct GreaterThan<T: PartialOrd>(pub T);
+pub struct GreaterThan<T>(pub T);
 
 impl<T: PartialOrd + Debug> Display for GreaterThan<T> {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "GreaterThan({:?})", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "GreaterThan({:?})", self.0) }
 }
 
 impl<T: PartialOrd + Send + Sync + Debug> Constraint<T> for GreaterThan<T> {
     fn is_satisfied_by(&self, value: &T) -> bool { value > &self.0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Positive;
 
 impl_constraint!(Positive<PartialOrd + Zero>; self, value, { value > &zero() });
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct GreaterThanOrEqual<T: PartialOrd>(pub T);
+pub struct GreaterThanOrEqual<T>(pub T);
 
 impl<T: PartialOrd + Debug> Display for GreaterThanOrEqual<T> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
@@ -382,9 +405,8 @@ impl<T: PartialOrd + Send + Sync + Debug> Constraint<T> for GreaterThanOrEqual<T
     fn is_satisfied_by(&self, value: &T) -> bool { value >= &self.0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
-pub struct Interval<T: PartialOrd> {
+pub struct Interval<T> {
     pub lb: T,
     pub ub: T,
 }
@@ -396,59 +418,43 @@ impl<T: PartialOrd + Debug> Display for Interval<T> {
 }
 
 impl<T: PartialOrd + Send + Sync + Debug> Constraint<T> for Interval<T> {
-    fn is_satisfied_by(&self, value: &T) -> bool {
-        value >= &self.lb && value <= &self.ub
-    }
+    fn is_satisfied_by(&self, value: &T) -> bool { value >= &self.lb && value <= &self.ub }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct NonNegative;
 
 impl_constraint!(NonNegative<PartialOrd + Zero>; self, value, { value >= &zero() });
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Natural;
 
 impl_constraint!(Natural<PrimInt>; self, value, { value > &zero() });
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Empty;
 
 impl Display for Empty {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Empty")
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Empty") }
 }
 
 impl<T> Constraint<Vec<T>> for Empty {
-    fn is_satisfied_by(&self, vec: &Vec<T>) -> bool {
-        vec.len() == 0
-    }
+    fn is_satisfied_by(&self, vec: &Vec<T>) -> bool { vec.len() == 0 }
 }
 
 impl<T> Constraint<Vector<T>> for Empty {
-    fn is_satisfied_by(&self, vector: &Vector<T>) -> bool {
-        vector.len() == 0
-    }
+    fn is_satisfied_by(&self, vector: &Vector<T>) -> bool { vector.len() == 0 }
 }
 
-///
 #[derive(Debug, Clone, Copy)]
 pub struct Square;
 
 impl Display for Square {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "Square")
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Square") }
 }
 
 impl<T> Constraint<Matrix<T>> for Square {
-    fn is_satisfied_by(&self, matrix: &Matrix<T>) -> bool {
-        matrix.is_square()
-    }
+    fn is_satisfied_by(&self, matrix: &Matrix<T>) -> bool { matrix.is_square() }
 }
 
 #[cfg(test)]

@@ -13,7 +13,9 @@ shape_params! {
 new_dist!(Kumaraswamy<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.a.0, $self.0.b.0) }
+    ($self:ident) => {
+        ($self.0.a.0, $self.0.b.0)
+    };
 }
 
 impl Kumaraswamy {
@@ -27,9 +29,7 @@ impl Kumaraswamy {
 }
 
 impl Default for Kumaraswamy {
-    fn default() -> Kumaraswamy {
-        Kumaraswamy(Params::new_unchecked(1.0, 1.0))
-    }
+    fn default() -> Kumaraswamy { Kumaraswamy(Params::new_unchecked(1.0, 1.0)) }
 }
 
 impl Distribution for Kumaraswamy {
@@ -79,15 +79,11 @@ impl UnivariateMoments for Kumaraswamy {
         (m3 - 3.0 * mean * var - mean.powi(3)) / var.powf(3.0 / 2.0)
     }
 
-    fn excess_kurtosis(&self) -> f64 {
-        unimplemented!()
-    }
+    fn excess_kurtosis(&self) -> f64 { unimplemented!() }
 }
 
 impl Quantiles for Kumaraswamy {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (a, b) = get_params!(self);
@@ -108,8 +104,8 @@ impl Modes for Kumaraswamy {
     }
 }
 
-impl Entropy for Kumaraswamy {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Kumaraswamy {
+    fn shannon_entropy(&self) -> f64 {
         let (a, b) = get_params!(self);
         let hb = harmonic_n(b.floor() as usize);
 

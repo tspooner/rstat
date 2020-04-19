@@ -1,9 +1,12 @@
-use crate::{params::{Count, Shape}, prelude::*};
+use super::choose;
+use crate::{
+    params::{Count, Shape},
+    prelude::*,
+};
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use special_fun::FloatSpecial;
 use std::fmt;
-use super::choose;
 
 params! {
     Params {
@@ -22,7 +25,9 @@ pub struct BetaBinomial {
 }
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.params.n.0, $self.params.alpha.0, $self.params.beta.0) }
+    ($self:ident) => {
+        ($self.params.n.0, $self.params.alpha.0, $self.params.beta.0)
+    };
 }
 
 impl BetaBinomial {
@@ -72,21 +77,15 @@ impl Distribution for BetaBinomial {
         }
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> usize {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> usize { unimplemented!() }
 }
 
 impl DiscreteDistribution for BetaBinomial {
-    fn pmf(&self, k: &usize) -> Probability {
-        Probability::new_unchecked(self.pmf_raw(*k))
-    }
+    fn pmf(&self, k: &usize) -> Probability { Probability::new_unchecked(self.pmf_raw(*k)) }
 }
 
 impl UnivariateMoments for BetaBinomial {
-    fn mean(&self) -> f64 {
-        self.params.n.0 as f64 * self.pi
-    }
+    fn mean(&self) -> f64 { self.params.n.0 as f64 * self.pi }
 
     fn variance(&self) -> f64 {
         let n = self.params.n.0 as f64;
@@ -113,10 +112,8 @@ impl UnivariateMoments for BetaBinomial {
 
         let apb = alpha + beta;
 
-        let b1 = alpha / (
-            n * self.pi * self.pi * self.rho * beta *
-            (apb + 2.0) * (apb + 3.0) * (apb + n)
-        );
+        let b1 = alpha
+            / (n * self.pi * self.pi * self.rho * beta * (apb + 2.0) * (apb + 3.0) * (apb + n));
         let b2 = (apb - 1.0 + 6.0 * n) / alpha;
         let b3 = 3.0 * alpha * beta * (n - 2.0);
         let b4 = 6.0 * n * n;

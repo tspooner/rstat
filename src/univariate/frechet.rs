@@ -1,24 +1,22 @@
 use crate::{prelude::*, univariate::uniform::Uniform};
 use rand::Rng;
 use spaces::real::Interval;
-use std::{fmt, f64::INFINITY};
+use std::{f64::INFINITY, fmt};
 
 pub use crate::params::Shape;
 
 new_dist!(Frechet<Shape<f64>>);
 
 macro_rules! get_alpha {
-    ($self:ident) => { ($self.0).0 }
+    ($self:ident) => {
+        ($self.0).0
+    };
 }
 
 impl Frechet {
-    pub fn new(alpha: f64) -> Result<Frechet, failure::Error> {
-        Ok(Frechet(Shape::new(alpha)?))
-    }
+    pub fn new(alpha: f64) -> Result<Frechet, failure::Error> { Ok(Frechet(Shape::new(alpha)?)) }
 
-    pub fn new_unchecked(alpha: f64) -> Frechet {
-        Frechet(Shape(alpha))
-    }
+    pub fn new_unchecked(alpha: f64) -> Frechet { Frechet(Shape(alpha)) }
 }
 
 impl Default for Frechet {
@@ -61,7 +59,7 @@ impl UnivariateMoments for Frechet {
                 use special_fun::FloatSpecial;
 
                 (1.0 - 1.0 / alpha).gamma()
-            }
+            },
         }
     }
 
@@ -74,7 +72,7 @@ impl UnivariateMoments for Frechet {
                 let gamma_1m1oa = (1.0 - 1.0 / alpha).gamma();
 
                 (1.0 - 2.0 / alpha).gamma() - gamma_1m1oa * gamma_1m1oa
-            }
+            },
         }
     }
 
@@ -87,8 +85,7 @@ impl UnivariateMoments for Frechet {
                 let gamma_1m1oa = (1.0 - 1.0 / alpha).gamma();
                 let gamma_1m2oa = (1.0 - 2.0 / alpha).gamma();
 
-                let numerator =
-                    (1.0 - 3.0 / alpha).gamma() - 3.0 * gamma_1m2oa * gamma_1m1oa
+                let numerator = (1.0 - 3.0 / alpha).gamma() - 3.0 * gamma_1m2oa * gamma_1m1oa
                     + 2.0 * gamma_1m1oa * gamma_1m1oa * gamma_1m1oa;
 
                 let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
@@ -96,7 +93,7 @@ impl UnivariateMoments for Frechet {
                     (denominator_inner * denominator_inner * denominator_inner).sqrt();
 
                 (numerator / denominator).into()
-            }
+            },
         }
     }
 
@@ -115,20 +112,16 @@ impl UnivariateMoments for Frechet {
                 let denominator_inner = gamma_1m2oa - gamma_1m1oa * gamma_1m1oa;
                 let denominator = denominator_inner * denominator_inner;
 
-        numerator / denominator - 6.0
-            }
+                numerator / denominator - 6.0
+            },
         }
     }
 }
 
 impl Quantiles for Frechet {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
-    fn median(&self) -> f64 {
-        1.0 / 2.0f64.ln().powf(1.0 / get_alpha!(self))
-    }
+    fn median(&self) -> f64 { 1.0 / 2.0f64.ln().powf(1.0 / get_alpha!(self)) }
 }
 
 impl Modes for Frechet {
@@ -139,8 +132,8 @@ impl Modes for Frechet {
     }
 }
 
-impl Entropy for Frechet {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Frechet {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let alpha = get_alpha!(self);

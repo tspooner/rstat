@@ -199,8 +199,6 @@ mod tests {
             ]
         )?;
 
-        println!("{}", mixture.mean());
-
         assert!((uniform.mean() - mixture.mean()).abs() < 1e-7);
         assert!((uniform.variance() - mixture.variance()).abs() < 1e-7);
 

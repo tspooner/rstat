@@ -1,4 +1,7 @@
-use crate::{params::{Shape, Rate}, prelude::*};
+use crate::{
+    params::{Rate, Shape},
+    prelude::*,
+};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
@@ -13,7 +16,9 @@ params! {
 new_dist!(Erlang<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.k.0, $self.0.lambda.0) }
+    ($self:ident) => {
+        ($self.0.k.0, $self.0.lambda.0)
+    };
 }
 
 impl Erlang {
@@ -21,9 +26,7 @@ impl Erlang {
         Params::new(mu, s).map(|p| Erlang(p))
     }
 
-    pub fn new_unchecked(mu: usize, s: f64) -> Erlang {
-        Erlang(Params::new_unchecked(mu, s))
-    }
+    pub fn new_unchecked(mu: usize, s: f64) -> Erlang { Erlang(Params::new_unchecked(mu, s)) }
 
     #[inline(always)]
     pub fn mu(&self) -> f64 { 1.0 / self.0.lambda.0 }
@@ -50,9 +53,7 @@ impl Distribution for Erlang {
         Probability::new_unchecked(k.gammainc(lambda * x) / k.factorial())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Erlang {
@@ -78,13 +79,9 @@ impl UnivariateMoments for Erlang {
         k as f64 / lambda / lambda
     }
 
-    fn skewness(&self) -> f64 {
-        2.0 / (self.0.k.0 as f64).sqrt()
-    }
+    fn skewness(&self) -> f64 { 2.0 / (self.0.k.0 as f64).sqrt() }
 
-    fn excess_kurtosis(&self) -> f64 {
-        6.0 / self.0.k.0 as f64
-    }
+    fn excess_kurtosis(&self) -> f64 { 6.0 / self.0.k.0 as f64 }
 }
 
 impl Modes for Erlang {

@@ -1,24 +1,31 @@
 use failure::Fail;
-use std::{fmt, iter::Sum, ops::{Add, Sub, Mul, Div, Rem, Not}};
-
-// mod simplex;
-// pub use self::simplex::{UnitSimplex, SimplexError, SimplexVector};
+use std::{
+    fmt,
+    iter::Sum,
+    ops::{Add, Div, Mul, Not, Rem, Sub},
+};
 
 #[derive(Debug, Fail)]
 pub enum ProbabilityError {
-    #[fail(display="Value {} doesn't lie in the range [0.0, 1.0].", _0)]
+    #[fail(display = "Value {} doesn't lie in the range [0.0, 1.0].", _0)]
     InvalidProbability(f64),
 }
 
 /// Type representing the probability an event.
 ///
-/// This struct is just a wrapper around `f64` that strictly enforces that the probability lies in
-/// \\([0, 1]\\).
+/// This struct is just a wrapper around `f64` that strictly enforces that the
+/// probability lies in \\([0, 1]\\).
 #[derive(Debug, Default, Clone, Copy, PartialEq, PartialOrd)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
 pub struct Probability(pub(crate) f64);
 
 impl Probability {
-    /// Construct a probability, checking that the argument lies in \\([0, 1]\\).
+    /// Construct a probability, checking that the argument lies in \\([0,
+    /// 1]\\).
     ///
     /// # Examples
     /// ```
@@ -42,24 +49,16 @@ impl Probability {
     }
 
     /// Construct a probability without checking for validity.
-    pub fn new_unchecked(p: f64) -> Probability {
-        Probability(p)
-    }
+    pub fn new_unchecked(p: f64) -> Probability { Probability(p) }
 
     /// Returns a new [Probability](struct.Probability.html) with value 0.
-    pub fn zero() -> Probability {
-        Probability(0.0)
-    }
+    pub fn zero() -> Probability { Probability(0.0) }
 
     /// Returns a new [Probability](struct.Probability.html) with value 0.5.
-    pub fn half() -> Probability {
-        Probability(0.5)
-    }
+    pub fn half() -> Probability { Probability(0.5) }
 
     /// Returns a new [Probability](struct.Probability.html) with value 1.
-    pub fn one() -> Probability {
-        Probability(1.0)
-    }
+    pub fn one() -> Probability { Probability(1.0) }
 
     /// Unwrap the probability and return the internal `f64`.
     ///
@@ -129,16 +128,17 @@ impl crate::params::Param for Probability {
     fn value(&self) -> &f64 { &self.0 }
 
     fn constraints() -> crate::params::constraints::Constraints<Self::Value> {
-        vec![Box::new(crate::params::constraints::Interval { lb: 0.0, ub: 1.0, })]
+        vec![Box::new(crate::params::constraints::Interval {
+            lb: 0.0,
+            ub: 1.0,
+        })]
     }
 }
 
 impl std::convert::TryFrom<f64> for Probability {
     type Error = ProbabilityError;
 
-    fn try_from(p: f64) -> Result<Self, ProbabilityError> {
-        Probability::new(p)
-    }
+    fn try_from(p: f64) -> Result<Self, ProbabilityError> { Probability::new(p) }
 }
 
 impl From<Probability> for f64 {
@@ -146,27 +146,19 @@ impl From<Probability> for f64 {
 }
 
 impl fmt::Display for Probability {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.0)
-    }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "{}", self.0) }
 }
 
 impl PartialEq<f64> for Probability {
-    fn eq(&self, other: &f64) -> bool {
-        self.0.eq(other)
-    }
+    fn eq(&self, other: &f64) -> bool { self.0.eq(other) }
 }
 
 impl Sum<Probability> for f64 {
-    fn sum<I: Iterator<Item = Probability>>(iter: I) -> f64 {
-        iter.map(|p| p.unwrap()).sum()
-    }
+    fn sum<I: Iterator<Item = Probability>>(iter: I) -> f64 { iter.map(|p| p.unwrap()).sum() }
 }
 
 impl<'a> Sum<&'a Probability> for f64 {
-    fn sum<I: Iterator<Item = &'a Probability>>(iter: I) -> f64 {
-        iter.map(|p| p.unwrap()).sum()
-    }
+    fn sum<I: Iterator<Item = &'a Probability>>(iter: I) -> f64 { iter.map(|p| p.unwrap()).sum() }
 }
 
 macro_rules! impl_op {
@@ -299,15 +291,11 @@ impl_op!(Rem::rem(self, other) {
 impl Not for Probability {
     type Output = Probability;
 
-    fn not(self) -> Probability {
-        Probability::new_unchecked(1.0 - self.0)
-    }
+    fn not(self) -> Probability { Probability::new_unchecked(1.0 - self.0) }
 }
 
 impl Not for &Probability {
     type Output = Probability;
 
-    fn not(self) -> Probability {
-        Probability::new_unchecked(1.0 - self.0)
-    }
+    fn not(self) -> Probability { Probability::new_unchecked(1.0 - self.0) }
 }

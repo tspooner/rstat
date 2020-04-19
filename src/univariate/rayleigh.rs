@@ -19,17 +19,15 @@ pub use crate::params::Shape;
 new_dist!(Rayleigh<Shape<f64>>);
 
 macro_rules! get_sigma {
-    ($self:ident) => { ($self.0).0 }
+    ($self:ident) => {
+        ($self.0).0
+    };
 }
 
 impl Rayleigh {
-    pub fn new(sigma: f64) -> Result<Rayleigh, failure::Error> {
-        Ok(Rayleigh(Shape::new(sigma)?))
-    }
+    pub fn new(sigma: f64) -> Result<Rayleigh, failure::Error> { Ok(Rayleigh(Shape::new(sigma)?)) }
 
-    pub fn new_unchecked(sigma: f64) -> Rayleigh {
-        Rayleigh(Shape(sigma))
-    }
+    pub fn new_unchecked(sigma: f64) -> Rayleigh { Rayleigh(Shape(sigma)) }
 }
 
 impl Distribution for Rayleigh {
@@ -46,9 +44,7 @@ impl Distribution for Rayleigh {
         Probability::new_unchecked(1.0 - (-x * x / sigma * sigma / 2.0).exp())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Rayleigh {
@@ -77,23 +73,17 @@ impl UnivariateMoments for Rayleigh {
 }
 
 impl Quantiles for Rayleigh {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
-    fn median(&self) -> f64 {
-        get_sigma!(self) * (2.0 * 2.0f64.ln()).sqrt()
-    }
+    fn median(&self) -> f64 { get_sigma!(self) * (2.0 * 2.0f64.ln()).sqrt() }
 }
 
 impl Modes for Rayleigh {
-    fn modes(&self) -> Vec<f64> {
-        vec![get_sigma!(self)]
-    }
+    fn modes(&self) -> Vec<f64> { vec![get_sigma!(self)] }
 }
 
-impl Entropy for Rayleigh {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Rayleigh {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let gamma = -(1.0f64.digamma());

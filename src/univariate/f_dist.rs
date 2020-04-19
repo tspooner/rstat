@@ -13,7 +13,9 @@ params! {
 new_dist!(FDist<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.d1.0, $self.0.d2.0) }
+    ($self:ident) => {
+        ($self.0.d1.0, $self.0.d2.0)
+    };
 }
 
 impl FDist {
@@ -21,9 +23,7 @@ impl FDist {
         Params::new(d1, d2).map(|p| FDist(p))
     }
 
-    pub fn new_unchecked(d1: usize, d2: usize) -> FDist {
-        FDist(Params::new_unchecked(d1, d2))
-    }
+    pub fn new_unchecked(d1: usize, d2: usize) -> FDist { FDist(Params::new_unchecked(d1, d2)) }
 }
 
 impl Distribution for FDist {
@@ -50,7 +50,9 @@ impl Distribution for FDist {
 
         let (d1, d2) = get_params!(self);
 
-        rand_distr::FisherF::new(d1 as f64, d2 as f64).unwrap().sample(rng)
+        rand_distr::FisherF::new(d1 as f64, d2 as f64)
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -76,7 +78,7 @@ impl UnivariateMoments for FDist {
                 let d2 = d2 as f64;
 
                 d2 / (d2 - 2.0)
-            }
+            },
         }
     }
 
@@ -88,7 +90,7 @@ impl UnivariateMoments for FDist {
                 let d2m2 = d2 - 2.0;
 
                 2.0 * d2 * d2 * (d1 + d2m2) / d1 / d2m2 / d2m2 / (d2 - 4.0)
-            }
+            },
         }
     }
 
@@ -102,7 +104,7 @@ impl UnivariateMoments for FDist {
                 let denominator = (d2 - 6.0) * (d1 * (d1 + d2 - 2.0)).sqrt();
 
                 numerator / denominator
-            }
+            },
         }
     }
 
@@ -118,7 +120,7 @@ impl UnivariateMoments for FDist {
                 let denominator = d1 * (d2 - 6.0) * (d2 - 8.0) * (d1 + d2m2);
 
                 numerator / denominator
-            }
+            },
         }
     }
 }
@@ -131,13 +133,13 @@ impl Modes for FDist {
                 let (d1, d2) = (d1 as f64, self.0.d2.0 as f64);
 
                 vec![(d1 - 2.0) / d1 * d2 / (d2 + 2.0)]
-            }
+            },
         }
     }
 }
 
-impl Entropy for FDist {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for FDist {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let (d1, d2) = get_params!(self);

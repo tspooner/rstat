@@ -1,8 +1,4 @@
-use crate::{
-    consts::PI_2,
-    prelude::*,
-    univariate::normal::Normal,
-};
+use crate::{consts::PI_2, prelude::*, univariate::normal::Normal};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -14,7 +10,9 @@ pub use crate::univariate::normal::Params;
 pub struct LogNormal(Normal);
 
 macro_rules! get_params {
-    ($self:ident) => { (($self.0).0.mu.0, ($self.0).0.sigma.0) }
+    ($self:ident) => {
+        (($self.0).0.mu.0, ($self.0).0.sigma.0)
+    };
 }
 
 impl LogNormal {
@@ -28,9 +26,7 @@ impl LogNormal {
 }
 
 impl From<Params> for LogNormal {
-    fn from(params: Params) -> LogNormal {
-        LogNormal(params.into())
-    }
+    fn from(params: Params) -> LogNormal { LogNormal(params.into()) }
 }
 
 impl From<Normal> for LogNormal {
@@ -56,7 +52,9 @@ impl Distribution for LogNormal {
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
         use rand_distr::Distribution as _;
 
-        rand_distr::LogNormal::new(self.mean(), self.standard_deviation()).unwrap().sample(rng)
+        rand_distr::LogNormal::new(self.mean(), self.standard_deviation())
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -98,9 +96,7 @@ impl UnivariateMoments for LogNormal {
 }
 
 impl Quantiles for LogNormal {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 { (self.0).0.mu.0.exp() }
 }
@@ -113,8 +109,8 @@ impl Modes for LogNormal {
     }
 }
 
-impl Entropy for LogNormal {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for LogNormal {
+    fn shannon_entropy(&self) -> f64 {
         let (mu, sigma) = get_params!(self);
 
         (sigma * (mu + 0.5).exp() * PI_2.sqrt()).log2()

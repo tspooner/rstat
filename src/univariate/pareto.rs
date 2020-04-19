@@ -14,7 +14,9 @@ locscale_params! {
 new_dist!(Pareto<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.x_m.0, $self.0.alpha.0) }
+    ($self:ident) => {
+        ($self.0.x_m.0, $self.0.alpha.0)
+    };
 }
 
 impl Pareto {
@@ -46,7 +48,9 @@ impl Distribution for Pareto {
 
         let (x_m, alpha) = get_params!(self);
 
-        rand_distr::Pareto::<f64>::new(x_m, alpha).unwrap().sample(rng)
+        rand_distr::Pareto::<f64>::new(x_m, alpha)
+            .unwrap()
+            .sample(rng)
     }
 }
 
@@ -115,13 +119,11 @@ impl Quantiles for Pareto {
 }
 
 impl Modes for Pareto {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.0.x_m.0]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.x_m.0] }
 }
 
-impl Entropy for Pareto {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Pareto {
+    fn shannon_entropy(&self) -> f64 {
         let (x_m, alpha) = get_params!(self);
 
         (x_m / alpha * (1.0 + 1.0 / alpha).exp()).ln()
@@ -136,12 +138,7 @@ impl FisherInformation for Pareto {
         unsafe {
             Array2::from_shape_vec_unchecked(
                 (2, 2),
-                vec![
-                    alpha / x_m / x_m,
-                    off_diag,
-                    off_diag,
-                    1.0 / alpha / alpha,
-                ],
+                vec![alpha / x_m / x_m, off_diag, off_diag, 1.0 / alpha / alpha],
             )
         }
     }

@@ -2,7 +2,7 @@ use crate::{params::Count, prelude::*};
 use failure::Error;
 use ndarray::{Array1, Array2};
 use rand::Rng;
-use spaces::{ProductSpace, discrete::Ordinal};
+use spaces::{discrete::Ordinal, ProductSpace};
 use std::fmt;
 
 #[cfg_attr(feature = "serde", derive(Serialize, Deserialize))]
@@ -42,7 +42,6 @@ impl Multinomial {
         Ok(Multinomial(params))
     }
 
-
     pub fn new_unchecked(n: usize, ps: Vec<f64>) -> Multinomial {
         Multinomial(Params::new_unchecked(n, ps))
     }
@@ -50,15 +49,11 @@ impl Multinomial {
 
 impl Multinomial {
     #[inline]
-    pub fn n_categories(&self) -> usize {
-        self.0.ps.len()
-    }
+    pub fn n_categories(&self) -> usize { self.0.ps.len() }
 }
 
 impl From<Params> for Multinomial {
-    fn from(params: Params) -> Multinomial {
-        Multinomial(params)
-    }
+    fn from(params: Params) -> Multinomial { Multinomial(params) }
 }
 
 impl Distribution for Multinomial {
@@ -73,13 +68,9 @@ impl Distribution for Multinomial {
 
     fn params(&self) -> Params { self.0.clone() }
 
-    fn cdf(&self, _: &Vec<usize>) -> Probability {
-        unimplemented!()
-    }
+    fn cdf(&self, _: &Vec<usize>) -> Probability { unimplemented!() }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<usize> {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<usize> { unimplemented!() }
 }
 
 impl DiscreteDistribution for Multinomial {
@@ -105,11 +96,7 @@ impl DiscreteDistribution for Multinomial {
         let term_1 = (self.0.n.0 as f64 + 1.0).loggamma();
         let term_2 = xs.iter().zip(self.0.ps.iter()).fold(0.0, |acc, (&x, &p)| {
             let x_f64 = x as f64;
-            let xlogy = if x == 0 {
-                0.0
-            } else {
-                x_f64 * p.ln()
-            };
+            let xlogy = if x == 0 { 0.0 } else { x_f64 * p.ln() };
 
             acc + xlogy - (x_f64 + 1.0).loggamma()
         });
@@ -119,14 +106,14 @@ impl DiscreteDistribution for Multinomial {
 }
 
 impl MultivariateMoments for Multinomial {
-    fn mean(&self) -> Array1<f64> {
-        self.0.ps.iter().map(|&p| p * self.0.n.0 as f64).collect()
-    }
+    fn mean(&self) -> Array1<f64> { self.0.ps.iter().map(|&p| p * self.0.n.0 as f64).collect() }
 
     fn variance(&self) -> Array1<f64> {
-        self.0.ps.iter().map(|&p| {
-            (p * (1.0 - p)) * self.0.n.0 as f64
-        }).collect()
+        self.0
+            .ps
+            .iter()
+            .map(|&p| (p * (1.0 - p)) * self.0.n.0 as f64)
+            .collect()
     }
 
     fn covariance(&self) -> Array2<f64> {

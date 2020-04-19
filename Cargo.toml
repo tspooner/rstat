@@ -21,6 +21,8 @@ rustdoc-args = [ "--html-in-header", "katex.html" ]
 [features]
 default = []
 
+serde = ["serde_crate", "ndarray/serde"]
+
 [dependencies]
 failure = "0.1"
 
@@ -32,7 +34,12 @@ special-fun = "0.2"
 
 spaces = "5.0"
 
-ndarray = "0.13"
+ndarray = { version = "0.13", features = ["serde"] }
 ndarray-linalg = { version = "0.12", optional = true }
 
-serde = { version = "1.0", optional = true, default-features = false, features = ["derive"] }
+[dependencies.serde_crate]
+package = "serde"
+optional = true
+version = "1.0"
+default-features = false
+features = ["std", "derive"]

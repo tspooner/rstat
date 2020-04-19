@@ -16,7 +16,9 @@ locscale_params! {
 new_dist!(Gumbel<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.beta.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.beta.0)
+    };
 }
 
 impl Gumbel {
@@ -24,9 +26,7 @@ impl Gumbel {
         Params::new(mu, beta).map(|p| Gumbel(p))
     }
 
-    pub fn new_unchecked(mu: f64, beta: f64) -> Gumbel {
-        Gumbel(Params::new_unchecked(mu, beta))
-    }
+    pub fn new_unchecked(mu: f64, beta: f64) -> Gumbel { Gumbel(Params::new_unchecked(mu, beta)) }
 
     #[inline(always)]
     pub fn z(&self, x: f64) -> f64 {
@@ -37,9 +37,7 @@ impl Gumbel {
 }
 
 impl Default for Gumbel {
-    fn default() -> Gumbel {
-        Gumbel(Params::new_unchecked(0.0, 1.0))
-    }
+    fn default() -> Gumbel { Gumbel(Params::new_unchecked(0.0, 1.0)) }
 }
 
 impl Distribution for Gumbel {
@@ -56,9 +54,7 @@ impl Distribution for Gumbel {
         Probability::new_unchecked((-(-z).exp()).exp())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Gumbel {
@@ -96,9 +92,7 @@ impl UnivariateMoments for Gumbel {
 }
 
 impl Quantiles for Gumbel {
-    fn quantile(&self, _: Probability) -> f64 {
-        unimplemented!()
-    }
+    fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
         let (mu, beta) = get_params!(self);
@@ -108,13 +102,11 @@ impl Quantiles for Gumbel {
 }
 
 impl Modes for Gumbel {
-    fn modes(&self) -> Vec<f64> {
-        vec![self.0.mu.0]
-    }
+    fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
-impl Entropy for Gumbel {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Gumbel {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         self.0.beta.0.ln() + -(1.0f64.digamma()) + 1.0

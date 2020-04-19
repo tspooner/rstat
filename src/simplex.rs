@@ -1,11 +1,15 @@
 use crate::{
-    Distribution, Probability,
-    params::{Param, constraints::Constraints},
-    univariate::uniform::Uniform
+    params::{
+        constraints::{self, Constraints, UnsatisfiedConstraintError},
+        Param,
+    },
+    univariate::uniform::Uniform,
+    Distribution,
+    Probability,
 };
 use failure::Fail;
-use std::ops;
 use rand::Rng;
+use std::ops;
 
 /// Utility for sampling from a unit \\(K\\)-simplex.
 #[derive(Clone, Copy, Debug)]
@@ -37,8 +41,8 @@ impl UnitSimplex {
     ///
     /// This algorithm works as follows:
     ///
-    /// 1. Draw \\(K\\) independent points, \\(x_i \in [0, 1]\\), uniformly at random.
-    /// 2. Apply the transformation \\(z_i = -\ln{x_i}\\).
+    /// 1. Draw \\(K\\) independent points, \\(x_i \in [0, 1]\\), uniformly at
+    /// random. 2. Apply the transformation \\(z_i = -\ln{x_i}\\).
     /// 3. Compute the sum \\(s = \sum_i x_i\\).
     /// 4. Return the vector of values \\(z_i / s\\).
     ///
@@ -67,37 +71,25 @@ impl UnitSimplex {
 
 #[derive(Clone, Debug, Fail)]
 pub enum SimplexError {
-    #[fail(display="Probabilities in SimplexVector must sum to 1.")]
+    #[fail(display = "Probabilities in SimplexVector must sum to 1.")]
     Unnormalised,
 }
 
-/// Probability vector constrainted to the [unit simplex](struct.UnitSimplex.html).
+/// Probability vector constrainted to the [unit
+/// simplex](struct.UnitSimplex.html).
 #[derive(Clone, Debug)]
 pub struct SimplexVector(Vec<f64>);
 
 impl SimplexVector {
-    /// Construct a new probability vector on the [unit simplex](struct.UnitSimplex.html).
+    /// Construct a new probability vector on the [unit
+    /// simplex](struct.UnitSimplex.html).
     pub fn new(ps: Vec<f64>) -> Result<SimplexVector, failure::Error> {
-        let mut z: f64 = 0.0;
-
-        for p in ps.iter() {
-            let p = Probability::new(*p)?.0;
-
-            z += p;
-        }
-
-        if (z - 1.0).abs() < 1e-5 {
-            Ok(SimplexVector(ps))
-        } else {
-            Err(SimplexError::Unnormalised)?
-        }
+        std::convert::TryFrom::try_from(ps)
     }
 
     /// Construct a new probability vector without enforcing constraints.
     pub fn new_unchecked<I>(ps: I) -> SimplexVector
-    where
-        I: IntoIterator<Item = f64>,
-    {
+    where I: IntoIterator<Item = f64> {
         SimplexVector(ps.into_iter().collect())
     }
 
@@ -120,23 +112,37 @@ impl ops::Deref for SimplexVector {
     fn deref(&self) -> &[f64] { self.0.deref() }
 }
 
+impl std::convert::TryFrom<Vec<f64>> for SimplexVector {
+    type Error = failure::Error;
+
+    fn try_from(ps: Vec<f64>) -> Result<SimplexVector, failure::Error> {
+        let mut z: f64 = 0.0;
+
+        for p in ps.iter() {
+            z += Probability::new(*p)?.0;
+        }
+
+        if (z - 1.0).abs() < 1e-5 {
+            Ok(SimplexVector(ps))
+        } else {
+            Err(SimplexError::Unnormalised)?
+        }
+    }
+}
+
 impl Param for SimplexVector {
     type Value = Vec<f64>;
 
     fn value(&self) -> &Vec<f64> { &self.0 }
 
-    fn constraints() -> Constraints<Vec<f64>> {
-        vec![
-
-        ]
-    }
+    fn constraints() -> Constraints<Vec<f64>> { vec![] }
 }
 
 #[cfg(test)]
 mod tests {
-    use rand::thread_rng;
-    use std::iter::{repeat, once};
     use super::{Probability, SimplexVector};
+    use rand::thread_rng;
+    use std::iter::{once, repeat};
 
     #[test]
     fn test_sample_index_degenerate() {
@@ -153,7 +159,10 @@ mod tests {
 
         fn make_simplex(idx: usize, n: usize) -> SimplexVector {
             SimplexVector::new_unchecked(
-                repeat(0.0).take(idx).chain(once(1.0)).chain(repeat(0.0).take(n - idx - 1))
+                repeat(0.0)
+                    .take(idx)
+                    .chain(once(1.0))
+                    .chain(repeat(0.0).take(n - idx - 1)),
             )
         }
 

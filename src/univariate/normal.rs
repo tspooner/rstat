@@ -18,21 +18,21 @@ locscale_params! {
 new_dist!(Normal<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.sigma.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.sigma.0)
+    };
 }
 
 impl Normal {
     pub fn new(mu: f64, sigma: f64) -> Result<Normal, failure::Error> {
-        Params::new(mu, sigma).map(|p| Normal(p))
+        Params::new(mu, sigma).map(Normal)
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> Normal {
         Normal(Params::new_unchecked(mu, sigma))
     }
 
-    pub fn standard() -> Normal {
-        Normal(Params::new_unchecked(0.0, 1.0))
-    }
+    pub fn standard() -> Normal { Normal(Params::new_unchecked(0.0, 1.0)) }
 
     #[inline(always)]
     pub fn z(&self, x: f64) -> f64 {
@@ -57,9 +57,13 @@ impl Distribution for Normal {
     fn params(&self) -> Self::Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
+        use std::num::FpCategory;
         use special_fun::FloatSpecial;
 
-        Probability::new_unchecked(self.z(*x).norm())
+        Probability::new_unchecked(match x.classify() {
+            FpCategory::Infinite => if x.is_sign_negative() { 0.0 } else { 1.0 },
+            _ => self.z(*x).norm()
+        })
     }
 
     fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> f64 {
@@ -108,10 +112,8 @@ impl Modes for Normal {
     fn modes(&self) -> Vec<f64> { vec![self.0.mu.0] }
 }
 
-impl Entropy for Normal {
-    fn entropy(&self) -> f64 {
-        (PI_E_2 * self.variance()).ln() / 2.0
-    }
+impl ShannonEntropy for Normal {
+    fn shannon_entropy(&self) -> f64 { (PI_E_2 * self.variance()).ln() / 2.0 }
 }
 
 impl FisherInformation for Normal {
@@ -143,9 +145,11 @@ impl MLE for Normal {
         let n = xs.len() as f64;
 
         let mean = xs.iter().fold(0.0, |acc, &x| acc + x) / n;
-        let var = xs.into_iter().map(|x| {
-            x - mean
-        }).fold(0.0, |acc, r| acc + r * r) / (n - 1.0);
+        let var = xs
+            .into_iter()
+            .map(|x| x - mean)
+            .fold(0.0, |acc, r| acc + r * r)
+            / (n - 1.0);
 
         Normal::new(mean, var.sqrt())
     }

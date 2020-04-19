@@ -16,7 +16,9 @@ locscale_params! {
 new_dist!(Levy<Params>);
 
 macro_rules! get_params {
-    ($self:ident) => { ($self.0.mu.0, $self.0.c.0) }
+    ($self:ident) => {
+        ($self.0.mu.0, $self.0.c.0)
+    };
 }
 
 impl Levy {
@@ -24,18 +26,14 @@ impl Levy {
         Params::new(mu, c).map(|p| Levy(p))
     }
 
-    pub fn new_unchecked(mu: f64, c: f64) -> Levy {
-        Levy(Params::new_unchecked(mu, c))
-    }
+    pub fn new_unchecked(mu: f64, c: f64) -> Levy { Levy(Params::new_unchecked(mu, c)) }
 }
 
 impl Distribution for Levy {
     type Support = Interval;
     type Params = Params;
 
-    fn support(&self) -> Interval {
-        Interval::left_bounded(self.0.mu.0)
-    }
+    fn support(&self) -> Interval { Interval::left_bounded(self.0.mu.0) }
 
     fn params(&self) -> Params { self.0 }
 
@@ -47,9 +45,7 @@ impl Distribution for Levy {
         Probability::new_unchecked((c / 2.0 / (x - mu)).erfc())
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 {
-        unimplemented!()
-    }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Levy {
@@ -96,8 +92,8 @@ impl Modes for Levy {
     }
 }
 
-impl Entropy for Levy {
-    fn entropy(&self) -> f64 {
+impl ShannonEntropy for Levy {
+    fn shannon_entropy(&self) -> f64 {
         use special_fun::FloatSpecial;
 
         let c = self.0.c.0;
