@@ -12,7 +12,7 @@
 Add this to your `Cargo.toml`:
 ```toml
 [dependencies]
-rstat = "0.4"
+rstat = "0.5"
 ```
 
 ### Feature `serde`
