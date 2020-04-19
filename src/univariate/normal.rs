@@ -57,12 +57,18 @@ impl Distribution for Normal {
     fn params(&self) -> Self::Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
-        use std::num::FpCategory;
         use special_fun::FloatSpecial;
+        use std::num::FpCategory;
 
         Probability::new_unchecked(match x.classify() {
-            FpCategory::Infinite => if x.is_sign_negative() { 0.0 } else { 1.0 },
-            _ => self.z(*x).norm()
+            FpCategory::Infinite => {
+                if x.is_sign_negative() {
+                    0.0
+                } else {
+                    1.0
+                }
+            },
+            _ => self.z(*x).norm(),
         })
     }
 
