@@ -1,9 +1,17 @@
-use crate::{params::DOF, prelude::*};
+use crate::{
+    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
+pub use crate::params::DOF;
+
 params! {
+    #[derive(Copy)]
     Params {
         d1: DOF<usize>,
         d2: DOF<usize>
@@ -20,7 +28,7 @@ macro_rules! get_params {
 
 impl FDist {
     pub fn new(d1: usize, d2: usize) -> Result<FDist, failure::Error> {
-        Params::new(d1, d2).map(|p| FDist(p))
+        Params::new(d1, d2).map(FDist)
     }
 
     pub fn new_unchecked(d1: usize, d2: usize) -> FDist { FDist(Params::new_unchecked(d1, d2)) }

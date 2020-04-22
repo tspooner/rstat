@@ -1,35 +1,47 @@
-use crate::{prelude::*, univariate::uniform::Uniform};
+use crate::{
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    univariate::uniform::Uniform,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
 
 pub use crate::params::Shape;
 
-new_dist!(Frechet<Shape<f64>>);
+params! {
+    Params {
+        alpha: Shape<f64>
+    }
+}
+
+new_dist!(Frechet<Params>);
 
 macro_rules! get_alpha {
     ($self:ident) => {
-        ($self.0).0
+        $self.0.alpha.0
     };
 }
 
 impl Frechet {
-    pub fn new(alpha: f64) -> Result<Frechet, failure::Error> { Ok(Frechet(Shape::new(alpha)?)) }
+    pub fn new(alpha: f64) -> Result<Frechet, failure::Error> { Params::new(alpha).map(Frechet) }
 
-    pub fn new_unchecked(alpha: f64) -> Frechet { Frechet(Shape(alpha)) }
+    pub fn new_unchecked(alpha: f64) -> Frechet { Frechet(Params::new_unchecked(alpha)) }
 }
 
 impl Default for Frechet {
-    fn default() -> Frechet { Frechet(Shape(1.0)) }
+    fn default() -> Frechet { Frechet::new_unchecked(1.0) }
 }
 
 impl Distribution for Frechet {
     type Support = Interval;
-    type Params = Shape<f64>;
+    type Params = Params;
 
     fn support(&self) -> Interval { Interval::left_bounded(0.0) }
 
-    fn params(&self) -> Shape<f64> { Shape(get_alpha!(self)) }
+    fn params(&self) -> Params { Params::new_unchecked(get_alpha!(self)) }
 
     fn cdf(&self, x: &f64) -> Probability {
         Probability::new_unchecked((-(x.powf(-get_alpha!(self)))).exp())

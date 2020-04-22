@@ -1,10 +1,16 @@
-use crate::prelude::*;
+use crate::{
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         x_m<f64>,
         alpha<f64>
@@ -21,7 +27,7 @@ macro_rules! get_params {
 
 impl Pareto {
     pub fn new(x_m: f64, alpha: f64) -> Result<Pareto, failure::Error> {
-        Params::new(x_m, alpha).map(|p| Pareto(p))
+        Params::new(x_m, alpha).map(Pareto)
     }
 
     pub fn new_unchecked(x_m: f64, alpha: f64) -> Pareto {

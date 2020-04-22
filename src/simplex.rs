@@ -72,10 +72,8 @@ impl UnitSimplex {
 }
 
 #[derive(Clone, Debug, Fail)]
-pub enum SimplexError {
-    #[fail(display = "Probabilities in SimplexVector must sum to 1.")]
-    Unnormalised,
-}
+#[fail(display = "Probabilities {:?} do not sum to 1.", _0)]
+pub struct InvalidSimplexError(Vec<f64>);
 
 /// Probability vector constrainted to the [unit
 /// simplex](struct.UnitSimplex.html).
@@ -99,6 +97,9 @@ impl SimplexVector {
     where I: IntoIterator<Item = f64> {
         SimplexVector(ps.into_iter().collect())
     }
+
+    /// Unwrap and return the inner `Vec<f64>` instance.
+    pub fn unwrap(self) -> Vec<f64> { self.0 }
 
     /// Sample a probability-weighted random index from the vector.
     pub fn sample_index<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
@@ -132,7 +133,7 @@ impl std::convert::TryFrom<Vec<f64>> for SimplexVector {
         if (z - 1.0).abs() < 1e-5 {
             Ok(SimplexVector(ps))
         } else {
-            Err(SimplexError::Unnormalised)?
+            Err(InvalidSimplexError(ps))?
         }
     }
 }
@@ -142,12 +143,14 @@ impl Param for SimplexVector {
 
     fn value(&self) -> &Vec<f64> { &self.0 }
 
+    fn into_value(self) -> Vec<f64> { self.0 }
+
     fn constraints() -> Constraints<Vec<f64>> { vec![] }
 }
 
 #[cfg(test)]
 mod tests {
-    use super::{Probability, SimplexVector};
+    use super::SimplexVector;
     use rand::thread_rng;
     use std::iter::{once, repeat};
 

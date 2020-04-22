@@ -1,4 +1,4 @@
-use crate::prelude::*;
+use crate::linalg::{Matrix, Vector};
 use failure::{Backtrace, Fail};
 use num::{zero, PrimInt, Zero};
 use std::{
@@ -6,7 +6,6 @@ use std::{
     ops::Deref,
 };
 
-#[macro_export]
 macro_rules! assert_constraint {
     ($x:ident+) => {
         $crate::params::constraints::Constraint::check($crate::params::constraints::Positive, $x)

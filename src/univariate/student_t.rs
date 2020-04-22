@@ -1,25 +1,44 @@
-use crate::{consts::PI, prelude::*};
+use crate::{
+    consts::PI,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
 pub use crate::params::Loc;
 
-new_dist!(StudentT<Loc<f64>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        nu: Loc<f64>
+    }
+}
+
+new_dist!(StudentT<Params>);
 
 macro_rules! get_nu {
     ($self:ident) => {
-        ($self.0).0
+        $self.0.nu.0
     };
+}
+
+impl StudentT {
+    pub fn new(nu: f64) -> Result<StudentT, failure::Error> { Ok(StudentT(Params::new(nu)?)) }
+
+    pub fn new_unchecked(nu: f64) -> StudentT { StudentT(Params::new_unchecked(nu)) }
 }
 
 impl Distribution for StudentT {
     type Support = Reals;
-    type Params = Loc<f64>;
+    type Params = Params;
 
     fn support(&self) -> Reals { Reals }
 
-    fn params(&self) -> Loc<f64> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
         use special_fun::FloatSpecial;

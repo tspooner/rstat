@@ -6,10 +6,8 @@ use std::{
 };
 
 #[derive(Debug, Fail)]
-pub enum ProbabilityError {
-    #[fail(display = "Value {} doesn't lie in the range [0.0, 1.0].", _0)]
-    InvalidProbability(f64),
-}
+#[fail(display = "Value {} doesn't lie in the range [0.0, 1.0].", _0)]
+pub struct InvalidProbabilityError(f64);
 
 /// Type representing the probability an event.
 ///
@@ -40,11 +38,11 @@ impl Probability {
     /// assert!(Probability::new(0.5).is_ok());
     /// assert!(Probability::new(1.0).is_ok());
     /// ```
-    pub fn new(p: f64) -> Result<Self, ProbabilityError> {
+    pub fn new(p: f64) -> Result<Self, InvalidProbabilityError> {
         if p >= 0.0 && p <= 1.0 {
             Ok(Probability(p))
         } else {
-            Err(ProbabilityError::InvalidProbability(p))
+            Err(InvalidProbabilityError(p))
         }
     }
 
@@ -127,6 +125,8 @@ impl crate::params::Param for Probability {
 
     fn value(&self) -> &f64 { &self.0 }
 
+    fn into_value(self) -> f64 { self.0 }
+
     fn constraints() -> crate::params::constraints::Constraints<Self::Value> {
         vec![Box::new(crate::params::constraints::Interval {
             lb: 0.0,
@@ -136,9 +136,9 @@ impl crate::params::Param for Probability {
 }
 
 impl std::convert::TryFrom<f64> for Probability {
-    type Error = ProbabilityError;
+    type Error = InvalidProbabilityError;
 
-    fn try_from(p: f64) -> Result<Self, ProbabilityError> { Probability::new(p) }
+    fn try_from(p: f64) -> Result<Self, InvalidProbabilityError> { Probability::new(p) }
 }
 
 impl From<Probability> for f64 {
@@ -270,11 +270,11 @@ macro_rules! impl_op {
 
 impl_op!(Add::add(self, other) {
     Probability::new(self.0 + other.0)
-} -> Result<Probability, ProbabilityError>);
+} -> Result<Probability, InvalidProbabilityError>);
 
 impl_op!(Sub::sub(self, other) {
     Probability::new(self.0 - other.0)
-} -> Result<Probability, ProbabilityError>);
+} -> Result<Probability, InvalidProbabilityError>);
 
 impl_op!(Mul::mul(self, other) {
     Probability::new_unchecked(self.0 * other.0)
@@ -282,11 +282,11 @@ impl_op!(Mul::mul(self, other) {
 
 impl_op!(Div::div(self, other) {
     Probability::new(self.0 / other.0)
-} -> Result<Probability, ProbabilityError>);
+} -> Result<Probability, InvalidProbabilityError>);
 
 impl_op!(Rem::rem(self, other) {
     Probability::new(self.0 % other.0)
-} -> Result<Probability, ProbabilityError>);
+} -> Result<Probability, InvalidProbabilityError>);
 
 impl Not for Probability {
     type Output = Probability;

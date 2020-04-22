@@ -1,14 +1,19 @@
 use crate::{
     consts::{PI_2, PI_E_2},
-    params::Shape,
-    prelude::*,
+    statistics::{Modes, ShannonEntropy, UnivariateMoments},
     univariate::{normal, uniform::Uniform},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
+pub use crate::params::Shape;
+
 params! {
+    #[derive(Copy)]
     Params {
         mu: Shape<f64>,
         lambda: Shape<f64>

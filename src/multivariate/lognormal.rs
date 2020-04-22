@@ -1,7 +1,10 @@
 use crate::{
     linalg::{Matrix, Vector},
     multivariate::normal::Normal,
-    prelude::*,
+    statistics::MultivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use failure::Error;
 use rand::Rng;

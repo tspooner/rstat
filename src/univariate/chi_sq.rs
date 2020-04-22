@@ -1,38 +1,47 @@
-use crate::prelude::*;
+use crate::{
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Convolution,
+    Distribution,
+    Probability,
+};
 use rand;
 use spaces::real::PositiveReals;
+use special_fun::FloatSpecial;
 use std::fmt;
 
 pub use crate::params::DOF;
 
-new_dist!(ChiSq<DOF<usize>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        k: DOF<usize>
+    }
+}
+
+new_dist!(ChiSq<Params>);
 
 macro_rules! get_k {
     ($self:ident) => {
-        ($self.0).0 as f64
+        $self.0.k.0 as f64
     };
 }
 
 impl ChiSq {
-    pub fn new(dof: usize) -> Result<ChiSq, failure::Error> { Ok(ChiSq(DOF::new(dof)?)) }
+    pub fn new(k: usize) -> Result<ChiSq, failure::Error> { Ok(ChiSq(Params::new(k)?)) }
 
-    pub fn new_unchecked(dof: usize) -> ChiSq { ChiSq(DOF(dof)) }
-
-    #[inline(always)]
-    pub fn k(&self) -> f64 { get_k!(self) }
+    pub fn new_unchecked(k: usize) -> ChiSq { ChiSq(Params::new_unchecked(k)) }
 }
 
 impl Distribution for ChiSq {
     type Support = PositiveReals;
-    type Params = DOF<usize>;
+    type Params = Params;
 
     fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn params(&self) -> DOF<usize> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
         let ko2 = k / 2.0;
 
@@ -50,8 +59,6 @@ impl Distribution for ChiSq {
 
 impl ContinuousDistribution for ChiSq {
     fn pdf(&self, x: &f64) -> f64 {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
         let ko2 = k / 2.0;
         let norm = 2.0f64.powf(ko2) * ko2.gamma();
@@ -63,7 +70,7 @@ impl ContinuousDistribution for ChiSq {
 impl UnivariateMoments for ChiSq {
     fn mean(&self) -> f64 { get_k!(self) }
 
-    fn variance(&self) -> f64 { (2 * (self.0).0) as f64 }
+    fn variance(&self) -> f64 { (2 * self.0.k.0) as f64 }
 
     fn skewness(&self) -> f64 { (8.0 / get_k!(self)).sqrt() }
 
@@ -81,13 +88,11 @@ impl Quantiles for ChiSq {
 }
 
 impl Modes for ChiSq {
-    fn modes(&self) -> Vec<f64> { vec![((self.0).0.max(2) - 2) as f64] }
+    fn modes(&self) -> Vec<f64> { vec![(self.0.k.0.max(2) - 2) as f64] }
 }
 
 impl ShannonEntropy for ChiSq {
     fn shannon_entropy(&self) -> f64 {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
         let ko2 = k / 2.0;
 
@@ -99,8 +104,8 @@ impl Convolution<ChiSq> for ChiSq {
     type Output = ChiSq;
 
     fn convolve(self, rv: ChiSq) -> Result<ChiSq, failure::Error> {
-        let k1 = (self.0).0;
-        let k2 = (rv.0).0;
+        let k1 = self.0.k.0;
+        let k2 = rv.0.k.0;
 
         assert_constraint!(k1 == k2)?;
 
@@ -109,5 +114,5 @@ impl Convolution<ChiSq> for ChiSq {
 }
 
 impl fmt::Display for ChiSq {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "ChiSq({})", self.k()) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "ChiSq({})", self.0.k.0) }
 }

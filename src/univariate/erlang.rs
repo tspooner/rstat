@@ -1,12 +1,17 @@
 use crate::{
-    params::{Rate, Shape},
-    prelude::*,
+    statistics::{Modes, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
+use special_fun::FloatSpecial;
 use std::fmt;
 
+pub use crate::params::{Rate, Shape};
+
 params! {
+    #[derive(Copy)]
     Params {
         k: Shape<usize>,
         lambda: Rate<f64>
@@ -23,7 +28,7 @@ macro_rules! get_params {
 
 impl Erlang {
     pub fn new(mu: usize, s: f64) -> Result<Erlang, failure::Error> {
-        Params::new(mu, s).map(|p| Erlang(p))
+        Params::new(mu, s).map(Erlang)
     }
 
     pub fn new_unchecked(mu: usize, s: f64) -> Erlang { Erlang(Params::new_unchecked(mu, s)) }
@@ -44,25 +49,22 @@ impl Distribution for Erlang {
 
     fn params(&self) -> Params { self.0 }
 
-    fn cdf(&self, x: &f64) -> Probability {
-        use special_fun::FloatSpecial;
-
+    fn log_cdf(&self, x: &f64) -> f64 {
         let (k, lambda) = get_params!(self);
-        let k = k as f64;
 
-        Probability::new_unchecked(k.gammainc(lambda * x) / k.factorial())
+        (k as f64).gammainc(lambda * x).ln() - crate::utils::log_factorial_stirling(k as u64)
     }
 
     fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> f64 { unimplemented!() }
 }
 
 impl ContinuousDistribution for Erlang {
-    fn pdf(&self, x: &f64) -> f64 {
-        use special_fun::FloatSpecial;
-
+    fn log_pdf(&self, x: &f64) -> f64 {
         let (k, lambda) = get_params!(self);
 
-        lambda.powi(k as i32) * x.powi(k as i32 - 1) * (-lambda * x).exp() / (k as f64).factorial()
+        k as f64 * lambda.ln() + (k - 1) as f64 * x
+            - lambda * x
+            - crate::utils::log_factorial_stirling(k as u64 - 1)
     }
 }
 

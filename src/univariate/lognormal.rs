@@ -1,4 +1,11 @@
-use crate::{consts::PI_2, prelude::*, univariate::normal::Normal};
+use crate::{
+    consts::PI_2,
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    univariate::normal::Normal,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -17,7 +24,7 @@ macro_rules! get_params {
 
 impl LogNormal {
     pub fn new(mu: f64, sigma: f64) -> Result<LogNormal, failure::Error> {
-        Params::new(mu, sigma).map(|p| LogNormal(Normal(p)))
+        Normal::new(mu, sigma).map(LogNormal)
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> LogNormal {

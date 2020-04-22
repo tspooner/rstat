@@ -2,7 +2,6 @@ use crate::{
     linalg::{Matrix, Vector},
     Distribution,
     Probability,
-    Sample,
 };
 use spaces::Space;
 
@@ -114,19 +113,4 @@ pub trait ShannonEntropy: Distribution {
 pub trait FisherInformation: Distribution {
     /// Computes the Fisher information matrix of the distribution, \\(I(X)\\).
     fn fisher_information(&self) -> Matrix<f64>;
-}
-
-pub trait MahalanobisDistance: Distribution {
-    /// Compute the Mahalanobis distance of sample \\(\\boldsymbol{x}\\).
-    ///
-    /// The Mahalanobis distance represents the distance between the sample
-    /// \\(\\boldsymbol{x}\\) and the mean of the distribution,
-    /// \\(\\boldsymbol{\\mu}\\): \\[\\sqrt{(\\boldsymbol{x} -
-    /// \\boldsymbol{\\mu}){ \\Sigma^{-1} (\\boldsymbol{x} -
-    /// \\boldsymbol{\\mu})}}.\\]
-    fn d_mahalanobis(&self, x: &Sample<Self>) -> f64 { self.d_mahalanobis_squared(x).sqrt() }
-
-    /// Compute the squared Mahalanobis distance of sample
-    /// \\(\\boldsymbol{x}\\).
-    fn d_mahalanobis_squared(&self, x: &Sample<Self>) -> f64 { self.d_mahalanobis(x).powi(2) }
 }

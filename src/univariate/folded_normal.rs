@@ -1,13 +1,16 @@
 use crate::{
     consts::{PI_2, TWO_OVER_PI},
-    params::Scale,
-    prelude::*,
+    statistics::{Modes, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::NonNegativeReals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         sigma<f64>
@@ -24,7 +27,7 @@ macro_rules! get_params {
 
 impl FoldedNormal {
     pub fn new(mu: f64, sigma: f64) -> Result<FoldedNormal, failure::Error> {
-        Params::new(mu, sigma).map(|p| FoldedNormal(p))
+        Params::new(mu, sigma).map(FoldedNormal)
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> FoldedNormal {

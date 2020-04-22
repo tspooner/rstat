@@ -1,13 +1,24 @@
 use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
-    prelude::*,
+    fitting::{Likelihood, Score},
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand;
 use spaces::real::Interval;
+use special_fun::FloatSpecial;
 use std::fmt;
 
 shape_params! {
+    #[derive(Copy)]
     Params<f64> { alpha, beta }
+}
+
+pub struct Grad {
+    pub alpha: f64,
+    pub beta: f64,
 }
 
 new_dist!(Beta<Params>);
@@ -20,7 +31,7 @@ macro_rules! get_params {
 
 impl Beta {
     pub fn new(alpha: f64, beta: f64) -> Result<Beta, failure::Error> {
-        Params::new(alpha, beta).map(|p| Beta(p))
+        Params::new(alpha, beta).map(Beta)
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> Beta {
@@ -41,8 +52,6 @@ impl Distribution for Beta {
     fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
-        use special_fun::FloatSpecial;
-
         let (alpha, beta) = get_params!(self);
 
         Probability::new_unchecked(x.betainc(alpha, beta))
@@ -59,8 +68,6 @@ impl Distribution for Beta {
 
 impl ContinuousDistribution for Beta {
     fn pdf(&self, x: &f64) -> f64 {
-        use special_fun::FloatSpecial;
-
         let (a, b) = get_params!(self);
 
         let numerator = x.powf(a - 1.0) * (1.0 - x).powf(b - 1.0);
@@ -144,13 +151,53 @@ impl Modes for Beta {
 
 impl ShannonEntropy for Beta {
     fn shannon_entropy(&self) -> f64 {
-        use special_fun::FloatSpecial;
+        let (a, b) = get_params!(self);
+        let (am1, bm1) = (a - 1.0, b - 1.0);
+
+        a.logbeta(b) - am1 * a.digamma() - bm1 * b.digamma() + (am1 + bm1) * (a + b).digamma()
+    }
+}
+
+impl Likelihood for Beta {
+    fn log_likelihood(&self, samples: &[f64]) -> f64 {
+        const JITTER: f64 = 1e-9;
+
+        let n = samples.len() as f64;
 
         let (a, b) = get_params!(self);
-        let apb = a + b;
+        let (am1, bm1) = (a - 1.0, b - 1.0);
 
-        a.logbeta(b) - (a - 1.0) * a.digamma() - (b - 1.0) * b.digamma()
-            + (apb - 2.0) * apb.digamma()
+        samples
+            .into_iter()
+            .map(|x| am1 * x.max(JITTER).ln() + bm1 * (1.0 - x).max(JITTER).ln())
+            .sum::<f64>()
+            - n * a.logbeta(b)
+    }
+}
+
+impl Score for Beta {
+    type Grad = Grad;
+
+    fn score(&self, samples: &[f64]) -> Grad {
+        const JITTER: f64 = 1e-9;
+
+        let (a, b) = get_params!(self);
+
+        let apb_digamma = (a + b).digamma();
+        let a_digamma = a.digamma();
+        let b_digamma = b.digamma();
+
+        let [grad_a, grad_b] = samples.into_iter().fold([0.0; 2], |acc, x| {
+            [
+                acc[0] + x.max(JITTER).ln() - a_digamma + apb_digamma,
+                acc[1] + (1.0 - x).max(JITTER).ln() - b_digamma + apb_digamma,
+            ]
+        });
+
+        Grad {
+            alpha: grad_a,
+            beta: grad_b,
+        }
     }
 }
 

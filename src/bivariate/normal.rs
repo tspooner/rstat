@@ -1,14 +1,18 @@
 use crate::{
     consts::PI_2,
     linalg::{Matrix, Vector},
-    params::{Corr, Loc, Scale},
-    prelude::*,
+    statistics::MultivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use ndarray::array;
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{real::Reals, TwoSpace};
 use std::fmt;
+
+pub use crate::params::{Corr, Loc, Scale};
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Params
@@ -22,7 +26,7 @@ use std::fmt;
 pub struct Params {
     pub mu: Loc<[f64; 2]>,
     pub sigma: Scale<[f64; 2]>,
-    pub rho: Corr<f64>,
+    pub rho: Corr,
 }
 
 impl Params {

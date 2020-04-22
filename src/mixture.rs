@@ -1,4 +1,10 @@
-use crate::prelude::*;
+use crate::{
+    statistics::UnivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+    SimplexVector,
+};
 use failure::{Error, Fail};
 use rand::Rng;
 use spaces::{Space, Union};
@@ -191,10 +197,7 @@ where C::Support: Union + Clone
 #[cfg(test)]
 mod tests {
     use super::Mixture;
-    use crate::{
-        prelude::*,
-        univariate::{normal::Normal, uniform::Uniform},
-    };
+    use crate::{statistics::UnivariateMoments, univariate::uniform::Uniform};
     use failure::Error;
 
     #[test]

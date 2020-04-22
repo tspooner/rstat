@@ -1,13 +1,18 @@
 use crate::{
     consts::THREE_HALVES,
-    params::{Scale, Shape},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
+pub use crate::params::{Scale, Shape};
+
 params! {
+    #[derive(Copy)]
     Params {
         lambda: Scale<f64>,
         k: Shape<f64>

@@ -2,6 +2,17 @@
 use crate::linalg::{Matrix, Vector};
 use std::fmt;
 
+pub use crate::params::Loc;
+
+/// Covariance matrix parameter \\(\\bm{\\Sigma}\\).
+#[derive(Debug, Clone)]
+#[cfg_attr(
+    feature = "serde",
+    derive(Serialize, Deserialize),
+    serde(crate = "serde_crate")
+)]
+pub struct Covariance<T = Matrix<f64>>(pub T);
+
 /// Parameter set for [Normal](struct.Normal.html).
 #[derive(Debug, Clone)]
 #[cfg_attr(
@@ -13,17 +24,6 @@ pub struct Params<S = Matrix<f64>> {
     pub mu: Loc<Vector<f64>>,
     pub sigma: Covariance<S>,
 }
-
-pub use crate::params::Loc;
-
-/// Covariance matrix parameter \\(\\bm{\\Sigma}\\).
-#[derive(Debug, Clone)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
-pub struct Covariance<T = Matrix<f64>>(pub T);
 
 /// Multivariate Normal distribution with mean \\(\\bm{\\mu}\\) covariance
 /// matrix \\(\\bm{\\Sigma}\\).

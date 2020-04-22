@@ -1,12 +1,16 @@
 use crate::{
     consts::{ONE_OVER_PI, ONE_THIRD, PI, PI2, PI4, TWO_OVER_PI2},
-    prelude::*,
+    statistics::{Modes, Quantiles, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         s<f64>
@@ -23,7 +27,7 @@ macro_rules! get_params {
 
 impl Cosine {
     pub fn new(mu: f64, s: f64) -> Result<Cosine, failure::Error> {
-        Params::new(mu, s).map(|p| Cosine(p))
+        Params::new(mu, s).map(Cosine)
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Cosine { Cosine(Params::new_unchecked(mu, s)) }

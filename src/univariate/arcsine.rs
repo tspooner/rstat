@@ -1,12 +1,16 @@
 use crate::{
     consts::{ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params { a<f64>, w<f64> }
 }
 
@@ -25,14 +29,14 @@ macro_rules! get_params {
 
 impl Arcsine {
     pub fn new(a: f64, w: f64) -> Result<Arcsine, failure::Error> {
-        Params::new(a, w).map(|p| Arcsine(p))
+        Params::new(a, w).map(Arcsine)
     }
 
     pub fn new_unchecked(a: f64, w: f64) -> Arcsine { Arcsine(Params::new_unchecked(a, w)) }
 }
 
 impl Default for Arcsine {
-    fn default() -> Arcsine { Arcsine(Params::new_unchecked(0.0, 1.0)) }
+    fn default() -> Arcsine { Arcsine::new_unchecked(0.0, 1.0) }
 }
 
 impl Distribution for Arcsine {

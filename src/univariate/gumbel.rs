@@ -1,12 +1,16 @@
 use crate::{
     consts::{PI2, PI3, TWELVE_FIFTHS, TWENTY_SEVEN_FIFTHS},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         beta<f64>
@@ -23,7 +27,7 @@ macro_rules! get_params {
 
 impl Gumbel {
     pub fn new(mu: f64, beta: f64) -> Result<Gumbel, failure::Error> {
-        Params::new(mu, beta).map(|p| Gumbel(p))
+        Params::new(mu, beta).map(Gumbel)
     }
 
     pub fn new_unchecked(mu: f64, beta: f64) -> Gumbel { Gumbel(Params::new_unchecked(mu, beta)) }

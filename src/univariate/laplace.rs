@@ -1,9 +1,16 @@
-use crate::{consts::E, prelude::*};
+use crate::{
+    consts::E,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         b<f64>
@@ -20,7 +27,7 @@ macro_rules! get_params {
 
 impl Laplace {
     pub fn new(mu: f64, b: f64) -> Result<Laplace, failure::Error> {
-        Params::new(mu, b).map(|p| Laplace(p))
+        Params::new(mu, b).map(Laplace)
     }
 
     pub fn new_unchecked(mu: f64, b: f64) -> Laplace { Laplace(Params::new_unchecked(mu, b)) }

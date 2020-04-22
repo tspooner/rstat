@@ -1,12 +1,17 @@
 use crate::{
     consts::{ONE_OVER_PI, PI},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy},
+    ContinuousDistribution,
+    Convolution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         x0<f64>,
         gamma<f64>
@@ -23,7 +28,7 @@ macro_rules! get_params {
 
 impl Cauchy {
     pub fn new(x0: f64, gamma: f64) -> Result<Cauchy, failure::Error> {
-        Params::new(x0, gamma).map(|p| Cauchy(p))
+        Params::new(x0, gamma).map(Cauchy)
     }
 
     pub fn new_unchecked(x0: f64, gamma: f64) -> Cauchy {

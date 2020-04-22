@@ -1,13 +1,44 @@
 use super::{Covariance, Loc, Normal, Params};
 use crate::{
     consts::PI_2,
-    linalg::Vector,
-    params::constraints::{self, Constraint, Constraints, UnsatisfiedConstraintError as UCE},
-    prelude::*,
+    linalg::{Matrix, Vector},
+    metrics::Mahalanobis,
+    params::{
+        constraints::{self, Constraint, Constraints, UnsatisfiedConstraintError as UCE},
+        Param,
+    },
+    statistics::MultivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{real::Reals, ProductSpace};
+
+/// Isotropic covariance matrix parameter \\(\\sigma^2\\bm{I}\\).
+pub type IsotropicCovariance = Covariance<f64>;
+
+impl Covariance<f64> {
+    /// Construct an isotropic covariance matrix parameter
+    /// \\((\\sigma^2\\bm{I}\\).
+    ///
+    /// # Constraints
+    /// 1. The variance term is positive real.
+    pub fn isotropic(value: f64) -> Result<Self, UCE<f64>> {
+        Ok(Covariance(assert_constraint!(value+)?))
+    }
+}
+
+impl Param for Covariance<f64> {
+    type Value = f64;
+
+    fn value(&self) -> &Self::Value { &self.0 }
+
+    fn into_value(self) -> Self::Value { self.0 }
+
+    fn constraints() -> Constraints<Self::Value> { vec![Box::new(constraints::Positive)] }
+}
 
 /// Parameter set for [IsotropicNormal](type.IsotropicNormal.html).
 pub type IsotropicNormalParams = Params<f64>;
@@ -46,28 +77,6 @@ impl IsotropicNormalParams {
     /// # Constraints
     /// 1. The dimensionality is a positive integer.
     pub fn standard(n: usize) -> Result<Self, failure::Error> { Self::homogeneous(n, 0.0, 1.0) }
-}
-
-/// Isotropic covariance matrix parameter \\(\\sigma^2\\bm{I}\\).
-pub type IsotropicCovariance = Covariance<f64>;
-
-impl Covariance<f64> {
-    /// Construct an isotropic covariance matrix parameter
-    /// \\((\\sigma^2\\bm{I}\\).
-    ///
-    /// # Constraints
-    /// 1. The variance term is positive real.
-    pub fn isotropic(value: f64) -> Result<Self, UCE<f64>> {
-        Ok(Covariance(assert_constraint!(value+)?))
-    }
-}
-
-impl Param for Covariance<f64> {
-    type Value = f64;
-
-    fn value(&self) -> &Self::Value { &self.0 }
-
-    fn constraints() -> Constraints<Self::Value> { vec![Box::new(constraints::Positive)] }
 }
 
 /// Multivariate Normal distribution with mean \\(\\bm{\\mu}\\) and isotropic
@@ -242,7 +251,7 @@ impl MultivariateMoments for IsotropicNormal {
     }
 }
 
-impl MahalanobisDistance for IsotropicNormal {
+impl Mahalanobis for IsotropicNormal {
     fn d_mahalanobis_squared(&self, x: &Vec<f64>) -> f64 {
         x.into_iter()
             .zip(self.params.mu.0.iter())

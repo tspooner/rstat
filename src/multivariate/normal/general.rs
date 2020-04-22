@@ -1,33 +1,20 @@
 use super::{Covariance, Loc, Normal, Params};
 use crate::{
     consts::PI_2,
-    linalg::Vector,
-    params::constraints::{self, Constraint, Constraints},
-    prelude::*,
+    linalg::{cholesky, inverse_lt, Matrix, Vector},
+    metrics::Mahalanobis,
+    params::{
+        constraints::{self, Constraint, Constraints},
+        Param,
+    },
+    statistics::MultivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{real::Reals, ProductSpace};
-
-impl Params {
-    /// Construct a parameter set for [Normal](struct.Normal.html):
-    /// \\(\\langle\\bm{\\mu}, \\bm{\\Sigma}\\rangle.\\)
-    ///
-    /// # Constraints
-    /// 1. The covariance matrix is not square.
-    /// 2. The covariance matrix is not positive semi-definite.
-    pub fn new(mu: Vector<f64>, sigma: Matrix<f64>) -> Result<Self, failure::Error> {
-        let mu = Loc::new(mu)?;
-        let sigma = Covariance::new(sigma)?;
-
-        let n_mu = mu.0.len();
-        let n_sigma = sigma.0.nrows();
-
-        assert_constraint!(n_mu == n_sigma)?;
-
-        Ok(Params { mu, sigma })
-    }
-}
 
 impl Covariance {
     /// Construct an \\(n\\)-dimensional covariance matrix parameter
@@ -48,10 +35,32 @@ impl Param for Covariance {
 
     fn value(&self) -> &Self::Value { &self.0 }
 
+    fn into_value(self) -> Self::Value { self.0 }
+
     fn constraints() -> Constraints<Self::Value> {
         let c = constraints::All(constraints::Positive);
 
         vec![Box::new(c)]
+    }
+}
+
+impl Params {
+    /// Construct a parameter set for [Normal](struct.Normal.html):
+    /// \\(\\langle\\bm{\\mu}, \\bm{\\Sigma}\\rangle.\\)
+    ///
+    /// # Constraints
+    /// 1. The covariance matrix is not square.
+    /// 2. The covariance matrix is not positive semi-definite.
+    pub fn new(mu: Vector<f64>, sigma: Matrix<f64>) -> Result<Self, failure::Error> {
+        let mu = Loc::new(mu)?;
+        let sigma = Covariance::new(sigma)?;
+
+        let n_mu = mu.0.len();
+        let n_sigma = sigma.0.nrows();
+
+        assert_constraint!(n_mu == n_sigma)?;
+
+        Ok(Params { mu, sigma })
     }
 }
 
@@ -182,7 +191,7 @@ impl MultivariateMoments for Normal {
     fn variance(&self) -> Vector<f64> { self.params.sigma.0.diag().to_owned() }
 }
 
-impl MahalanobisDistance for Normal {
+impl Mahalanobis for Normal {
     fn d_mahalanobis_squared(&self, x: &Vec<f64>) -> f64 {
         let diff: Vector<f64> = x
             .into_iter()

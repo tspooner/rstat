@@ -1,7 +1,11 @@
 use crate::{
     consts::{PI_2, PI_E_2},
-    fitting::MLE,
-    prelude::*,
+    fitting::{Likelihood, Score, MLE},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Convolution,
+    Distribution,
+    Probability,
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -9,13 +13,19 @@ use spaces::real::Reals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         sigma<f64>
     }
 }
 
-new_dist!(Normal<Params>);
+pub struct Grad {
+    pub mu: f64,
+    pub sigma: f64,
+}
+
+new_dist!(#[derive(Copy)] Normal<Params>);
 
 macro_rules! get_params {
     ($self:ident) => {
@@ -135,14 +145,40 @@ impl FisherInformation for Normal {
     }
 }
 
-impl Convolution<Normal> for Normal {
-    type Output = Normal;
+impl Likelihood for Normal {
+    fn log_likelihood(&self, samples: &[f64]) -> f64 {
+        let (mu, sigma) = get_params!(self);
 
-    fn convolve(self, rv: Normal) -> Result<Normal, failure::Error> {
-        let new_mu = self.0.mu.0 + rv.0.mu.0;
-        let new_var = (self.variance() + rv.variance()).sqrt();
+        let s2 = sigma * sigma;
+        let ls2 = s2.ln();
+        let no2 = (samples.len() as f64) / 2.0;
 
-        Ok(Normal::new_unchecked(new_mu, new_var))
+        -no2 / 2.0 * (PI_2.ln() + ls2)
+            - samples
+                .into_iter()
+                .map(|x| (*x - mu).powi(2) / 2.0 / s2)
+                .sum::<f64>()
+    }
+}
+
+impl Score for Normal {
+    type Grad = Grad;
+
+    fn score(&self, samples: &[f64]) -> Grad {
+        let (mu, sigma) = get_params!(self);
+        let [sum, sum_sq] = samples.into_iter().fold([0.0; 2], |[s, ss], x| {
+            let d = x - mu;
+
+            [s + d, ss + d * d]
+        });
+
+        let n = samples.len() as f64;
+        let s2 = sigma * sigma;
+
+        Grad {
+            mu: sum / s2,
+            sigma: sum_sq / s2 / sigma - n / sigma,
+        }
     }
 }
 
@@ -158,6 +194,17 @@ impl MLE for Normal {
             / (n - 1.0);
 
         Normal::new(mean, var.sqrt())
+    }
+}
+
+impl Convolution<Normal> for Normal {
+    type Output = Normal;
+
+    fn convolve(self, rv: Normal) -> Result<Normal, failure::Error> {
+        let new_mu = self.0.mu.0 + rv.0.mu.0;
+        let new_var = (self.variance() + rv.variance()).sqrt();
+
+        Ok(Normal::new_unchecked(new_mu, new_var))
     }
 }
 

@@ -2,16 +2,6 @@
 //! [distributions](trait.Distribution.html).
 pub use crate::statistics::UnivariateMoments as Moments;
 
-#[inline]
-pub(self) fn factorial(n: u64) -> u64 { (2..n).product() }
-
-#[inline]
-pub(self) fn choose(n: u64, k: u64) -> u64 {
-    let k = if k > n - k { n - k } else { k };
-
-    (0..k).fold(1, |acc, i| acc * (n - i) / (i + 1))
-}
-
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Abstract
 ///////////////////////////////////////////////////////////////////////////////////////////////////

@@ -1,12 +1,16 @@
 use crate::{
     consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Reals;
 use std::fmt;
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         s<f64>
@@ -23,7 +27,7 @@ macro_rules! get_params {
 
 impl Logistic {
     pub fn new(mu: f64, s: f64) -> Result<Logistic, failure::Error> {
-        Params::new(mu, s).map(|p| Logistic(p))
+        Params::new(mu, s).map(Logistic)
     }
 
     pub fn new_unchecked(mu: f64, s: f64) -> Logistic { Logistic(Params::new_unchecked(mu, s)) }

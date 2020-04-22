@@ -1,13 +1,18 @@
 use crate::{
     consts::ONE_THIRD,
-    params::{Loc, Shape},
-    prelude::*,
+    statistics::{Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
+pub use crate::params::{Loc, Shape};
+
 params! {
+    #[derive(Copy)]
     Params {
         mu: Loc<f64>,
         sigma: Shape<f64>,
@@ -25,7 +30,7 @@ macro_rules! get_params {
 
 impl GeneralisedPareto {
     pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedPareto, failure::Error> {
-        Params::new(mu, sigma, zeta).map(|p| GeneralisedPareto(p))
+        Params::new(mu, sigma, zeta).map(GeneralisedPareto)
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64, zeta: f64) -> GeneralisedPareto {

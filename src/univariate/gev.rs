@@ -1,14 +1,19 @@
 use crate::{
     consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS},
-    params::{Loc, Shape},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use special_fun::FloatSpecial;
 use std::{f64::INFINITY, fmt};
 
+pub use crate::params::{Loc, Shape};
+
 params! {
+    #[derive(Copy)]
     Params {
         mu: Loc<f64>,
         sigma: Shape<f64>,
@@ -26,7 +31,7 @@ macro_rules! get_params {
 
 impl GeneralisedExtremeValue {
     pub fn new(mu: f64, sigma: f64, zeta: f64) -> Result<GeneralisedExtremeValue, failure::Error> {
-        Params::new(mu, sigma, zeta).map(|p| GeneralisedExtremeValue(p))
+        Params::new(mu, sigma, zeta).map(GeneralisedExtremeValue)
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64, zeta: f64) -> GeneralisedExtremeValue {

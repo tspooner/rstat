@@ -22,15 +22,15 @@ extern crate serde_crate;
 #[macro_use]
 mod macros;
 mod consts;
-mod prelude;
+mod utils;
 
 pub mod linalg;
 
 mod probability;
-pub use self::probability::{Probability, ProbabilityError};
+pub use self::probability::{InvalidProbabilityError, Probability};
 
 mod simplex;
-pub use self::simplex::{SimplexError, SimplexVector, UnitSimplex};
+pub use self::simplex::{InvalidSimplexError, SimplexVector, UnitSimplex};
 
 #[macro_use]
 pub mod params;
@@ -125,7 +125,9 @@ pub trait Distribution: From<<Self as Distribution>::Params> {
     /// assert_eq!(dist.cdf(&0.0), Probability::half());
     /// assert_eq!(dist.cdf(&f64::INFINITY), Probability::one());
     /// ```
-    fn cdf(&self, x: &Sample<Self>) -> Probability;
+    fn cdf(&self, x: &Sample<Self>) -> Probability {
+        Probability::new_unchecked(self.log_cdf(x).exp())
+    }
 
     /// Evaluates the complementary CDF at \\(x\\).
     ///
@@ -164,8 +166,9 @@ pub trait Distribution: From<<Self as Distribution>::Params> {
 }
 
 macro_rules! new_dist {
-    ($name:ident<$pt:ty>) => {
-        #[derive(Debug, Clone, Copy)]
+    ($(#[$attr:meta])* $name:ident<$pt:ty>) => {
+        $(#[$attr])*
+        #[derive(Debug, Clone)]
         pub struct $name(pub(crate) $pt);
 
         impl From<$pt> for $name {
@@ -202,7 +205,9 @@ pub trait DiscreteDistribution: Distribution {
     /// assert_eq!(dist.pmf(&4), Probability::new_unchecked(0.3955078125));
     /// assert_eq!(dist.pmf(&5), Probability::new_unchecked(0.2373046875));
     /// ```
-    fn pmf(&self, x: &Sample<Self>) -> Probability;
+    fn pmf(&self, x: &Sample<Self>) -> Probability {
+        Probability::new_unchecked(self.log_pmf(x).exp())
+    }
 
     ln_variant!(
         /// Evaluates the log PMF at \\(x\\).
@@ -236,7 +241,7 @@ pub trait ContinuousDistribution: Distribution {
     /// assert_eq!(dist.pdf(&0.75), 1.0);
     /// assert_eq!(dist.pdf(&1.0), 0.0);
     /// ```
-    fn pdf(&self, x: &Sample<Self>) -> f64;
+    fn pdf(&self, x: &Sample<Self>) -> f64 { self.log_pdf(x).exp() }
 
     ln_variant!(
         /// Evaluates the log PDF at \\(x\\).
@@ -293,6 +298,7 @@ pub trait Convolution<T: Distribution = Self> {
 }
 
 pub mod fitting;
+pub mod metrics;
 pub mod statistics;
 
 pub mod bivariate;

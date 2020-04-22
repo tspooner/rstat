@@ -1,4 +1,9 @@
-use crate::prelude::*;
+use crate::{
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use ndarray::Array2;
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -6,39 +11,40 @@ use std::{fmt, ops::Not};
 
 pub use crate::params::Rate;
 
-new_dist!(Exponential<Rate<f64>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        lambda: Rate<f64>
+    }
+}
+
+new_dist!(Exponential<Params>);
 
 macro_rules! get_lambda {
     ($self:ident) => {
-        ($self.0).0
+        $self.0.lambda.0
     };
 }
 
 impl Exponential {
     pub fn new(lambda: f64) -> Result<Exponential, failure::Error> {
-        Ok(Exponential(Rate::new(lambda)?))
+        Params::new(lambda).map(Exponential)
     }
 
-    pub fn new_unchecked(lambda: f64) -> Exponential { Exponential(Rate(lambda)) }
-
-    #[inline(always)]
-    pub fn lambda(&self) -> f64 { get_lambda!(self) }
-
-    #[inline(always)]
-    pub fn mu(&self) -> f64 { 1.0 / get_lambda!(self) }
+    pub fn new_unchecked(lambda: f64) -> Exponential { Exponential(Params::new_unchecked(lambda)) }
 }
 
 impl Default for Exponential {
-    fn default() -> Exponential { Exponential(Rate(1.0)) }
+    fn default() -> Exponential { Exponential::new_unchecked(1.0) }
 }
 
 impl Distribution for Exponential {
     type Support = PositiveReals;
-    type Params = Rate<f64>;
+    type Params = Params;
 
     fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn params(&self) -> Rate<f64> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
         Probability::new_unchecked(1.0 - (-get_lambda!(self) * x).exp())
@@ -98,5 +104,5 @@ impl FisherInformation for Exponential {
 }
 
 impl fmt::Display for Exponential {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Exp({})", self.lambda()) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Exp({})", self.0.lambda.0) }
 }

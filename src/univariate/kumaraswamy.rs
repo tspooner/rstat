@@ -1,4 +1,9 @@
-use crate::prelude::*;
+use crate::{
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand;
 use spaces::real::Interval;
 use std::fmt;
@@ -7,6 +12,7 @@ use std::fmt;
 fn harmonic_n(n: usize) -> f64 { (1..=n).map(|i| 1.0 / i as f64).sum() }
 
 shape_params! {
+    #[derive(Copy)]
     Params<f64> { a, b }
 }
 

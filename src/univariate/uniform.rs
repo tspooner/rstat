@@ -2,14 +2,19 @@ use crate::{
     consts::{NINE_FIFTHS, SIX_FIFTHS},
     params::{
         constraints::{All, Constraint, Positive, UnsatisfiedConstraintError},
-        Loc,
-        Scale,
+        Param,
     },
-    prelude::*,
+    statistics::{Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::{discrete::Interval as DiscreteInterval, real::Interval as RealInterval};
 use std::fmt;
+
+pub use crate::params::{Loc, Scale};
 
 #[derive(Debug, Clone, Copy)]
 #[cfg_attr(

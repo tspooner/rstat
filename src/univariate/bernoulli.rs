@@ -1,40 +1,65 @@
-use crate::{fitting::MLE, prelude::*, univariate::binomial::Binomial};
+use crate::{
+    fitting::{Likelihood, Score, MLE},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    univariate::binomial::Binomial,
+    Convolution,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
+};
 use ndarray::Array2;
 use spaces::discrete::Binary;
 use std::fmt;
 
+params! {
+    #[derive(Copy)]
+    Params {
+        p: Probability<>
+    }
+}
+
+pub struct Grad {
+    pub p: f64,
+}
+
 #[derive(Debug, Clone, Copy)]
 pub struct Bernoulli {
-    pub p: Probability,
-    q: Probability,
+    pub(crate) params: Params,
 
+    q: Probability,
     variance: f64,
 }
 
 impl Bernoulli {
-    pub fn new(p: Probability) -> Bernoulli {
-        let pf64 = p.unwrap();
+    pub fn new(p: f64) -> Result<Bernoulli, failure::Error> {
+        Params::new(p).map(|ps| Bernoulli {
+            q: !ps.p,
+            params: ps,
+            variance: p * (1.0 - p),
+        })
+    }
 
+    pub fn new_unchecked(p: f64) -> Bernoulli { Params::new_unchecked(p).into() }
+}
+
+impl From<Params> for Bernoulli {
+    fn from(params: Params) -> Bernoulli {
         Bernoulli {
-            p: p,
-            q: !p,
+            q: !params.p,
+            variance: params.p.0 * (1.0 - params.p.0),
 
-            variance: pf64 * (1.0 - pf64),
+            params,
         }
     }
 }
 
-impl From<Probability> for Bernoulli {
-    fn from(p: Probability) -> Bernoulli { Bernoulli::new(p) }
-}
-
 impl Distribution for Bernoulli {
     type Support = Binary;
-    type Params = Probability;
+    type Params = Params;
 
     fn support(&self) -> Binary { Binary }
 
-    fn params(&self) -> Probability { self.p }
+    fn params(&self) -> Params { self.params }
 
     fn cdf(&self, k: &bool) -> Probability {
         if *k {
@@ -44,24 +69,26 @@ impl Distribution for Bernoulli {
         }
     }
 
-    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool { rng.gen_bool(self.p.into()) }
+    fn sample<R: rand::Rng + ?Sized>(&self, rng: &mut R) -> bool {
+        rng.gen_bool(self.params.p.unwrap())
+    }
 }
 
 impl DiscreteDistribution for Bernoulli {
     fn pmf(&self, k: &bool) -> Probability {
         match k {
-            true => self.p,
+            true => self.params.p,
             false => self.q,
         }
     }
 }
 
 impl UnivariateMoments for Bernoulli {
-    fn mean(&self) -> f64 { self.p.into() }
+    fn mean(&self) -> f64 { self.params.p.into() }
 
     fn variance(&self) -> f64 { self.variance }
 
-    fn skewness(&self) -> f64 { (1.0 - 2.0 * self.p.unwrap()) / self.variance.sqrt() }
+    fn skewness(&self) -> f64 { (1.0 - 2.0 * self.params.p.unwrap()) / self.variance.sqrt() }
 
     fn kurtosis(&self) -> f64 { 1.0 / self.variance - 6.0 }
 
@@ -72,7 +99,7 @@ impl Quantiles for Bernoulli {
     fn quantile(&self, _: Probability) -> f64 { unimplemented!() }
 
     fn median(&self) -> f64 {
-        match self.p.unwrap() {
+        match self.params.p.unwrap() {
             p if (p - 0.5).abs() < 1e-7 => 0.5,
             p if (p < 0.5) => 0.0,
             _ => 1.0,
@@ -84,7 +111,7 @@ impl Modes for Bernoulli {
     fn modes(&self) -> Vec<bool> {
         use std::cmp::Ordering::*;
 
-        match self.p.partial_cmp(&self.q) {
+        match self.params.p.partial_cmp(&self.q) {
             Some(Less) => vec![false],
             Some(Equal) => vec![false, true],
             Some(Greater) => vec![false],
@@ -95,8 +122,8 @@ impl Modes for Bernoulli {
 
 impl ShannonEntropy for Bernoulli {
     fn shannon_entropy(&self) -> f64 {
-        let p: f64 = self.p.into();
-        let q: f64 = self.q.into();
+        let p = self.params.p.unwrap();
+        let q = self.q.unwrap();
 
         if q.abs() < 1e-7 || (q - 1.0).abs() < 1e-7 {
             0.0
@@ -110,28 +137,44 @@ impl FisherInformation for Bernoulli {
     fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), 1.0 / self.variance) }
 }
 
-impl Convolution<Bernoulli> for Bernoulli {
-    type Output = Binomial;
+impl Likelihood for Bernoulli {
+    fn log_likelihood(&self, samples: &[bool]) -> f64 {
+        samples.into_iter().map(|x| self.log_pmf(x)).sum()
+    }
+}
 
-    fn convolve(self, rv: Bernoulli) -> Result<Binomial, failure::Error> {
-        let p1 = self.p;
-        let p2 = rv.p;
+impl Score for Bernoulli {
+    type Grad = Grad;
 
-        assert_constraint!(p1 == p2)?;
-
-        Ok(Binomial::new_unchecked(2, self.p))
+    fn score(&self, samples: &[bool]) -> Grad {
+        Grad {
+            p: samples.into_iter().map(|x| 1.0 / self.pmf(x)).sum(),
+        }
     }
 }
 
 impl MLE for Bernoulli {
     fn fit_mle(xs: &[bool]) -> Result<Self, failure::Error> {
         let n = xs.len() as f64;
-        let p = Probability::new(xs.iter().fold(0, |acc, &x| acc + x as u64) as f64 / n)?;
+        let p = xs.iter().fold(0, |acc, &x| acc + x as u64) as f64 / n;
 
-        Ok(Bernoulli::new(p))
+        Bernoulli::new(p)
+    }
+}
+
+impl Convolution<Bernoulli> for Bernoulli {
+    type Output = Binomial;
+
+    fn convolve(self, rv: Bernoulli) -> Result<Binomial, failure::Error> {
+        let p1 = self.params.p;
+        let p2 = rv.params.p;
+
+        assert_constraint!(p1 == p2)?;
+
+        Ok(Binomial::new_unchecked(2, self.params.p))
     }
 }
 
 impl fmt::Display for Bernoulli {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Ber({})", self.p) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Ber({})", self.params.p) }
 }

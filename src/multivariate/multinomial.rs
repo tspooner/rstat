@@ -1,9 +1,17 @@
-use crate::{params::Count, prelude::*};
+use crate::{
+    statistics::MultivariateMoments,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
+    SimplexVector,
+};
 use failure::Error;
 use ndarray::{Array1, Array2};
 use rand::Rng;
 use spaces::{discrete::Ordinal, ProductSpace};
 use std::fmt;
+
+pub use crate::params::Count;
 
 #[derive(Debug, Clone)]
 #[cfg_attr(

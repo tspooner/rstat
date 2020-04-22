@@ -1,38 +1,47 @@
-use crate::{consts::THREE_HALVES, prelude::*};
+use crate::{
+    consts::THREE_HALVES,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::PositiveReals;
+use special_fun::FloatSpecial;
 use std::fmt;
 
 pub use crate::params::DOF;
 
-new_dist!(Chi<DOF<usize>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        k: DOF<usize>
+    }
+}
+
+new_dist!(Chi<Params>);
 
 macro_rules! get_k {
     ($self:ident) => {
-        ($self.0).0 as f64
+        $self.0.k.0 as f64
     };
 }
 
 impl Chi {
-    pub fn new(dof: usize) -> Result<Chi, failure::Error> { Ok(Chi(DOF::new(dof)?)) }
+    pub fn new(k: usize) -> Result<Chi, failure::Error> { Params::new(k).map(Chi) }
 
-    pub fn new_unchecked(dof: usize) -> Chi { Chi(DOF(dof)) }
-
-    #[inline(always)]
-    pub fn k(&self) -> f64 { get_k!(self) }
+    pub fn new_unchecked(k: usize) -> Chi { Chi(Params::new_unchecked(k)) }
 }
 
 impl Distribution for Chi {
     type Support = PositiveReals;
-    type Params = DOF<usize>;
+    type Params = Params;
 
     fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn params(&self) -> DOF<usize> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
-        use special_fun::FloatSpecial;
-
         Probability::new_unchecked((get_k!(self) / 2.0).gammainc(x * x / 2.0))
     }
 
@@ -41,8 +50,6 @@ impl Distribution for Chi {
 
 impl ContinuousDistribution for Chi {
     fn pdf(&self, x: &f64) -> f64 {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
         let ko2 = k / 2.0;
         let norm = 2.0f64.powf(ko2 - 1.0) * ko2.gamma();
@@ -53,8 +60,6 @@ impl ContinuousDistribution for Chi {
 
 impl UnivariateMoments for Chi {
     fn mean(&self) -> f64 {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
 
         2.0f64.sqrt() * ((k + 1.0) / 2.0).gamma() / (k / 2.0).gamma()
@@ -96,7 +101,7 @@ impl Quantiles for Chi {
 
 impl Modes for Chi {
     fn modes(&self) -> Vec<f64> {
-        let k = (self.0).0;
+        let k = self.0.k.0;
 
         if k >= 1 {
             vec![((k - 1) as f64).sqrt()]
@@ -108,8 +113,6 @@ impl Modes for Chi {
 
 impl ShannonEntropy for Chi {
     fn shannon_entropy(&self) -> f64 {
-        use special_fun::FloatSpecial;
-
         let k = get_k!(self);
         let ko2 = k / 2.0;
 
@@ -118,5 +121,5 @@ impl ShannonEntropy for Chi {
 }
 
 impl fmt::Display for Chi {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Chi({})", self.k()) }
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Chi({})", self.0.k.0) }
 }

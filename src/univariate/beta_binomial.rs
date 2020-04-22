@@ -1,14 +1,19 @@
-use super::choose;
 use crate::{
-    params::{Count, Shape},
-    prelude::*,
+    statistics::UnivariateMoments,
+    utils::*,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::discrete::Ordinal;
 use special_fun::FloatSpecial;
 use std::fmt;
 
+pub use crate::params::{Count, Shape};
+
 params! {
+    #[derive(Copy)]
     Params {
         n: Count<usize>,
         alpha: Shape<f64>,
@@ -32,16 +37,11 @@ macro_rules! get_params {
 
 impl BetaBinomial {
     pub fn new(n: usize, alpha: f64, beta: f64) -> Result<BetaBinomial, failure::Error> {
-        Params::new(n, alpha, beta).map(|p| p.into())
+        Params::new(n, alpha, beta).map(|ps| ps.into())
     }
 
     pub fn new_unchecked(n: usize, alpha: f64, beta: f64) -> BetaBinomial {
-        BetaBinomial {
-            pi: alpha / (alpha + beta),
-            rho: 1.0 / (alpha + beta + 1.0),
-
-            params: Params::new_unchecked(n, alpha, beta),
-        }
+        Params::new_unchecked(n, alpha, beta).into()
     }
 
     fn pmf_raw(&self, k: usize) -> f64 {
@@ -57,7 +57,12 @@ impl BetaBinomial {
 
 impl From<Params> for BetaBinomial {
     fn from(params: Params) -> BetaBinomial {
-        BetaBinomial::new_unchecked(params.n.0, params.alpha.0, params.beta.0)
+        BetaBinomial {
+            pi: params.alpha.0 / (params.alpha.0 + params.beta.0),
+            rho: 1.0 / (params.alpha.0 + params.beta.0 + 1.0),
+
+            params,
+        }
     }
 }
 

@@ -1,8 +1,12 @@
-use super::factorial;
 use crate::{
     consts::{NINETEEN_OVER_360, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, PI_E_2},
-    fitting::MLE,
-    prelude::*,
+    fitting::{Likelihood, Score, MLE},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    utils::log_factorial_stirling,
+    Convolution,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
 };
 use ndarray::Array2;
 use rand::Rng;
@@ -11,27 +15,40 @@ use std::fmt;
 
 pub use crate::params::Rate;
 
-new_dist!(Poisson<Rate<f64>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        lambda: Rate<f64>
+    }
+}
+
+pub struct Grad {
+    pub lambda: f64,
+}
+
+new_dist!(Poisson<Params>);
 
 macro_rules! get_lambda {
     ($self:ident) => {
-        ($self.0).0
+        $self.0.lambda.0
     };
 }
 
 impl Poisson {
-    pub fn new(lambda: f64) -> Result<Poisson, failure::Error> { Ok(Poisson(Rate::new(lambda)?)) }
+    pub fn new(lambda: f64) -> Result<Poisson, failure::Error> {
+        Ok(Poisson(Params::new(lambda)?))
+    }
 
-    pub fn new_unchecked(lambda: f64) -> Poisson { Poisson(Rate(lambda)) }
+    pub fn new_unchecked(lambda: f64) -> Poisson { Poisson(Params::new_unchecked(lambda)) }
 }
 
 impl Distribution for Poisson {
     type Support = Naturals;
-    type Params = Rate<f64>;
+    type Params = Params;
 
     fn support(&self) -> Naturals { Naturals }
 
-    fn params(&self) -> Rate<f64> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, _: &u64) -> Probability { unimplemented!() }
 
@@ -45,11 +62,10 @@ impl Distribution for Poisson {
 }
 
 impl DiscreteDistribution for Poisson {
-    fn pmf(&self, k: &u64) -> Probability {
+    fn log_pmf(&self, k: &u64) -> f64 {
         let l = get_lambda!(self);
-        let p = l.powi(*k as i32) * l.exp() / factorial(*k) as f64;
 
-        Probability::new_unchecked(p)
+        *k as f64 * l.ln() - l - crate::utils::log_factorial_stirling(*k)
     }
 }
 
@@ -92,11 +108,30 @@ impl FisherInformation for Poisson {
     fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), get_lambda!(self)) }
 }
 
-impl Convolution<Poisson> for Poisson {
-    type Output = Poisson;
+impl Likelihood for Poisson {
+    fn log_likelihood(&self, samples: &[u64]) -> f64 {
+        let n = samples.len() as f64;
+        let l = get_lambda!(self);
+        let l_ln = l.ln();
 
-    fn convolve(self, rv: Poisson) -> Result<Poisson, failure::Error> {
-        Ok(Poisson(Rate(get_lambda!(self) + get_lambda!(rv))))
+        -n * l
+            + samples
+                .into_iter()
+                .map(|k| l_ln * *k as f64 - log_factorial_stirling(*k))
+                .sum::<f64>()
+    }
+}
+
+impl Score for Poisson {
+    type Grad = Grad;
+
+    fn score(&self, samples: &[u64]) -> Grad {
+        let n = samples.len() as f64;
+        let l = get_lambda!(self);
+
+        Grad {
+            lambda: n + samples.into_iter().sum::<u64>() as f64 / l,
+        }
     }
 }
 
@@ -105,6 +140,16 @@ impl MLE for Poisson {
         let n = xs.len() as f64;
 
         Poisson::new(xs.iter().fold(0.0, |acc, &x| acc + x as f64) as f64 / n)
+    }
+}
+
+impl Convolution<Poisson> for Poisson {
+    type Output = Poisson;
+
+    fn convolve(self, rv: Poisson) -> Result<Poisson, failure::Error> {
+        Ok(Poisson(Params::new_unchecked(
+            get_lambda!(self) + get_lambda!(rv),
+        )))
     }
 }
 

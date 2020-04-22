@@ -1,12 +1,16 @@
 use crate::{
     consts::{PI, PI_16, THREE_HALVES},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use std::{f64::INFINITY, fmt};
 
 locscale_params! {
+    #[derive(Copy)]
     Params {
         mu<f64>,
         c<f64>
@@ -22,9 +26,7 @@ macro_rules! get_params {
 }
 
 impl Levy {
-    pub fn new(mu: f64, c: f64) -> Result<Levy, failure::Error> {
-        Params::new(mu, c).map(|p| Levy(p))
-    }
+    pub fn new(mu: f64, c: f64) -> Result<Levy, failure::Error> { Params::new(mu, c).map(Levy) }
 
     pub fn new_unchecked(mu: f64, c: f64) -> Levy { Levy(Params::new_unchecked(mu, c)) }
 }

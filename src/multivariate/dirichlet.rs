@@ -1,8 +1,16 @@
-use crate::{params::Concentrations, prelude::*};
+use crate::{
+    linalg::{Matrix, Vector},
+    statistics::{Modes, MultivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use failure::Error;
 use rand::Rng;
 use spaces::{Interval, ProductSpace};
 use std::fmt;
+
+pub use crate::params::Concentrations;
 
 #[derive(Debug, Clone)]
 pub struct Dirichlet {

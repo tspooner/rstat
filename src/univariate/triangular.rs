@@ -1,13 +1,18 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
-    params::{Loc, Scale},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::Interval;
 use std::fmt;
 
+pub use crate::params::{Loc, Scale};
+
 params! {
+    #[derive(Copy)]
     Params {
         a: Loc<f64>,
         a2c: Scale<f64>,
@@ -39,7 +44,7 @@ macro_rules! get_params {
 
 impl Triangular {
     pub fn new(a: f64, a2c: f64, c2b: f64) -> Result<Triangular, failure::Error> {
-        Params::new(a, a2c, c2b).map(|p| Triangular(p))
+        Params::new(a, a2c, c2b).map(Triangular)
     }
 
     pub fn new_unchecked(a: f64, a2c: f64, c2b: f64) -> Triangular {

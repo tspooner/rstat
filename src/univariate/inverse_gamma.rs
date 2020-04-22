@@ -1,9 +1,15 @@
-use crate::prelude::*;
+use crate::{
+    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
+};
 use rand::Rng;
 use spaces::real::PositiveReals;
 use std::fmt;
 
 shape_params! {
+    #[derive(Copy)]
     Params<f64> {
         alpha,
         beta
@@ -20,7 +26,7 @@ macro_rules! get_params {
 
 impl InvGamma {
     pub fn new(alpha: f64, beta: f64) -> Result<InvGamma, failure::Error> {
-        Params::new(alpha, beta).map(|p| InvGamma(p))
+        Params::new(alpha, beta).map(InvGamma)
     }
 
     pub fn new_unchecked(alpha: f64, beta: f64) -> InvGamma {

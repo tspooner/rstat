@@ -1,6 +1,9 @@
 use crate::{
     consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
-    prelude::*,
+    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use spaces::real::PositiveReals;
@@ -16,27 +19,34 @@ const KURTOSIS: f64 = EXCESS_KURTOSIS + 3.0;
 
 pub use crate::params::Shape;
 
-new_dist!(Rayleigh<Shape<f64>>);
+params! {
+    #[derive(Copy)]
+    Params {
+        sigma: Shape<f64>
+    }
+}
+
+new_dist!(Rayleigh<Params>);
 
 macro_rules! get_sigma {
     ($self:ident) => {
-        ($self.0).0
+        $self.0.sigma.0
     };
 }
 
 impl Rayleigh {
-    pub fn new(sigma: f64) -> Result<Rayleigh, failure::Error> { Ok(Rayleigh(Shape::new(sigma)?)) }
+    pub fn new(sigma: f64) -> Result<Rayleigh, failure::Error> { Params::new(sigma).map(Rayleigh) }
 
-    pub fn new_unchecked(sigma: f64) -> Rayleigh { Rayleigh(Shape(sigma)) }
+    pub fn new_unchecked(sigma: f64) -> Rayleigh { Rayleigh(Params::new_unchecked(sigma)) }
 }
 
 impl Distribution for Rayleigh {
     type Support = PositiveReals;
-    type Params = Shape<f64>;
+    type Params = Params;
 
     fn support(&self) -> PositiveReals { PositiveReals }
 
-    fn params(&self) -> Shape<f64> { self.0 }
+    fn params(&self) -> Params { self.0 }
 
     fn cdf(&self, x: &f64) -> Probability {
         let sigma = get_sigma!(self);

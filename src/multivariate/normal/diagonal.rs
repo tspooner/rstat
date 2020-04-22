@@ -1,37 +1,20 @@
 use super::{Covariance, Loc, Normal, Params};
 use crate::{
     consts::PI_2,
-    linalg::Vector,
-    params::constraints::{self, Constraint, Constraints},
-    prelude::*,
+    linalg::{Matrix, Vector},
+    metrics::Mahalanobis,
+    params::{
+        constraints::{self, Constraint, Constraints},
+        Param,
+    },
+    statistics::MultivariateMoments,
+    ContinuousDistribution,
+    Distribution,
+    Probability,
 };
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
 use spaces::{real::Reals, ProductSpace};
-
-/// Parameter set for [DiagonalNormal](type.DiagonalNormal.html).
-pub type DiagonalNormalParams = Params<Vector<f64>>;
-
-impl DiagonalNormalParams {
-    /// Construct a parameter set for
-    /// [DiagonalNormal](type.DiagonalNormal.html): \\(\\langle\\bm{\\mu},
-    /// \\mathrm{diag}(\\sigma_1, \\ldots, \\sigma_n)\\rangle.\\)
-    ///
-    /// # Constraints
-    /// 1. The mean and variance vectors are the same length.
-    /// 2. All variance terms are positive real.
-    pub fn diagonal(mu: Vector<f64>, sigma: Vector<f64>) -> Result<Self, failure::Error> {
-        let mu = Loc::new(mu)?;
-        let sigma = Covariance::diagonal(sigma)?;
-
-        let n_mu = mu.0.len();
-        let n_sigma = mu.0.len();
-
-        assert_constraint!(n_mu == n_sigma)?;
-
-        Ok(DiagonalNormalParams { mu, sigma })
-    }
-}
 
 /// Diagonal covariance matrix parameter \\(\\mathrm{diag}(\\sigma_1, \\ldots,
 /// \\sigma_n)\\).
@@ -55,10 +38,36 @@ impl Param for Covariance<Vector<f64>> {
 
     fn value(&self) -> &Self::Value { &self.0 }
 
+    fn into_value(self) -> Self::Value { self.0 }
+
     fn constraints() -> Constraints<Self::Value> {
         let c = constraints::All(constraints::Positive);
 
         vec![Box::new(c)]
+    }
+}
+
+/// Parameter set for [DiagonalNormal](type.DiagonalNormal.html).
+pub type DiagonalNormalParams = Params<Vector<f64>>;
+
+impl DiagonalNormalParams {
+    /// Construct a parameter set for
+    /// [DiagonalNormal](type.DiagonalNormal.html): \\(\\langle\\bm{\\mu},
+    /// \\mathrm{diag}(\\sigma_1, \\ldots, \\sigma_n)\\rangle.\\)
+    ///
+    /// # Constraints
+    /// 1. The mean and variance vectors are the same length.
+    /// 2. All variance terms are positive real.
+    pub fn diagonal(mu: Vector<f64>, sigma: Vector<f64>) -> Result<Self, failure::Error> {
+        let mu = Loc::new(mu)?;
+        let sigma = Covariance::diagonal(sigma)?;
+
+        let n_mu = mu.0.len();
+        let n_sigma = mu.0.len();
+
+        assert_constraint!(n_mu == n_sigma)?;
+
+        Ok(DiagonalNormalParams { mu, sigma })
     }
 }
 
@@ -163,7 +172,7 @@ impl MultivariateMoments for DiagonalNormal {
     fn variance(&self) -> Vector<f64> { self.params.sigma.0.clone() }
 }
 
-impl MahalanobisDistance for DiagonalNormal {
+impl Mahalanobis for DiagonalNormal {
     fn d_mahalanobis_squared(&self, x: &Vec<f64>) -> f64 {
         x.into_iter()
             .zip(self.params.mu.0.iter())

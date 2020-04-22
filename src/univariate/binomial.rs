@@ -1,11 +1,22 @@
-use super::choose;
-use crate::{consts::PI_E, params::Count, prelude::*, univariate::bernoulli::Bernoulli};
+use crate::{
+    consts::PI_E,
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    univariate::bernoulli::Bernoulli,
+    utils::*,
+    Convolution,
+    DiscreteDistribution,
+    Distribution,
+    Probability,
+};
 use ndarray::Array2;
 use rand;
 use spaces::discrete::Ordinal;
 use std::fmt;
 
+pub use crate::params::Count;
+
 params! {
+    #[derive(Copy)]
     Params {
         n: Count<usize>,
         p: Probability<>
@@ -140,7 +151,7 @@ impl Convolution<Bernoulli> for Binomial {
 
     fn convolve(self, rv: Bernoulli) -> Result<Binomial, failure::Error> {
         let p1 = self.params.p;
-        let p2 = rv.p;
+        let p2 = rv.params.p;
 
         Binomial::new(self.params.n.0 + 1, assert_constraint!(p1 == p2)?)
     }
