@@ -46,13 +46,11 @@ impl Params {
         Params::independent(mu, [sigma, sigma])
     }
 
-    pub fn standard() -> Params { Params::new_unchecked([0.0; 2], [1.0; 2], 0.0) }
-
-    pub fn new_unchecked(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> Params {
+    pub fn standard() -> Params {
         Params {
-            mu: Loc(mu),
-            sigma: Scale(sigma),
-            rho: Corr(rho),
+            mu: Loc([0.0; 2]),
+            sigma: Scale([1.0; 2]),
+            rho: Corr(0.0),
         }
     }
 }
@@ -74,19 +72,39 @@ impl Normal {
         Params::new(mu, sigma, rho).map(Normal)
     }
 
+    pub fn new_unchecked(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> Normal {
+        Normal(Params {
+            mu: Loc(mu),
+            sigma: Scale(sigma),
+            rho: Corr(rho),
+        })
+    }
+
     pub fn independent(mu: [f64; 2], sigma: [f64; 2]) -> Result<Normal, failure::Error> {
         Params::independent(mu, sigma).map(Normal)
+    }
+
+    pub fn independent_unchecked(mu: [f64; 2], sigma: [f64; 2]) -> Normal {
+        Normal(Params {
+            mu: Loc(mu),
+            sigma: Scale(sigma),
+            rho: Corr(0.0),
+        })
     }
 
     pub fn isotropic(mu: [f64; 2], sigma: f64) -> Result<Normal, failure::Error> {
         Params::isotropic(mu, sigma).map(Normal)
     }
 
-    pub fn standard() -> Normal { Normal(Params::standard()) }
-
-    pub fn new_unchecked(mu: [f64; 2], sigma: [f64; 2], rho: f64) -> Normal {
-        Normal(Params::new_unchecked(mu, sigma, rho))
+    pub fn isotropic_unchecked(mu: [f64; 2], sigma: f64) -> Normal {
+        Normal(Params {
+            mu: Loc(mu),
+            sigma: Scale([sigma, sigma]),
+            rho: Corr(0.0),
+        })
     }
+
+    pub fn standard() -> Normal { Normal(Params::standard()) }
 
     #[inline]
     pub fn z(&self, x: &[f64; 2]) -> f64 {

@@ -307,3 +307,5 @@ pub mod univariate;
 
 mod mixture;
 pub use self::mixture::Mixture;
+
+pub mod builder;

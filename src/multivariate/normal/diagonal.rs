@@ -58,9 +58,13 @@ impl DiagonalNormalParams {
     /// # Constraints
     /// 1. The mean and variance vectors are the same length.
     /// 2. All variance terms are positive real.
-    pub fn diagonal(mu: Vector<f64>, sigma: Vector<f64>) -> Result<Self, failure::Error> {
-        let mu = Loc::new(mu)?;
-        let sigma = Covariance::diagonal(sigma)?;
+    pub fn diagonal<M, S>(mu: M, sigma: S) -> Result<Self, failure::Error>
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Vector<f64>>,
+    {
+        let mu = Loc::new(mu.into())?;
+        let sigma = Covariance::diagonal(sigma.into())?;
 
         let n_mu = mu.0.len();
         let n_sigma = mu.0.len();
@@ -91,7 +95,11 @@ impl DiagonalNormal {
     ///
     /// assert!(dist.is_ok());
     /// ```
-    pub fn diagonal(mu: Vector<f64>, sigma: Vector<f64>) -> Result<Self, failure::Error> {
+    pub fn diagonal<M, S>(mu: M, sigma: S) -> Result<Self, failure::Error>
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Vector<f64>>,
+    {
         let params = Params::diagonal(mu, sigma)?;
 
         Ok(Normal::diagonal_unchecked(params.mu.0, params.sigma.0))
@@ -109,10 +117,14 @@ impl DiagonalNormal {
     /// let dist: DiagonalNormal =
     ///     Normal::diagonal_unchecked(vec![0.0, 1.0].into(), vec![0.5, 2.0].into());
     /// ```
-    pub fn diagonal_unchecked(mu: Vector<f64>, sigma: Vector<f64>) -> Self {
+    pub fn diagonal_unchecked<M, S>(mu: M, sigma: S) -> Self
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Vector<f64>>,
+    {
         let params = Params {
-            mu: Loc(mu),
-            sigma: Covariance(sigma),
+            mu: Loc(mu.into()),
+            sigma: Covariance(sigma.into()),
         };
 
         Normal {

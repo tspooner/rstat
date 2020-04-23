@@ -50,7 +50,7 @@ impl IsotropicNormalParams {
     ///
     /// # Constraints
     /// 1. All variance terms are positive real.
-    pub fn isotropic(mu: Vector<f64>, sigma: f64) -> Result<Self, failure::Error> {
+    pub fn isotropic<M: Into<Vector<f64>>>(mu: M, sigma: f64) -> Result<Self, failure::Error> {
         let mu = Loc::new(mu.into())?;
         let sigma = Covariance::isotropic(sigma)?;
 
@@ -98,7 +98,7 @@ impl IsotropicNormal {
     ///
     /// assert!(dist.is_ok());
     /// ```
-    pub fn isotropic(mu: Vector<f64>, sigma: f64) -> Result<Self, failure::Error> {
+    pub fn isotropic<M: Into<Vector<f64>>>(mu: M, sigma: f64) -> Result<Self, failure::Error> {
         let params = Params::isotropic(mu, sigma)?;
 
         Ok(Normal::isotropic_unchecked(params.mu.0, params.sigma.0))
@@ -114,9 +114,9 @@ impl IsotropicNormal {
     /// # use rstat::multivariate::normal::{Normal, IsotropicNormal};
     /// let dist: IsotropicNormal = Normal::isotropic_unchecked(vec![0.0, 1.0].into(), 1.0);
     /// ```
-    pub fn isotropic_unchecked(mu: Vector<f64>, sigma: f64) -> Self {
+    pub fn isotropic_unchecked<M: Into<Vector<f64>>>(mu: M, sigma: f64) -> Self {
         let params = Params {
-            mu: Loc(mu),
+            mu: Loc(mu.into()),
             sigma: Covariance(sigma),
         };
 

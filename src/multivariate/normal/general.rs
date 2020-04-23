@@ -51,9 +51,13 @@ impl Params {
     /// # Constraints
     /// 1. The covariance matrix is not square.
     /// 2. The covariance matrix is not positive semi-definite.
-    pub fn new(mu: Vector<f64>, sigma: Matrix<f64>) -> Result<Self, failure::Error> {
-        let mu = Loc::new(mu)?;
-        let sigma = Covariance::new(sigma)?;
+    pub fn new<M, S>(mu: M, sigma: S) -> Result<Self, failure::Error>
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Matrix<f64>>,
+    {
+        let mu = Loc::new(mu.into())?;
+        let sigma = Covariance::new(sigma.into())?;
 
         let n_mu = mu.0.len();
         let n_sigma = sigma.0.nrows();
@@ -85,7 +89,11 @@ impl Normal {
     ///
     /// assert!(dist.is_ok());
     /// ```
-    pub fn new(mu: Vector<f64>, sigma: Matrix<f64>) -> Result<Self, failure::Error> {
+    pub fn new<M, S>(mu: M, sigma: S) -> Result<Self, failure::Error>
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Matrix<f64>>,
+    {
         let params = Params::new(mu, sigma)?;
 
         Ok(Normal::new_unchecked(params.mu.0, params.sigma.0))
@@ -105,10 +113,14 @@ impl Normal {
     /// ]);
     /// let dist: Normal = Normal::new_unchecked(vec![0.0, 1.0].into(), cov);
     /// ```
-    pub fn new_unchecked(mu: Vector<f64>, sigma: Matrix<f64>) -> Self {
+    pub fn new_unchecked<M, S>(mu: M, sigma: S) -> Self
+    where
+        M: Into<Vector<f64>>,
+        S: Into<Matrix<f64>>,
+    {
         let params = Params {
-            mu: Loc(mu),
-            sigma: Covariance(sigma),
+            mu: Loc(mu.into()),
+            sigma: Covariance(sigma.into()),
         };
 
         #[cfg(feature = "ndarray-linalg")]
