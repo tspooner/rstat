@@ -19,18 +19,21 @@ extern crate ndarray_linalg;
 #[cfg(feature = "serde")]
 extern crate serde_crate;
 
-#[macro_use]
-mod macros;
+macro_rules! undefined {
+    () => (panic!("quantity undefined"));
+    ($($arg:tt)+) => (panic!("quantity undefined: {}", std::format_args!($($arg)+)));
+}
+
 mod consts;
 mod utils;
 
 pub mod linalg;
 
 mod probability;
-pub use self::probability::{InvalidProbabilityError, Probability};
-
-mod simplex;
-pub use self::simplex::{InvalidSimplexError, SimplexVector, UnitSimplex};
+pub use self::probability::{
+    InvalidProbabilityError, Probability,
+    InvalidSimplexError, SimplexVector, UnitSimplex,
+};
 
 #[macro_use]
 pub mod params;
@@ -102,7 +105,7 @@ pub trait Distribution: From<<Self as Distribution>::Params> {
     /// let params = dist.params();
     ///
     /// assert_eq!(params.mu.value(), &0.0);
-    /// assert_eq!(params.sigma.value(), &1.0);
+    /// assert_eq!(params.Sigma.value(), &1.0);
     /// ```
     fn params(&self) -> Self::Params;
 
@@ -269,14 +272,14 @@ pub trait Convolution<T: Distribution = Self> {
     /// # Examples
     /// ```
     /// # use rstat::{Distribution, Convolution, params::Param, univariate::normal::Normal};
-    /// let dist_a = Normal::new_unchecked(0.0, 1.0);
-    /// let dist_b = Normal::new_unchecked(1.0, 2.0);
+    /// let dist_a = Normal::new_unchecked(0.0, 1.0f64.powi(2));
+    /// let dist_b = Normal::new_unchecked(1.0, 2.0f64.powi(2));
     ///
     /// let dist_c = dist_a.convolve(dist_b).unwrap();
     /// let params = dist_c.params();
     ///
     /// assert_eq!(params.mu.value(), &1.0);
-    /// assert_eq!(params.sigma.value(), &5.0f64.sqrt());
+    /// assert_eq!(params.Sigma.value(), &5.0f64);
     /// ```
     fn convolve(self, rv: T) -> Result<Self::Output, failure::Error>;
 
@@ -297,13 +300,14 @@ pub trait Convolution<T: Distribution = Self> {
     }
 }
 
-pub mod fitting;
 pub mod metrics;
 pub mod statistics;
+pub mod fitting;
 
+pub mod normal;
+pub mod univariate;
 pub mod bivariate;
 pub mod multivariate;
-pub mod univariate;
 
 mod mixture;
 pub use self::mixture::Mixture;

@@ -3,4 +3,10 @@
 pub use crate::statistics::MultivariateMoments as Moments;
 
 // Continuous:
-pub mod normal;
+pub mod normal {
+    pub use crate::normal::{
+        BvNormal as Normal,
+        BvNormalGrad as Grad,
+        BvNormalParams as Params,
+    };
+}

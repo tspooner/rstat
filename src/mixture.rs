@@ -40,9 +40,9 @@ pub enum MixtureError {
 /// let gmm = Mixture::new(
 ///     vec![0.2, 0.5, 0.3],
 ///     vec![
-///         Normal::new(-2.0, 1.2)?,
-///         Normal::new(0.0, 1.0)?,
-///         Normal::new(3.0, 2.5)?,
+///         Normal::new(-2.0, 1.2_f64.powi(2))?,
+///         Normal::new(0.0, 1.0_f64.powi(2))?,
+///         Normal::new(3.0, 2.5_f64.powi(2))?,
 ///     ],
 /// )?;
 ///
@@ -216,7 +216,4 @@ mod tests {
 
         Ok(())
     }
-
-    #[test]
-    fn test_gmm() -> Result<(), Error> { Ok(()) }
 }

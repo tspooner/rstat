@@ -16,7 +16,7 @@ documentation = "https://docs.rs/rstat"
 edition = "2018"
 
 [package.metadata.docs.rs]
-rustdoc-args = [ "--html-in-header", "katex.html" ]
+rustdoc-args = ["--html-in-header", "katex.html"]
 
 [features]
 default = []

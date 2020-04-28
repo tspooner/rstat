@@ -56,9 +56,15 @@ pub mod levy;
 
 pub mod logistic;
 
-pub mod lognormal;
+// pub mod lognormal;
 
-pub mod normal;
+pub mod normal {
+    pub use crate::normal::{
+        UvNormal as Normal,
+        UvNormalGrad as Grad,
+        UvNormalParams as Params,
+    };
+}
 
 pub mod pareto;
 

@@ -54,7 +54,7 @@ impl From<Params> for InvNormal {
     fn from(params: Params) -> InvNormal {
         InvNormal {
             params,
-            std_norm: normal::Normal(normal::Params::new_unchecked(0.0, 1.0)),
+            std_norm: normal::Normal::new_unchecked(0.0, 1.0),
         }
     }
 }

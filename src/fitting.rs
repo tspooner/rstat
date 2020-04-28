@@ -14,10 +14,14 @@ pub enum FittingError {
 /// All observations are treated as independent.
 pub trait Likelihood: Distribution {
     /// Computes the likelihood \\(\\mathcal{L}(\\theta \\mid \\bm{x})\\).
-    fn likelihood(&self, samples: &[Sample<Self>]) -> f64 { self.log_likelihood(samples).exp() }
+    fn likelihood(&self, samples: &[Sample<Self>]) -> f64 {
+        self.log_likelihood(samples).exp()
+    }
 
     /// Computes the log-likelihood \\(l(\\theta \\mid \\bm{x})\\).
-    fn log_likelihood(&self, samples: &[Sample<Self>]) -> f64 { self.likelihood(samples).ln() }
+    fn log_likelihood(&self, samples: &[Sample<Self>]) -> f64 {
+        self.likelihood(samples).ln()
+    }
 }
 
 /// Trait for [distributions](trait.Distribution.html) with a well-defined score

@@ -5,7 +5,16 @@ pub use crate::statistics::MultivariateMoments as Moments;
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Continuous
 ///////////////////////////////////////////////////////////////////////////////////////////////////
-pub mod normal;
+pub mod normal {
+    pub use crate::normal::{
+        MvNormal as Normal,
+        MvNormalGrad as Grad,
+        MvNormalParams as Params,
+
+        DiagonalNormal, DiagonalNormalGrad, DiagonalNormalParams,
+        IsotropicNormal, IsotropicNormalGrad, IsotropicNormalParams,
+    };
+}
 
 pub mod lognormal;
 
