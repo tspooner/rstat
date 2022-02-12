@@ -10,7 +10,7 @@ use spaces::real::PositiveReals;
 use std::fmt;
 
 const TWO_PI_MINUS_3: f64 = 2.0 * (PI - 3.0);
-const FOUR_MINUS_PI: f64 = (4.0 - PI);
+const FOUR_MINUS_PI: f64 = 4.0 - PI;
 const FOUR_MINUS_PI_OVER_2: f64 = FOUR_MINUS_PI / 2.0;
 
 const EXCESS_KURTOSIS: f64 =

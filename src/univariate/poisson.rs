@@ -57,7 +57,7 @@ impl Distribution for Poisson {
 
         rand_distr::Poisson::<f64>::new(get_lambda!(self))
             .unwrap()
-            .sample(rng)
+            .sample(rng) as u64
     }
 }
 

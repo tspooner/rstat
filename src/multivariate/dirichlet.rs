@@ -89,7 +89,7 @@ impl ContinuousDistribution for Dirichlet {
     fn log_pdf(&self, xs: &Vec<f64>) -> f64 {
         let n = self.alphas.0.len();
 
-        assert!(xs.len() == n, format!("Input `xs` must have length {}.", n));
+        assert!(xs.len() == n, "Input `xs` must have length {}.", n);
 
         xs.iter()
             .zip(self.alphas.0.iter())

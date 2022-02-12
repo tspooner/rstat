@@ -26,16 +26,16 @@ serde = ["serde_crate", "ndarray/serde", "spaces/serialize"]
 [dependencies]
 failure = "0.1"
 
-rand = "0.7"
-rand_distr = "0.2"
+rand = "0.8"
+rand_distr = "0.4"
 
-num = "0.2"
+num = "0.4"
 special-fun = "0.2"
 
 spaces = "5.0"
 
-ndarray = "0.13"
-ndarray-linalg = { version = "0.12", optional = true }
+ndarray = "0.15"
+ndarray-linalg = { version = "0.14", optional = true }
 
 [dependencies.serde_crate]
 package = "serde"
