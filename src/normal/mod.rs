@@ -1,13 +1,10 @@
 //! A generalised implementation of the multivariate Normal distribution.
 #![allow(non_snake_case)]
-use crate::{
-    params::{
-        Param, constraints::{
-            self, Constraint, Constraints,
-            UnsatisfiedConstraintError as UCE,
-        }
-    },
-    linalg::{Vector, Matrix},
+use crate::params::{
+    Param, constraints::{
+        self, Constraint, Constraints,
+        UnsatisfiedConstraintError as UCE,
+    }
 };
 
 pub use crate::params::Loc;
@@ -22,9 +19,9 @@ pub use crate::params::Loc;
 pub struct Covariance<S>(pub S);
 
 /// Dense covariance matrix parameter \\(\\bm{\\Sigma}\\).
-pub type MatrixCovariance = Covariance<Matrix<f64>>;
+pub type MatrixCovariance<const N: usize> = Covariance<[[f64; N]; N]>;
 
-impl MatrixCovariance {
+impl<const N: usize> MatrixCovariance<N> {
     /// Construct an \\(n\\)-dimensional covariance matrix parameter \\(\\bm{\\Sigma}\\).
     ///
     /// # Arguments
@@ -33,31 +30,35 @@ impl MatrixCovariance {
     /// # Constraints
     /// 1. The covariance matrix is square.
     /// 2. The covariance matrix is positive semi-definite.
-    pub fn matrix(Sigma: Matrix<f64>) -> Result<Self, failure::Error> {
-        let c = constraints::And((constraints::Square, constraints::All(constraints::Positive)));
+    pub fn matrix(Sigma: [[f64; N]; N]) -> Result<Self, failure::Error> {
+        let c = constraints::And((
+            constraints::Square,
+            constraints::All(constraints::All(constraints::NonNegative))
+        ));
 
         Ok(Covariance(c.check(Sigma)?))
     }
 }
 
-impl Param for MatrixCovariance {
-    type Value = Matrix<f64>;
+impl<const N: usize> Param for MatrixCovariance<N> {
+    type Value = [[f64; N]; N];
 
     fn value(&self) -> &Self::Value { &self.0 }
 
     fn into_value(self) -> Self::Value { self.0 }
 
     fn constraints() -> Constraints<Self::Value> {
-        let c = constraints::All(constraints::Positive);
-
-        vec![Box::new(c)]
+        vec![
+            Box::new(constraints::Square),
+            Box::new(constraints::All(constraints::All(constraints::Positive)))
+        ]
     }
 }
 
 /// Diagonal covariance matrix parameter \\(\\mathrm{diag}(\\sigma_1^2, \\ldots, \\sigma_n^2)\\).
-pub type DiagonalCovariance = Covariance<Vector<f64>>;
+pub type DiagonalCovariance<const N: usize> = Covariance<[f64; N]>;
 
-impl DiagonalCovariance {
+impl<const N: usize> DiagonalCovariance<N> {
     /// Construct an \\(n\\)-dimensional diagonal covariance matrix parameter
     /// \\(\\mathrm{diag}(\\sigma_1^2, \\ldots, \\sigma_n^2)\\).
     ///
@@ -67,15 +68,15 @@ impl DiagonalCovariance {
     ///
     /// # Constraints
     /// 1. All variance terms are positive real.
-    pub fn diagonal(sigma2_diag: Vector<f64>) -> Result<Self, failure::Error> {
+    pub fn diagonal(sigma2_diag: [f64; N]) -> Result<Self, failure::Error> {
         let c = constraints::All(constraints::Positive);
 
         Ok(Covariance(c.check(sigma2_diag)?))
     }
 }
 
-impl Param for Covariance<Vector<f64>> {
-    type Value = Vector<f64>;
+impl<const N: usize> Param for Covariance<[f64; N]> {
+    type Value = [f64; N];
 
     fn value(&self) -> &Self::Value { &self.0 }
 
@@ -124,7 +125,7 @@ impl Param for BivariateCovariance {
 
 /// Diagonal covariance matrix parameter \\(\\mathrm{diag}(\\sigma_1^2, \\sigma_2^2)\\) in
 /// 2-dimensions.
-pub type PairedCovariance = Covariance<[f64; 2]>;
+pub type PairedCovariance = DiagonalCovariance<2>;
 
 impl PairedCovariance {
     /// Construct a diagonal covariance matrix parameter \\(\\mathrm{diag}(\\sigma_1^2,
@@ -142,16 +143,6 @@ impl PairedCovariance {
 
         Ok(Covariance(c.check(sigma2_diag)?))
     }
-}
-
-impl Param for PairedCovariance {
-    type Value = [f64; 2];
-
-    fn value(&self) -> &Self::Value { &self.0 }
-
-    fn into_value(self) -> Self::Value { self.0 }
-
-    fn constraints() -> Constraints<Self::Value> { todo!() }
 }
 
 /// Isotropic covariance matrix parameter \\(\\sigma^2\\bm{I}\\).
@@ -209,6 +200,8 @@ pub struct Grad<M, S> {
     /// Gradient of the covariance parameter \\(\\bm{\\Sigma}\\).
     pub Sigma: S,
 }
+
+pub(crate) mod linalg;
 
 mod univariate;
 pub use self::univariate::*;

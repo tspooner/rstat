@@ -145,7 +145,7 @@ macro_rules! params {
                 }
             }
 
-            $(#[inline(always)] pub fn $id(&self) -> &$ty<$($ity),*> { &self.$id })*
+            // $(#[inline(always)] pub fn $id(&self) -> &$ty<$($ity),*> { &self.$id })*
         }
     };
     (@munch ($id:ident: $ty:ident<$($ity:ident),*>) -> {$($output:tt)*}) => {

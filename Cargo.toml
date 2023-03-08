@@ -21,21 +21,22 @@ rustdoc-args = ["--html-in-header", "katex.html"]
 [features]
 default = []
 
-serde = ["serde_crate", "ndarray/serde", "spaces/serialize"]
+serde = ["serde_crate", "spaces/serde"]
 
 [dependencies]
 failure = "0.1"
 
-rand = "0.7"
-rand_distr = "0.2"
+rand = "0.8"
+rand_distr = "0.4"
 
-num = "0.2"
+num = "0.4"
 special-fun = "0.2"
 
-spaces = "5.0"
+blas = { version = "0.22", default-features = false }
+lapack = { version = "0.19", default-features = false }
 
-ndarray = "0.13"
-ndarray-linalg = { version = "0.12", optional = true }
+# spaces = "6.0"
+spaces = { path = "../spaces" }
 
 [dependencies.serde_crate]
 package = "serde"
@@ -43,3 +44,6 @@ optional = true
 version = "1.0"
 default-features = false
 features = ["std", "derive"]
+
+[dev-dependencies]
+blas-src = { version = "0.8", features = ["accelerate"] }

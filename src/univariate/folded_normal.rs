@@ -1,12 +1,13 @@
 use crate::{
     consts::{PI_2, TWO_OVER_PI},
-    statistics::{Modes, UnivariateMoments},
+    statistics::{Modes, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::NonNegativeReals;
+use spaces::real::{NonNegativeReals, non_negative_reals};
 use std::fmt;
 
 locscale_params! {
@@ -53,10 +54,10 @@ impl Default for FoldedNormal {
 }
 
 impl Distribution for FoldedNormal {
-    type Support = NonNegativeReals;
+    type Support = NonNegativeReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> NonNegativeReals { NonNegativeReals }
+    fn support(&self) -> NonNegativeReals<f64> { non_negative_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -95,7 +96,9 @@ impl ContinuousDistribution for FoldedNormal {
     }
 }
 
-impl UnivariateMoments for FoldedNormal {
+impl Univariate for FoldedNormal {}
+
+impl UvMoments for FoldedNormal {
     fn mean(&self) -> f64 {
         use special_fun::FloatSpecial;
 

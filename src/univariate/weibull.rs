@@ -1,12 +1,13 @@
 use crate::{
     consts::THREE_HALVES,
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 pub use crate::params::{Scale, Shape};
@@ -36,10 +37,10 @@ impl Weibull {
 }
 
 impl Distribution for Weibull {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -75,7 +76,9 @@ impl ContinuousDistribution for Weibull {
     }
 }
 
-impl UnivariateMoments for Weibull {
+impl Univariate for Weibull {}
+
+impl UvMoments for Weibull {
     fn mean(&self) -> f64 { self.0.lambda.0 * self.gamma_i(1.0) }
 
     fn variance(&self) -> f64 {

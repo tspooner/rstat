@@ -1,14 +1,15 @@
 use crate::{
     fitting::{Likelihood, Score},
-    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, ShannonEntropy, UvMoments},
     univariate::exponential::Exponential,
     ContinuousDistribution,
     Convolution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -56,10 +57,10 @@ impl Into<rand_distr::Gamma<f64>> for &Gamma {
 }
 
 impl Distribution for Gamma {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -86,7 +87,9 @@ impl ContinuousDistribution for Gamma {
     }
 }
 
-impl UnivariateMoments for Gamma {
+impl Univariate for Gamma {}
+
+impl UvMoments for Gamma {
     fn mean(&self) -> f64 {
         let (a, b) = get_params!(self);
 

@@ -1,13 +1,14 @@
 use crate::{
-    statistics::UnivariateMoments,
+    statistics::UvMoments,
     ContinuousDistribution,
     Distribution,
     Probability,
     SimplexVector,
+    Univariate,
 };
 use failure::{Error, Fail};
 use rand::Rng;
-use spaces::{Space, Union};
+use spaces::{Space, ops::{Union, Closure}};
 
 #[derive(Debug, Clone)]
 #[cfg_attr(
@@ -15,8 +16,8 @@ use spaces::{Space, Union};
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-pub struct Params<CP> {
-    pub ps: SimplexVector,
+pub struct Params<const N: usize, CP> {
+    pub ps: SimplexVector<N>,
     pub component_params: Vec<CP>,
 }
 
@@ -38,8 +39,8 @@ pub enum MixtureError {
 /// };
 ///
 /// let gmm = Mixture::new(
-///     vec![0.2, 0.5, 0.3],
-///     vec![
+///     [0.2, 0.5, 0.3],
+///     [
 ///         Normal::new(-2.0, 1.2_f64.powi(2))?,
 ///         Normal::new(0.0, 1.0_f64.powi(2))?,
 ///         Normal::new(3.0, 2.5_f64.powi(2))?,
@@ -53,20 +54,23 @@ pub enum MixtureError {
 /// # Ok::<(), failure::Error>(())
 /// ```
 #[derive(Debug, Clone)]
-pub struct Mixture<C: Distribution> {
+pub struct Mixture<const N: usize, C: Distribution> {
     /// The weights of the linear sum.
-    pub weights: SimplexVector,
+    pub weights: SimplexVector<N>,
 
     /// The [distribution](trait.Distribution.html) components of the linear
     /// sum.
-    pub components: Vec<C>,
+    pub components: [C; N],
 
     support: C::Support,
 }
 
-impl<C: Distribution> Mixture<C> {
-    pub fn new(weights: Vec<f64>, components: Vec<C>) -> Result<Mixture<C>, Error>
-    where C::Support: Union {
+impl<const N: usize, C: Distribution> Mixture<N, C>
+where
+    C::Support: Union<C::Support>,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
+{
+    pub fn new(weights: [f64; N], components: [C; N]) -> Result<Mixture<N, C>, Error> {
         if components.len() != weights.len() {
             Err(MixtureError::IncompatibleParameters)?
         } else {
@@ -79,8 +83,7 @@ impl<C: Distribution> Mixture<C> {
         }
     }
 
-    pub fn new_unchecked(weights: Vec<f64>, components: Vec<C>) -> Mixture<C>
-    where C::Support: Union {
+    pub fn new_unchecked(weights: [f64; N], components: [C; N]) -> Mixture<N, C> {
         Mixture {
             support: Self::compute_support(&components),
 
@@ -89,26 +92,31 @@ impl<C: Distribution> Mixture<C> {
         }
     }
 
-    pub fn n_components(&self) -> usize { self.components.len() }
+    pub fn n_components() -> usize { N }
 
-    fn compute_support(components: &[C]) -> C::Support
-    where C::Support: Union {
+    fn compute_support(components: &[C; N]) -> C::Support {
         components
             .iter()
             .skip(1)
-            .fold(components[0].support(), |acc, c| acc.union(&c.support()))
+            .fold(components[0].support(), |acc, c| acc.union_closure(c.support()))
     }
 }
 
-impl<C: Distribution> From<Params<C::Params>> for Mixture<C>
-where C::Support: Union
+impl<const N: usize, C: Distribution> From<Params<N, C::Params>> for Mixture<N, C>
+where
+    C::Support: Union<C::Support>,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
 {
-    fn from(params: Params<C::Params>) -> Mixture<C> {
-        let components: Vec<C> = params
-            .component_params
-            .into_iter()
-            .map(|cp| cp.into())
-            .collect();
+    fn from(params: Params<N, C::Params>) -> Mixture<N, C> {
+        let mut components: [std::mem::MaybeUninit<C>; N] = unsafe {
+            std::mem::MaybeUninit::uninit().assume_init()
+        };
+
+        params.component_params.into_iter().map(|c| c.into()).enumerate().for_each(|(i, c)| {
+            components[i].write(c);
+        });
+
+        let components: [C; N] = unsafe { (&components as *const _ as *const [C; N]).read() };
 
         Mixture {
             weights: params.ps,
@@ -118,15 +126,17 @@ where C::Support: Union
     }
 }
 
-impl<C: Distribution> Distribution for Mixture<C>
-where C::Support: Union + Clone
+impl<const N: usize, C: Distribution> Distribution for Mixture<N, C>
+where
+    C::Support: Union<C::Support> + Clone,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
 {
     type Support = C::Support;
-    type Params = Params<C::Params>;
+    type Params = Params<N, C::Params>;
 
     fn support(&self) -> Self::Support { self.support.clone() }
 
-    fn params(&self) -> Params<C::Params> {
+    fn params(&self) -> Params<N, C::Params> {
         Params {
             ps: self.weights.clone(),
             component_params: self.components.iter().map(|c| c.params()).collect(),
@@ -149,8 +159,16 @@ where C::Support: Union + Clone
     }
 }
 
-impl<C: ContinuousDistribution> ContinuousDistribution for Mixture<C>
-where C::Support: Union + Clone
+impl<const N: usize, C: Distribution> Univariate for Mixture<N, C>
+where
+    C::Support: Union<C::Support> + Clone,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
+{}
+
+impl<const N: usize, C: ContinuousDistribution> ContinuousDistribution for Mixture<N, C>
+where
+    C::Support: Union<C::Support> + Clone,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
 {
     fn pdf(&self, x: &<Self::Support as Space>::Value) -> f64 {
         self.components
@@ -161,14 +179,16 @@ where C::Support: Union + Clone
     }
 }
 
-impl<C: UnivariateMoments> UnivariateMoments for Mixture<C>
-where C::Support: Union + Clone
+impl<const N: usize, C: UvMoments> UvMoments for Mixture<N, C>
+where
+    C::Support: Union<C::Support> + Clone,
+    <C::Support as Union<C::Support>>::Output: Closure<Output = C::Support>,
 {
     fn mean(&self) -> f64 {
         self.components
             .iter()
             .zip(self.weights.iter())
-            .fold(0.0, |acc, (c, &p)| acc + p * c.mean())
+            .fold(0.0, |acc, (c, &w)| acc + w * c.mean())
     }
 
     fn variance(&self) -> f64 {
@@ -196,20 +216,23 @@ where C::Support: Union + Clone
 
 #[cfg(test)]
 mod tests {
-    use super::Mixture;
-    use crate::{statistics::UnivariateMoments, univariate::uniform::Uniform};
+    use crate::univariate::uniform::Uniform;
+    use super::*;
+    use spaces::intervals::Interval;
     use failure::Error;
 
     #[test]
     fn test_uniform_pair_mixture() -> Result<(), Error> {
         let uniform = Uniform::<f64>::new(0.0, 2.0)?;
         let mixture = Mixture::new(
-            vec![0.5, 0.5],
-            vec![
+            [0.5, 0.5],
+            [
                 Uniform::<f64>::new(0.0, 1.0)?,
                 Uniform::<f64>::new(1.0, 1.0)?,
             ],
         )?;
+
+        assert_eq!(uniform.support(), Interval::closed_unchecked(0.0, 2.0));
 
         assert!((uniform.mean() - mixture.mean()).abs() < 1e-7);
         assert!((uniform.variance() - mixture.variance()).abs() < 1e-7);

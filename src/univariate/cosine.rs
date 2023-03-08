@@ -1,12 +1,13 @@
 use crate::{
     consts::{ONE_OVER_PI, ONE_THIRD, PI, PI2, PI4, TWO_OVER_PI2},
-    statistics::{Modes, Quantiles, UnivariateMoments},
+    statistics::{Modes, Quantiles, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::intervals::Closed;
 use std::fmt;
 
 locscale_params! {
@@ -44,13 +45,13 @@ impl Cosine {
 }
 
 impl Distribution for Cosine {
-    type Support = Interval;
+    type Support = Closed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval {
+    fn support(&self) -> Closed<f64> {
         let (mu, s) = get_params!(self);
 
-        Interval::bounded(mu - s, mu + s)
+        Closed::closed_unchecked(mu - s, mu + s)
     }
 
     fn params(&self) -> Params { self.0 }
@@ -68,7 +69,9 @@ impl ContinuousDistribution for Cosine {
     fn pdf(&self, x: &f64) -> f64 { 0.5 * self.hvc(*x) }
 }
 
-impl UnivariateMoments for Cosine {
+impl Univariate for Cosine {}
+
+impl UvMoments for Cosine {
     fn mean(&self) -> f64 { self.0.mu.0 }
 
     fn variance(&self) -> f64 {

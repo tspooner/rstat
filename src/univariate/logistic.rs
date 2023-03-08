@@ -1,12 +1,13 @@
 use crate::{
     consts::{PI2, SIX_FIFTHS, TWENTY_ONE_FIFTHS},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Reals;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 locscale_params! {
@@ -41,10 +42,10 @@ impl Logistic {
 }
 
 impl Distribution for Logistic {
-    type Support = Reals;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -64,7 +65,9 @@ impl ContinuousDistribution for Logistic {
     }
 }
 
-impl UnivariateMoments for Logistic {
+impl Univariate for Logistic {}
+
+impl UvMoments for Logistic {
     fn mean(&self) -> f64 { self.0.mu.0 }
 
     fn variance(&self) -> f64 { self.0.s.0 * self.0.s.0 * PI2 / 3.0 }

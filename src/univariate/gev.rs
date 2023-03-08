@@ -1,12 +1,13 @@
 use crate::{
     consts::{ONE_THIRD, PI2_OVER_6, PI3, TWELVE_FIFTHS},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::real::{Reals, reals};
 use special_fun::FloatSpecial;
 use std::{f64::INFINITY, fmt};
 
@@ -57,23 +58,10 @@ impl GeneralisedExtremeValue {
 }
 
 impl Distribution for GeneralisedExtremeValue {
-    type Support = Interval;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval {
-        use std::cmp::Ordering::*;
-
-        let (mu, sigma, zeta) = get_params!(self);
-
-        match zeta
-            .partial_cmp(&0.0)
-            .expect("Invalid value provided for `zeta`.")
-        {
-            Less => Interval::right_bounded(mu - sigma / zeta),
-            Equal => Interval::unbounded(),
-            Greater => Interval::left_bounded(mu - sigma / zeta),
-        }
-    }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -90,7 +78,9 @@ impl ContinuousDistribution for GeneralisedExtremeValue {
     }
 }
 
-impl UnivariateMoments for GeneralisedExtremeValue {
+impl Univariate for GeneralisedExtremeValue {}
+
+impl UvMoments for GeneralisedExtremeValue {
     fn mean(&self) -> f64 {
         let (mu, sigma, zeta) = get_params!(self);
 

@@ -1,13 +1,13 @@
 //! A collection of univariate (i.e. scalar output)
 //! [distributions](trait.Distribution.html).
-pub use crate::statistics::UnivariateMoments as Moments;
+pub use crate::statistics::UvMoments as Moments;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Abstract
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 pub mod uniform;
 
-// pub mod degenerate;
+pub mod degenerate;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Continuous
@@ -56,7 +56,7 @@ pub mod levy;
 
 pub mod logistic;
 
-// pub mod lognormal;
+pub mod lognormal;
 
 pub mod normal {
     pub use crate::normal::{

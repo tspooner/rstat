@@ -4,14 +4,15 @@ use crate::{
         constraints::{All, Constraint, Positive, UnsatisfiedConstraintError},
         Param,
     },
-    statistics::{Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::{discrete::Interval as DiscreteInterval, real::Interval as RealInterval};
+use spaces::intervals::Closed;
 use std::fmt;
 
 pub use crate::params::{Loc, Scale};
@@ -31,7 +32,9 @@ impl<T> Params<T>
 where All<Positive>: Constraint<T>
 {
     pub fn new(lb: T, width: T) -> Result<Params<T>, UnsatisfiedConstraintError<T>>
-    where T: fmt::Debug {
+    where
+        T: fmt::Debug
+    {
         Ok(Params {
             lb: Loc::new(lb)?,
             width: Scale::new(width)?,
@@ -103,13 +106,13 @@ impl Default for Uniform<f64> {
 }
 
 impl Distribution for Uniform<f64> {
-    type Support = RealInterval;
+    type Support = Closed<f64>;
     type Params = Params<f64>;
 
-    fn support(&self) -> RealInterval {
+    fn support(&self) -> Closed<f64> {
         let (lb, ub) = get_params!(self);
 
-        RealInterval::bounded(lb, ub)
+        Closed::closed_unchecked(lb, ub)
     }
 
     fn params(&self) -> Params<f64> { self.params }
@@ -149,7 +152,9 @@ impl ContinuousDistribution for Uniform<f64> {
     }
 }
 
-impl UnivariateMoments for Uniform<f64> {
+impl Univariate for Uniform<f64> {}
+
+impl UvMoments for Uniform<f64> {
     fn mean(&self) -> f64 { self.params.lb.0 + self.params.width.0 / 2.0 }
 
     fn variance(&self) -> f64 {
@@ -212,13 +217,13 @@ impl Uniform<i64> {
 }
 
 impl Distribution for Uniform<i64> {
-    type Support = DiscreteInterval;
+    type Support = Closed<i64>;
     type Params = Params<i64>;
 
-    fn support(&self) -> DiscreteInterval {
+    fn support(&self) -> Closed<i64> {
         let (lb, ub) = get_params!(self);
 
-        DiscreteInterval::bounded(lb, ub)
+        Closed::closed_unchecked(lb, ub)
     }
 
     fn params(&self) -> Params<i64> { self.params }
@@ -258,7 +263,9 @@ impl DiscreteDistribution for Uniform<i64> {
     }
 }
 
-impl UnivariateMoments for Uniform<i64> {
+impl Univariate for Uniform<i64> {}
+
+impl UvMoments for Uniform<i64> {
     fn mean(&self) -> f64 { self.params.lb.0 as f64 + self.params.width.0 as f64 / 2.0 }
 
     fn variance(&self) -> f64 {
@@ -296,5 +303,20 @@ impl fmt::Display for Uniform<i64> {
         let (lb, ub) = get_params!(self);
 
         write!(f, "U{{{}, {}}}", lb, ub)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use failure::Error;
+
+    #[test]
+    fn test_mean() -> Result<(), Error> {
+        assert_eq!(Uniform::<f64>::new(0.0, 2.0)?.mean(), 1.0);
+        assert_eq!(Uniform::<f64>::new(0.0, 1.0)?.mean(), 0.5);
+        assert_eq!(Uniform::<f64>::new(1.0, 1.0)?.mean(), 1.5);
+
+        Ok(())
     }
 }

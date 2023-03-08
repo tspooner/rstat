@@ -1,12 +1,12 @@
 use crate::{
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::intervals::LeftClosed;
 use std::{f64::INFINITY, fmt};
 
 locscale_params! {
@@ -36,10 +36,10 @@ impl Pareto {
 }
 
 impl Distribution for Pareto {
-    type Support = Interval;
+    type Support = LeftClosed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::left_bounded(self.0.x_m.0) }
+    fn support(&self) -> LeftClosed<f64> { LeftClosed::left_closed(self.0.x_m.0) }
 
     fn params(&self) -> Params { self.0 }
 
@@ -74,7 +74,9 @@ impl ContinuousDistribution for Pareto {
     }
 }
 
-impl UnivariateMoments for Pareto {
+impl Univariate for Pareto {}
+
+impl UvMoments for Pareto {
     fn mean(&self) -> f64 {
         match self.0.alpha.0 {
             alpha if alpha <= 1.0 => INFINITY,
@@ -136,17 +138,15 @@ impl ShannonEntropy for Pareto {
     }
 }
 
-impl FisherInformation for Pareto {
-    fn fisher_information(&self) -> Array2<f64> {
+impl FisherInformation<2> for Pareto {
+    fn fisher_information(&self) -> [[f64; 2]; 2] {
         let (x_m, alpha) = get_params!(self);
         let off_diag = -1.0 / x_m;
 
-        unsafe {
-            Array2::from_shape_vec_unchecked(
-                (2, 2),
-                vec![alpha / x_m / x_m, off_diag, off_diag, 1.0 / alpha / alpha],
-            )
-        }
+        [
+            [alpha / x_m / x_m, off_diag],
+            [off_diag, 1.0 / alpha / alpha]
+        ]
     }
 }
 

@@ -1,12 +1,13 @@
 use crate::{
     consts::THREE_HALVES,
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -34,10 +35,10 @@ impl Chi {
 }
 
 impl Distribution for Chi {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -58,7 +59,9 @@ impl ContinuousDistribution for Chi {
     }
 }
 
-impl UnivariateMoments for Chi {
+impl Univariate for Chi {}
+
+impl UvMoments for Chi {
     fn mean(&self) -> f64 {
         let k = get_k!(self);
 

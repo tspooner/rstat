@@ -1,16 +1,17 @@
 use crate::{
     consts::{PI, PI2, PI_OVER_2, THREE_HALVES},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 const TWO_PI_MINUS_3: f64 = 2.0 * (PI - 3.0);
-const FOUR_MINUS_PI: f64 = (4.0 - PI);
+const FOUR_MINUS_PI: f64 = 4.0 - PI;
 const FOUR_MINUS_PI_OVER_2: f64 = FOUR_MINUS_PI / 2.0;
 
 const EXCESS_KURTOSIS: f64 =
@@ -41,10 +42,10 @@ impl Rayleigh {
 }
 
 impl Distribution for Rayleigh {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -66,7 +67,9 @@ impl ContinuousDistribution for Rayleigh {
     }
 }
 
-impl UnivariateMoments for Rayleigh {
+impl Univariate for Rayleigh {}
+
+impl UvMoments for Rayleigh {
     fn mean(&self) -> f64 { get_sigma!(self) * PI_OVER_2.sqrt() }
 
     fn variance(&self) -> f64 {

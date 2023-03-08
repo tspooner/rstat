@@ -1,12 +1,13 @@
 use crate::{
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Convolution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -34,10 +35,10 @@ impl ChiSq {
 }
 
 impl Distribution for ChiSq {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -67,7 +68,9 @@ impl ContinuousDistribution for ChiSq {
     }
 }
 
-impl UnivariateMoments for ChiSq {
+impl Univariate for ChiSq {}
+
+impl UvMoments for ChiSq {
     fn mean(&self) -> f64 { get_k!(self) }
 
     fn variance(&self) -> f64 { (2 * self.0.k.0) as f64 }

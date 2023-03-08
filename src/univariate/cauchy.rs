@@ -5,9 +5,10 @@ use crate::{
     Convolution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Reals;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 locscale_params! {
@@ -51,10 +52,10 @@ impl Default for Cauchy {
 }
 
 impl Distribution for Cauchy {
-    type Support = Reals;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -78,6 +79,8 @@ impl ContinuousDistribution for Cauchy {
         1.0 / PI / self.0.gamma.0 / (1.0 + z * z)
     }
 }
+
+impl Univariate for Cauchy {}
 
 impl Quantiles for Cauchy {
     fn quantile(&self, p: Probability) -> f64 {

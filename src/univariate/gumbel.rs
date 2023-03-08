@@ -1,12 +1,13 @@
 use crate::{
     consts::{PI2, PI3, TWELVE_FIFTHS, TWENTY_SEVEN_FIFTHS},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Reals;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 locscale_params! {
@@ -45,10 +46,10 @@ impl Default for Gumbel {
 }
 
 impl Distribution for Gumbel {
-    type Support = Reals;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -69,7 +70,9 @@ impl ContinuousDistribution for Gumbel {
     }
 }
 
-impl UnivariateMoments for Gumbel {
+impl Univariate for Gumbel {}
+
+impl UvMoments for Gumbel {
     fn mean(&self) -> f64 {
         use special_fun::FloatSpecial;
 

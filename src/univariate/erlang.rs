@@ -1,10 +1,11 @@
 use crate::{
-    statistics::{Modes, UnivariateMoments},
+    statistics::{Modes, UvMoments},
     ContinuousDistribution,
     Distribution,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -42,10 +43,10 @@ impl Default for Erlang {
 }
 
 impl Distribution for Erlang {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -68,7 +69,9 @@ impl ContinuousDistribution for Erlang {
     }
 }
 
-impl UnivariateMoments for Erlang {
+impl Univariate for Erlang {}
+
+impl UvMoments for Erlang {
     fn mean(&self) -> f64 {
         let (k, lambda) = get_params!(self);
 

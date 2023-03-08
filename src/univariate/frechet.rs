@@ -1,12 +1,13 @@
 use crate::{
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     univariate::uniform::Uniform,
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::real::{PositiveReals, positive_reals};
 use std::{f64::INFINITY, fmt};
 
 pub use crate::params::Shape;
@@ -36,10 +37,10 @@ impl Default for Frechet {
 }
 
 impl Distribution for Frechet {
-    type Support = Interval;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::left_bounded(0.0) }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { Params::new_unchecked(get_alpha!(self)) }
 
@@ -63,7 +64,9 @@ impl ContinuousDistribution for Frechet {
     }
 }
 
-impl UnivariateMoments for Frechet {
+impl Univariate for Frechet {}
+
+impl UvMoments for Frechet {
     fn mean(&self) -> f64 {
         match get_alpha!(self) {
             alpha if alpha <= 1.0 => INFINITY,

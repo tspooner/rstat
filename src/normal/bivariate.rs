@@ -1,16 +1,15 @@
 use super::{Params, Grad, Loc, Covariance};
 use crate::{
     consts::PI_2,
-    linalg::{Matrix, Vector},
-    statistics::{MultivariateMoments, Modes, ShannonEntropy},
+    statistics::{MvMoments, Modes, ShannonEntropy},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Multivariate,
 };
-use ndarray::array;
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
-use spaces::{real::Reals, TwoSpace};
+use spaces::real::{reals, Reals};
 use std::fmt;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -108,10 +107,10 @@ impl From<BvNormalParams> for BvNormal {
 }
 
 impl Distribution for BvNormal {
-    type Support = TwoSpace<Reals>;
+    type Support = [Reals<f64>; 2];
     type Params = BvNormalParams;
 
-    fn support(&self) -> TwoSpace<Reals> { TwoSpace::new([Reals, Reals]) }
+    fn support(&self) -> Self::Support { [reals(); 2] }
 
     fn params(&self) -> BvNormalParams { self.0 }
 
@@ -140,29 +139,27 @@ impl ContinuousDistribution for BvNormal {
     }
 }
 
-impl MultivariateMoments for BvNormal {
-    fn mean(&self) -> Vector<f64> { vec![self.0.mu.0[0], self.0.mu.0[1]].into() }
+impl Multivariate<2> for BvNormal {}
 
-    fn covariance(&self) -> Matrix<f64> {
+impl MvMoments<2> for BvNormal {
+    fn mean(&self) -> [f64; 2] { self.0.mu.0 }
+
+    fn covariance(&self) -> [[f64; 2]; 2] {
         let (_, [sigma2_0, sigma2_1], rho) = get_params!(self);
         let cross_sigma = sigma2_0.sqrt() * sigma2_1.sqrt();
 
-        array![
+        [
             [sigma2_0, rho * cross_sigma],
             [rho * cross_sigma, sigma2_1],
         ]
     }
 
-    fn variance(&self) -> Vector<f64> {
-        let (_, [sigma2_0, sigma2_1], _) = get_params!(self);
+    fn variance(&self) -> [f64; 2] { self.0.Sigma.0.0 }
 
-        vec![sigma2_0, sigma2_1].into()
-    }
-
-    fn correlation(&self) -> Matrix<f64> {
+    fn correlation(&self) -> [[f64; 2]; 2] {
         let (_, _, rho) = get_params!(self);
 
-        array![[1.0, rho], [rho, 1.0]]
+        [[1.0, rho], [rho, 1.0]]
     }
 }
 
@@ -180,6 +177,6 @@ impl ShannonEntropy for BvNormal {
 
 impl fmt::Display for BvNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "N({:?}, {})", self.mean(), self.covariance())
+        write!(f, "N({:?}, {:?})", self.mean(), self.covariance())
     }
 }

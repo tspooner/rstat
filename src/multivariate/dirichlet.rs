@@ -1,37 +1,37 @@
 use crate::{
-    linalg::{Matrix, Vector},
-    statistics::{Modes, MultivariateMoments},
+    statistics::{Modes, MvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Multivariate,
 };
 use failure::Error;
 use rand::Rng;
-use spaces::{Interval, ProductSpace};
+use spaces::intervals::Closed;
 use std::fmt;
 
 pub use crate::params::Concentrations;
 
 #[derive(Debug, Clone)]
-pub struct Dirichlet {
-    pub alphas: Concentrations,
+pub struct Dirichlet<const N: usize> {
+    pub alphas: Concentrations<N>,
 
     alpha0: f64,
     ln_beta_alphas: f64,
-    alphas_normed: Vector<f64>,
+    alphas_normed: [f64; N],
 }
 
-impl Dirichlet {
-    pub fn new(alphas: Vector<f64>) -> Result<Dirichlet, Error> {
+impl<const N: usize> Dirichlet<N> {
+    pub fn new(alphas: [f64; N]) -> Result<Dirichlet<N>, Error> {
         let alphas = Concentrations::new(alphas)?;
 
         Ok(Dirichlet::new_unchecked(alphas.0))
     }
 
-    pub fn new_unchecked(alphas: Vector<f64>) -> Dirichlet {
+    pub fn new_unchecked(alphas: [f64; N]) -> Dirichlet<N> {
         use special_fun::FloatSpecial;
 
-        let alpha0 = alphas.scalar_sum();
+        let alpha0: f64 = alphas.iter().sum();
 
         Dirichlet {
             ln_beta_alphas: alphas
@@ -39,57 +39,53 @@ impl Dirichlet {
                 .fold(-alpha0.loggamma(), |acc, a| acc + a.loggamma()),
 
             alpha0,
-            alphas_normed: alphas.clone() / alpha0,
+            alphas_normed: alphas.map(|a| a / alpha0),
             alphas: Concentrations(alphas),
         }
     }
 }
 
-impl From<Concentrations> for Dirichlet {
-    fn from(alphas: Concentrations) -> Dirichlet { Dirichlet::new_unchecked(alphas.0) }
+impl<const N: usize> From<Concentrations<N>> for Dirichlet<N> {
+    fn from(alphas: Concentrations<N>) -> Dirichlet<N> { Dirichlet::new_unchecked(alphas.0) }
 }
 
-impl Distribution for Dirichlet {
-    type Support = ProductSpace<Interval>;
-    type Params = Concentrations;
+impl<const N: usize> Distribution for Dirichlet<N> {
+    type Support = [Closed<f64>; N];
+    type Params = Concentrations<N>;
 
-    fn support(&self) -> ProductSpace<Interval> {
-        std::iter::repeat(Interval::unit())
-            .take(self.alphas.0.len())
-            .collect()
-    }
+    fn support(&self) -> Self::Support { [Closed::unit(); N] }
 
-    fn params(&self) -> Concentrations { self.alphas.clone() }
+    fn params(&self) -> Concentrations<N> { self.alphas.clone() }
 
-    fn cdf(&self, _: &Vec<f64>) -> Probability { todo!() }
+    fn cdf(&self, _: &[f64; N]) -> Probability { todo!() }
 
-    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> Vec<f64> {
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> [f64; N] {
         use rand_distr::Gamma as GammaSampler;
 
         let mut sum = 0.0f64;
+        let mut sample = [0.0; N];
 
-        (self
-            .alphas
-            .0
-            .iter()
-            .map(|&alpha| {
-                let sample = rng.sample(GammaSampler::new(alpha, 1.0).unwrap());
-                sum += sample;
-                sample
-            })
-            .collect::<Vector<f64>>()
-            / sum)
-            .into_raw_vec()
+        for i in 0..N {
+            let a = self.alphas.0[i];
+            let s = rng.sample(GammaSampler::new(a, 1.0).unwrap());
+
+            sum += a;
+            sample[i] = s;
+        }
+
+        for i in 0..N {
+            sample[i] /= sum;
+        }
+
+        sample
     }
 }
 
-impl ContinuousDistribution for Dirichlet {
-    fn pdf(&self, xs: &Vec<f64>) -> f64 { self.log_pdf(xs).exp() }
+impl<const N: usize> ContinuousDistribution for Dirichlet<N> {
+    fn pdf(&self, xs: &[f64; N]) -> f64 { self.log_pdf(xs).exp() }
 
-    fn log_pdf(&self, xs: &Vec<f64>) -> f64 {
-        let n = self.alphas.0.len();
-
-        assert!(xs.len() == n, format!("Input `xs` must have length {}.", n));
+    fn log_pdf(&self, xs: &[f64; N]) -> f64 {
+        assert!(xs.len() == N, "Input `xs` must have length {}.", N);
 
         xs.iter()
             .zip(self.alphas.0.iter())
@@ -97,43 +93,47 @@ impl ContinuousDistribution for Dirichlet {
     }
 }
 
-impl MultivariateMoments for Dirichlet {
-    fn mean(&self) -> Vector<f64> { self.alphas_normed.clone() }
+impl<const N: usize> Multivariate<N> for Dirichlet<N> {}
 
-    fn variance(&self) -> Vector<f64> {
+impl<const N: usize> MvMoments<N> for Dirichlet<N> {
+    fn mean(&self) -> [f64; N] { self.alphas_normed.clone() }
+
+    fn variance(&self) -> [f64; N] {
         let norm = self.alpha0 * self.alpha0 * (self.alpha0 + 1.0);
 
-        self.alphas.0.mapv(|a| -a * (a - self.alpha0) / norm)
+        self.alphas.0.map(|a| -a * (a - self.alpha0) / norm)
     }
 
-    fn covariance(&self) -> Matrix<f64> {
+    fn covariance(&self) -> [[f64; N]; N] {
         let d = self.alphas.0.len();
         let norm = self.alpha0 * self.alpha0 * (self.alpha0 + 1.0);
 
-        Matrix::from_shape_fn((d, d), |(i, j)| {
-            if i == j {
-                let alpha = self.alphas.0[i];
+        let mut cov = [[0.0; N]; N];
 
-                alpha * (self.alpha0 - alpha) / norm
-            } else {
-                -self.alphas.0[i] * self.alphas.0[j] / norm
+        for i in 0..N {
+            for j in 0..i {
+                cov[i][j] = -self.alphas.0[i] * self.alphas.0[j] / norm;
             }
-        })
+
+            for j in (i + 1)..N {
+                cov[i][j] = -self.alphas.0[i] * self.alphas.0[j] / norm;
+            }
+
+            cov[i][i] = self.alphas.0[i] * (self.alpha0 - self.alphas.0[i]) / norm;
+        }
+
+        cov
     }
 }
 
-impl Modes for Dirichlet {
-    fn modes(&self) -> Vec<Vec<f64>> {
+impl<const N: usize> Modes for Dirichlet<N> {
+    fn modes(&self) -> Vec<[f64; N]> {
         let k = self.alphas.0.len() as f64;
 
-        vec![self
-            .alphas
-            .0
-            .mapv(|a| (a - 1.0) / (self.alpha0 - k))
-            .into_raw_vec()]
+        vec![self.alphas.0.map(|a| (a - 1.0) / (self.alpha0 - k))]
     }
 }
 
-impl fmt::Display for Dirichlet {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Dir({})", self.alphas.0) }
+impl<const N: usize> fmt::Display for Dirichlet<N> {
+    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Dir({:?})", self.alphas.0) }
 }

@@ -1,6 +1,6 @@
 //! A collection of multivariate (i.e. multiple output)
 //! [distributions](../trait.Distribution.html).
-pub use crate::statistics::MultivariateMoments as Moments;
+pub use crate::statistics::MvMoments as Moments;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Continuous

@@ -1,12 +1,12 @@
 use crate::{
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::{fmt, ops::Not};
 
 pub use crate::params::Rate;
@@ -39,10 +39,10 @@ impl Default for Exponential {
 }
 
 impl Distribution for Exponential {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -65,7 +65,9 @@ impl ContinuousDistribution for Exponential {
     }
 }
 
-impl UnivariateMoments for Exponential {
+impl Univariate for Exponential {}
+
+impl UvMoments for Exponential {
     fn mean(&self) -> f64 { 1.0 / get_lambda!(self) }
 
     fn variance(&self) -> f64 {
@@ -95,11 +97,11 @@ impl ShannonEntropy for Exponential {
     fn shannon_entropy(&self) -> f64 { 1.0 - get_lambda!(self).ln() }
 }
 
-impl FisherInformation for Exponential {
-    fn fisher_information(&self) -> Array2<f64> {
+impl FisherInformation<1> for Exponential {
+    fn fisher_information(&self) -> [[f64; 1]; 1] {
         let l = get_lambda!(self);
 
-        Array2::from_elem((1, 1), l * l)
+        [[l * l]]
     }
 }
 

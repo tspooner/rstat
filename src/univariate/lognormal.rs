@@ -1,14 +1,14 @@
 use crate::{
     consts::PI_2,
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     univariate::normal::Normal,
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 pub use crate::univariate::normal::Params;
@@ -18,7 +18,7 @@ pub struct LogNormal(Normal);
 
 macro_rules! get_params {
     ($self:ident) => {
-        (($self.0).0.mu.0, ($self.0).0.sigma.0)
+        (($self.0).0.mu.0, ($self.0).0.Sigma.0)
     };
 }
 
@@ -28,7 +28,7 @@ impl LogNormal {
     }
 
     pub fn new_unchecked(mu: f64, sigma: f64) -> LogNormal {
-        LogNormal(Normal(Params::new_unchecked(mu, sigma)))
+        LogNormal(Normal::new_unchecked(mu, sigma))
     }
 }
 
@@ -41,10 +41,10 @@ impl From<Normal> for LogNormal {
 }
 
 impl Distribution for LogNormal {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0.params() }
 
@@ -73,7 +73,9 @@ impl ContinuousDistribution for LogNormal {
     }
 }
 
-impl UnivariateMoments for LogNormal {
+impl Univariate for LogNormal {}
+
+impl UvMoments for LogNormal {
     fn mean(&self) -> f64 {
         let (mu, sigma) = get_params!(self);
 
@@ -88,14 +90,14 @@ impl UnivariateMoments for LogNormal {
     }
 
     fn skewness(&self) -> f64 {
-        let sigma = (self.0).0.sigma.0;
+        let sigma = (self.0).0.Sigma.0;
         let sigma2 = sigma * sigma;
 
         (sigma2.exp() + 2.0) * (sigma2.exp() - 1.0).sqrt()
     }
 
     fn excess_kurtosis(&self) -> f64 {
-        let sigma = (self.0).0.sigma.0;
+        let sigma = (self.0).0.Sigma.0;
         let sigma2 = sigma * sigma;
 
         (4.0 * sigma2).exp() + 2.0 * (3.0 * sigma2).exp() + 3.0 * (2.0 * sigma2).exp() - 6.0
@@ -124,22 +126,15 @@ impl ShannonEntropy for LogNormal {
     }
 }
 
-impl FisherInformation for LogNormal {
-    fn fisher_information(&self) -> Array2<f64> {
-        let sigma = (self.0).0.sigma.0;
+impl FisherInformation<2> for LogNormal {
+    fn fisher_information(&self) -> [[f64; 2]; 2] {
+        let sigma = (self.0).0.Sigma.0;
         let one_over_sigma2 = 1.0 / sigma / sigma;
 
-        unsafe {
-            Array2::from_shape_vec_unchecked(
-                (2, 2),
-                vec![
-                    one_over_sigma2,
-                    0.0,
-                    0.0,
-                    one_over_sigma2 * one_over_sigma2 / 2.0,
-                ],
-            )
-        }
+        [
+            [one_over_sigma2, 0.0],
+            [0.0, one_over_sigma2 * one_over_sigma2 / 2.0]
+        ]
     }
 }
 
