@@ -1,11 +1,12 @@
 use crate::{
-    linalg::{Matrix, Vector},
     Distribution,
+    Sample,
     Probability,
+    Univariate,
+    Multivariate,
 };
-use spaces::Space;
 
-pub trait UnivariateMoments: Distribution {
+pub trait UvMoments: Univariate {
     /// Computes the expected value of the distribution.
     fn mean(&self) -> f64;
 
@@ -29,9 +30,9 @@ pub trait UnivariateMoments: Distribution {
     fn excess_kurtosis(&self) -> f64 { self.kurtosis() - 3.0 }
 }
 
-pub trait MultivariateMoments: Distribution {
+pub trait MvMoments<const N: usize>: Multivariate<N> {
     /// Computes the vector of expected values of the distribution.
-    fn mean(&self) -> Vector<f64>;
+    fn mean(&self) -> [f64; N];
 
     /// Computes the vector of variances of the distribution.
     ///
@@ -39,26 +40,40 @@ pub trait MultivariateMoments: Distribution {
     /// taking the diagonal. It is recommended, however, that you provide
     /// specialised version to remove the overhead of computing the
     /// off-diagonal terms.
-    fn variance(&self) -> Vector<f64> { self.covariance().into_diag() }
+    fn variance(&self) -> [f64; N] {
+        let cov = self.covariance();
+        let mut var = [0.0; N];
+
+        for i in 0..N {
+            var[i] = cov[i][i];
+        }
+
+        var
+    }
 
     /// Computes the covariance matrix of the distribution.
-    fn covariance(&self) -> Matrix<f64>;
+    fn covariance(&self) -> [[f64; N]; N];
 
     /// Computes the correlation matrix of the distribution.
     ///
     /// A default implementation is provided by calling `self.covariance()` and
     /// using the terms to compute `corr(Xi, Xj) = cov(Xi, Xj) /
     /// sqrt(var(Xi) var(Xj)).`
-    fn correlation(&self) -> Matrix<f64> {
+    fn correlation(&self) -> [[f64; N]; N] {
         let cov = self.covariance();
+        let mut cor = [[0.0; N]; N];
 
-        Matrix::from_shape_fn(cov.dim(), |(i, j)| {
-            cov[(i, j)] * (cov[(i, i)] * cov[(j, j)]).sqrt()
-        })
+        for i in 0..N {
+            for j in 0..N {
+                cor[i][j] = cov[i][j] * (cov[i][i] * cov[j][j]).sqrt();
+            }
+        }
+
+        cor
     }
 }
 
-pub trait Quantiles: Distribution {
+pub trait Quantiles: Univariate {
     /// Evaluates the inverse cumulative distribution function (CDF) at `p`.
     ///
     /// The quantile function specifies the value `x` of a random variable `X`
@@ -102,7 +117,7 @@ pub trait Quantiles: Distribution {
 
 pub trait Modes: Distribution {
     /// Computes the mode(s) of the distribution.
-    fn modes(&self) -> Vec<<Self::Support as Space>::Value>;
+    fn modes(&self) -> Vec<Sample<Self>>;
 }
 
 pub trait ShannonEntropy: Distribution {
@@ -110,7 +125,7 @@ pub trait ShannonEntropy: Distribution {
     fn shannon_entropy(&self) -> f64;
 }
 
-pub trait FisherInformation: Distribution {
+pub trait FisherInformation<const N: usize>: Distribution {
     /// Computes the Fisher information matrix of the distribution, \\(I(X)\\).
-    fn fisher_information(&self) -> Matrix<f64>;
+    fn fisher_information(&self) -> [[f64; N]; N];
 }

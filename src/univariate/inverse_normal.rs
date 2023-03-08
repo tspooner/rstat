@@ -1,13 +1,14 @@
 use crate::{
     consts::{PI_2, PI_E_2},
-    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, ShannonEntropy, UvMoments},
     univariate::{normal, uniform::Uniform},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 pub use crate::params::Shape;
@@ -60,10 +61,10 @@ impl From<Params> for InvNormal {
 }
 
 impl Distribution for InvNormal {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.params }
 
@@ -111,7 +112,9 @@ impl ContinuousDistribution for InvNormal {
     }
 }
 
-impl UnivariateMoments for InvNormal {
+impl Univariate for InvNormal {}
+
+impl UvMoments for InvNormal {
     fn mean(&self) -> f64 { self.params.mu.0 }
 
     fn variance(&self) -> f64 {

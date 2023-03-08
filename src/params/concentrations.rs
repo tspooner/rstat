@@ -1,9 +1,6 @@
-use crate::{
-    linalg::Vector,
-    params::{
-        constraints::{self, Constraint},
-        Param,
-    },
+use crate::params::{
+    constraints::{self, Constraint},
+    Param,
 };
 
 #[derive(Debug, Clone)]
@@ -12,12 +9,19 @@ use crate::{
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-pub struct Concentrations(pub Vector<f64>);
+pub struct Concentrations<const N: usize>(
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "crate::utils::serde_arrays")
+    )]
+    pub [f64; N]
+);
 
-impl Concentrations {
+impl<const N: usize> Concentrations<N> {
     pub fn new(
-        value: Vector<f64>,
-    ) -> Result<Self, constraints::UnsatisfiedConstraintError<Vector<f64>>> {
+        value: [f64; N]
+    ) -> Result<Self, constraints::UnsatisfiedConstraintError<[f64; N]>>
+    {
         constraints::All(constraints::Positive)
             .check(value)
             .and_then(|value| constraints::Not(constraints::Empty).check(value))
@@ -25,12 +29,12 @@ impl Concentrations {
     }
 }
 
-impl Param for Concentrations {
-    type Value = Vector<f64>;
+impl<const N: usize> Param for Concentrations<N> {
+    type Value = [f64; N];
 
-    fn value(&self) -> &Vector<f64> { &self.0 }
+    fn value(&self) -> &[f64; N] { &self.0 }
 
-    fn into_value(self) -> Vector<f64> { self.0 }
+    fn into_value(self) -> [f64; N] { self.0 }
 
     fn constraints() -> constraints::Constraints<Self::Value> {
         let c1 = constraints::Not(constraints::Empty);

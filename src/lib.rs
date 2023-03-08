@@ -11,10 +11,6 @@ extern crate special_fun;
 
 extern crate spaces;
 
-extern crate ndarray;
-#[cfg(feature = "ndarray-linalg")]
-extern crate ndarray_linalg;
-
 #[cfg_attr(feature = "serde", macro_use)]
 #[cfg(feature = "serde")]
 extern crate serde_crate;
@@ -27,12 +23,10 @@ macro_rules! undefined {
 mod consts;
 mod utils;
 
-pub mod linalg;
-
 mod probability;
 pub use self::probability::{
     InvalidProbabilityError, Probability,
-    InvalidSimplexError, SimplexVector, UnitSimplex,
+    InvalidSimplexError, SimplexVector,
 };
 
 #[macro_use]
@@ -40,17 +34,26 @@ pub mod params;
 
 /// Iterator for drawing random samples from a
 /// [distribution](trait.Distribution.html).
-pub struct Sampler<'a, D: ?Sized, R: ?Sized> {
-    pub(crate) distribution: &'a D,
-    pub(crate) rng: &'a mut R,
+pub struct Sampler<'a, D, R: ?Sized> {
+    distribution: &'a D,
+    rng: &'a mut R,
 }
 
-impl<'a, D, R> Iterator for Sampler<'a, D, R>
+impl<'a, D, R: ?Sized> Sampler<'a, D, R> {
+    pub fn new(distribution: &'a D, rng: &'a mut R) -> Sampler<'a, D, R> {
+        Sampler {
+            distribution,
+            rng,
+        }
+    }
+}
+
+impl<'a, D, R: ?Sized> Iterator for Sampler<'a, D, R>
 where
-    D: Distribution + ?Sized,
-    R: rand::Rng + ?Sized,
+    D: Distribution,
+    R: rand::Rng,
 {
-    type Item = <D::Support as spaces::Space>::Value;
+    type Item = Sample<D>;
 
     #[inline(always)]
     fn next(&mut self) -> Option<Self::Item> { Some(self.distribution.sample(&mut self.rng)) }
@@ -67,7 +70,6 @@ macro_rules! ln_variant {
     }
 }
 
-/// Type alias for the sample type of a [distribution](trait.Distribution.html).
 pub type Sample<D> = <<D as Distribution>::Support as spaces::Space>::Value;
 
 /// Trait for probability distributions with a well-defined CDF.
@@ -82,12 +84,11 @@ pub trait Distribution: From<<Self as Distribution>::Params> {
     ///
     /// # Examples
     /// ```
-    /// # use spaces::{Space, BoundedSpace, Dim};
+    /// # use spaces::{Space, OrderedSpace};
     /// # use rstat::{Distribution, univariate, params::Param};
     /// let dist = univariate::beta::Beta::default();
     /// let support = dist.support();
     ///
-    /// assert_eq!(support.dim(), Dim::Finite(1));
     /// assert_eq!(support.inf().unwrap(), 0.0);
     /// assert_eq!(support.sup().unwrap(), 1.0);
     /// ```
@@ -161,10 +162,7 @@ pub trait Distribution: From<<Self as Distribution>::Params> {
     /// Draw an indefinite number of random values from the distribution
     /// support.
     fn sample_iter<'a, R: rand::Rng + ?Sized>(&'a self, rng: &'a mut R) -> Sampler<'a, Self, R> {
-        Sampler {
-            distribution: self,
-            rng,
-        }
+        Sampler::new(self, rng)
     }
 }
 
@@ -180,11 +178,19 @@ macro_rules! new_dist {
     };
 }
 
-#[inline]
-pub fn params_of<D: Distribution>(dist: &D) -> D::Params { dist.params() }
+// #[inline]
+// pub fn params_of<D: Distribution>(dist: &D) -> D::Params { dist.params() }
 
-#[inline]
-pub fn support_of<D: Distribution>(dist: &D) -> D::Support { dist.support() }
+// #[inline]
+// pub fn support_of<D: Distribution>(dist: &D) -> D::Support { dist.support() }
+
+// TODO - when associated const constraints drop, we can require Support::DIM = 1
+pub trait Univariate: Distribution {}
+
+// TODO - when associated const constraints drop, we can require Support::DIM > 1
+pub trait Multivariate<const N: usize>: Distribution {
+    fn dimensionality(&self) -> usize { N }
+}
 
 /// Trait for [distributions](trait.Distribution.html) over a countable
 /// `Support`.
@@ -262,12 +268,12 @@ pub trait ContinuousDistribution: Distribution {
 /// We then have that the random variables \\(Y = \sum_{i=1}^N X_i\\) and \\(Z
 /// \sim \text{Binomial}(N, p)\\) are exactly equivalent, i.e. \\(Y
 /// \stackrel{\text{d}}{=} Z\\).
-pub trait Convolution<T: Distribution = Self> {
+pub trait Convolution<D: Distribution = Self> {
     /// The resulting [Distribution](trait.Distribution.html) type.
     type Output: Distribution;
 
     /// Return the unweighted linear sum of `self` with another
-    /// [Distribution](trait.Distribution.html) of type `T`.
+    /// [Distribution](trait.Distribution.html) of type `D`.
     ///
     /// # Examples
     /// ```
@@ -281,13 +287,13 @@ pub trait Convolution<T: Distribution = Self> {
     /// assert_eq!(params.mu.value(), &1.0);
     /// assert_eq!(params.Sigma.value(), &5.0f64);
     /// ```
-    fn convolve(self, rv: T) -> Result<Self::Output, failure::Error>;
+    fn convolve(self, rv: D) -> Result<Self::Output, failure::Error>;
 
     /// Return the unweighted linear sum of `self` with a set of
-    /// [Distributions](trait.Distribution.html) of type `T`.
-    fn convolve_many(self, mut rvs: Vec<T>) -> Result<Self::Output, failure::Error>
+    /// [Distributions](trait.Distribution.html) of type `D`.
+    fn convolve_many(self, mut rvs: Vec<D>) -> Result<Self::Output, failure::Error>
     where
-        Self::Output: Convolution<T, Output = Self::Output>,
+        Self::Output: Convolution<D, Output = Self::Output>,
         Self: Sized,
     {
         let n = rvs.len();
@@ -300,7 +306,7 @@ pub trait Convolution<T: Distribution = Self> {
     }
 }
 
-pub mod metrics;
+pub mod distance;
 pub mod statistics;
 pub mod fitting;
 
@@ -312,4 +318,4 @@ pub mod multivariate;
 mod mixture;
 pub use self::mixture::Mixture;
 
-pub mod builder;
+// pub mod builder;

@@ -306,35 +306,65 @@ impl Not for &Probability {
     fn not(self) -> Probability { Probability::new_unchecked(1.0 - self.0) }
 }
 
-/// Utility for sampling from a unit \\(K\\)-simplex.
-#[derive(Clone, Copy, Debug)]
+#[derive(Clone, Debug, Fail)]
+#[fail(display = "Probabilities {:?} do not sum to 1.", _0)]
+pub struct InvalidSimplexError<const K: usize>([f64; K]);
+
+/// Probability vector constrainted to the unit simplex.
+#[derive(Clone, Debug)]
 #[cfg_attr(
     feature = "serde",
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-pub struct UnitSimplex(usize);
+pub struct SimplexVector<const K: usize>(
+    #[cfg_attr(
+        feature = "serde",
+        serde(with = "crate::utils::serde_arrays")
+    )]
+    [f64; K]
+);
 
-impl UnitSimplex {
-    /// Construct a \\(K = n + 1\\) probability simplex.
-    pub fn new(n: usize) -> UnitSimplex { UnitSimplex(n + 1) }
+impl<const K: usize> SimplexVector<K> {
+    /// Construct a new probability vector on the unit simplex.
+    pub fn new(ps: [f64; K]) -> Result<SimplexVector<K>, failure::Error> {
+        std::convert::TryFrom::try_from(ps)
+    }
+
+    /// Construct a new probability vector without enforcing constraints.
+    pub fn new_unchecked(ps: [f64; K]) -> SimplexVector<K> { SimplexVector(ps) }
+
+    /// Unwrap and return the inner `Vec<f64>` instance.
+    pub fn unwrap(self) -> [f64; K] { self.0 }
+
+    /// Sample a probability-weighted random index from the vector.
+    pub fn sample_index<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
+        let mut cdf = self.0.iter().scan(0.0, |state, p| {
+            *state += p;
+
+            Some(*state)
+        });
+        let rval: f64 = rng.gen();
+
+        cdf.position(|p| rval < p).unwrap_or(self.len() - 1)
+    }
 
     /// Compute the central point of the simplex \\(x_i = 1 / K\\).
     ///
     /// # Examples
     /// ```
-    /// use rstat::UnitSimplex;
+    /// use rstat::SimplexVector;
     ///
-    /// let s = UnitSimplex::new(2).centre();
+    /// let s = SimplexVector::<3>::centre();
     ///
     /// for i in 0..3 {
     ///     assert_eq!(s[i], 1.0 / 3.0);
     /// }
     /// ```
-    pub fn centre(&self) -> SimplexVector {
-        let p = 1.0 / self.0 as f64;
+    pub fn centre() -> SimplexVector<K> {
+        let p = 1.0 / K as f64;
 
-        SimplexVector::new_unchecked(std::iter::repeat(p).take(self.0))
+        SimplexVector::new_unchecked([p; K])
     }
 
     /// Draws a uniformly random point on the simplex.
@@ -350,79 +380,46 @@ impl UnitSimplex {
     /// # Examples
     /// ```
     /// use rand::thread_rng;
-    /// use rstat::UnitSimplex;
+    /// use rstat::SimplexVector;
     ///
-    /// let s = UnitSimplex::new(2).sample(&mut thread_rng());
+    /// let s = SimplexVector::<2>::sample(&mut thread_rng());
     ///
     /// assert!((s.iter().sum::<f64>() - 1.0).abs() < 1e-7);
     /// ```
-    pub fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> SimplexVector {
+    pub fn sample<R: Rng + ?Sized>(rng: &mut R) -> SimplexVector<K> {
         let mut sum = 0.0;
+        let mut probs = [0.0; K];
 
-        let vs: Vec<f64> = Uniform::<f64>::new_unchecked(0.0, 1.0)
-            .sample_iter(rng)
-            .map(|s| -s.ln())
-            .inspect(|v| sum += v)
-            .take(self.0)
-            .collect();
+        for i in 1..K {
+            let s = Uniform::<f64>::new_unchecked(0.0, 1.0).sample(rng);
 
-        SimplexVector(vs.into_iter().map(|v| v / sum).collect())
+            sum += s;
+            probs[i] = -s.ln();
+        }
+
+        let mut alt = 0.0;
+
+        for i in 1..K {
+            probs[i] /= sum;
+            alt += probs[i];
+        }
+
+        probs[0] = 1.0 - alt;
+
+        SimplexVector(probs)
     }
 }
 
-#[derive(Clone, Debug, Fail)]
-#[fail(display = "Probabilities {:?} do not sum to 1.", _0)]
-pub struct InvalidSimplexError(Vec<f64>);
+impl<const K: usize> ::std::ops::Deref for SimplexVector<K> {
+    type Target = [f64; K];
 
-/// Probability vector constrainted to the [unit
-/// simplex](struct.UnitSimplex.html).
-#[derive(Clone, Debug)]
-#[cfg_attr(
-    feature = "serde",
-    derive(Serialize, Deserialize),
-    serde(crate = "serde_crate")
-)]
-pub struct SimplexVector(Vec<f64>);
-
-impl SimplexVector {
-    /// Construct a new probability vector on the [unit
-    /// simplex](struct.UnitSimplex.html).
-    pub fn new(ps: Vec<f64>) -> Result<SimplexVector, failure::Error> {
-        std::convert::TryFrom::try_from(ps)
-    }
-
-    /// Construct a new probability vector without enforcing constraints.
-    pub fn new_unchecked<I>(ps: I) -> SimplexVector
-    where I: IntoIterator<Item = f64> {
-        SimplexVector(ps.into_iter().collect())
-    }
-
-    /// Unwrap and return the inner `Vec<f64>` instance.
-    pub fn unwrap(self) -> Vec<f64> { self.0 }
-
-    /// Sample a probability-weighted random index from the vector.
-    pub fn sample_index<R: Rng + ?Sized>(&self, rng: &mut R) -> usize {
-        let mut cdf = self.0.iter().scan(0.0, |state, p| {
-            *state += p;
-
-            Some(*state)
-        });
-        let rval: f64 = rng.gen();
-
-        cdf.position(|p| rval < p).unwrap_or(self.len() - 1)
-    }
+    fn deref(&self) -> &[f64; K] { &self.0 }
 }
 
-impl ::std::ops::Deref for SimplexVector {
-    type Target = [f64];
-
-    fn deref(&self) -> &[f64] { self.0.deref() }
-}
-
-impl std::convert::TryFrom<Vec<f64>> for SimplexVector {
+impl<const K: usize> std::convert::TryFrom<[f64; K]> for SimplexVector<K> {
     type Error = failure::Error;
 
-    fn try_from(ps: Vec<f64>) -> Result<SimplexVector, failure::Error> {
+    fn try_from(ps: [f64; K]) -> Result<SimplexVector<K>, failure::Error> {
         let mut z: f64 = 0.0;
 
         for p in ps.iter() {
@@ -437,14 +434,14 @@ impl std::convert::TryFrom<Vec<f64>> for SimplexVector {
     }
 }
 
-impl Param for SimplexVector {
-    type Value = Vec<f64>;
+impl<const K: usize> Param for SimplexVector<K> {
+    type Value = [f64; K];
 
-    fn value(&self) -> &Vec<f64> { &self.0 }
+    fn value(&self) -> &[f64; K] { &self.0 }
 
-    fn into_value(self) -> Vec<f64> { self.0 }
+    fn into_value(self) -> [f64; K] { self.0 }
 
-    fn constraints() -> Constraints<Vec<f64>> { vec![] }
+    fn constraints() -> Constraints<[f64; K]> { todo![] }
 }
 
 #[cfg(test)]
@@ -457,7 +454,7 @@ mod tests {
     fn test_sample_index_degenerate() {
         let mut rng = thread_rng();
 
-        let s = SimplexVector::new(vec![1.0]).unwrap();
+        let s = SimplexVector::new([1.0]).unwrap();
 
         assert_eq!(s.sample_index(&mut rng), 0);
     }
@@ -466,19 +463,18 @@ mod tests {
     fn test_sample_index_degenerate_n() {
         let mut rng = thread_rng();
 
-        fn make_simplex(idx: usize, n: usize) -> SimplexVector {
-            SimplexVector::new_unchecked(
-                repeat(0.0)
-                    .take(idx)
-                    .chain(once(1.0))
-                    .chain(repeat(0.0).take(n - idx - 1)),
-            )
+        fn make_simplex<const N: usize>(idx: usize) -> SimplexVector<N> {
+            let mut ps = [0.0; N];
+
+            ps[idx] = 1.0;
+
+            SimplexVector::new(ps).unwrap()
         }
 
-        assert_eq!(make_simplex(0, 5).sample_index(&mut rng), 0);
-        assert_eq!(make_simplex(1, 5).sample_index(&mut rng), 1);
-        assert_eq!(make_simplex(2, 5).sample_index(&mut rng), 2);
-        assert_eq!(make_simplex(3, 5).sample_index(&mut rng), 3);
-        assert_eq!(make_simplex(4, 5).sample_index(&mut rng), 4);
+        assert_eq!(make_simplex::<5>(0).sample_index(&mut rng), 0);
+        assert_eq!(make_simplex::<5>(1).sample_index(&mut rng), 1);
+        assert_eq!(make_simplex::<5>(2).sample_index(&mut rng), 2);
+        assert_eq!(make_simplex::<5>(3).sample_index(&mut rng), 3);
+        assert_eq!(make_simplex::<5>(4).sample_index(&mut rng), 4);
     }
 }

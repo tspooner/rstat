@@ -1,10 +1,11 @@
 use crate::{
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     DiscreteDistribution,
     Distribution,
+    Univariate,
 };
 use rand::Rng;
-use spaces::discrete::NonNegativeIntegers;
+use spaces::discrete::{NonNegativeIntegers, non_negative_integers};
 use std::fmt;
 
 pub use crate::Probability;
@@ -38,10 +39,10 @@ impl From<Params> for Geometric {
 }
 
 impl Distribution for Geometric {
-    type Support = NonNegativeIntegers;
+    type Support = NonNegativeIntegers<u64>;
     type Params = Params;
 
-    fn support(&self) -> NonNegativeIntegers { NonNegativeIntegers }
+    fn support(&self) -> NonNegativeIntegers<u64> { non_negative_integers() }
 
     fn params(&self) -> Params { self.params }
 
@@ -49,7 +50,13 @@ impl Distribution for Geometric {
         Probability::new_unchecked(1.0 - self.q.powi(*k as i32 + 1))
     }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> u64 { unimplemented!() }
+    fn sample<R: Rng + ?Sized>(&self, rng: &mut R) -> u64 {
+        use rand_distr::Distribution as _;
+
+        let dist = rand_distr::Geometric::new(self.params.p.unwrap()).unwrap();
+
+        dist.sample(rng)
+    }
 }
 
 impl DiscreteDistribution for Geometric {
@@ -58,7 +65,9 @@ impl DiscreteDistribution for Geometric {
     }
 }
 
-impl UnivariateMoments for Geometric {
+impl Univariate for Geometric {}
+
+impl UvMoments for Geometric {
     fn mean(&self) -> f64 { self.q.unwrap() / self.params.p.unwrap() }
 
     fn variance(&self) -> f64 {

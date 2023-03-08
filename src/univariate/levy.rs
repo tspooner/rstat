@@ -1,12 +1,13 @@
 use crate::{
     consts::{PI, PI_16, THREE_HALVES},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::intervals::LeftClosed;
 use std::{f64::INFINITY, fmt};
 
 locscale_params! {
@@ -32,10 +33,10 @@ impl Levy {
 }
 
 impl Distribution for Levy {
-    type Support = Interval;
+    type Support = LeftClosed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::left_bounded(self.0.mu.0) }
+    fn support(&self) -> LeftClosed<f64> { LeftClosed::left_closed(self.0.mu.0) }
 
     fn params(&self) -> Params { self.0 }
 
@@ -61,7 +62,9 @@ impl ContinuousDistribution for Levy {
     }
 }
 
-impl UnivariateMoments for Levy {
+impl Univariate for Levy {}
+
+impl UvMoments for Levy {
     fn mean(&self) -> f64 { INFINITY }
 
     fn variance(&self) -> f64 { INFINITY }

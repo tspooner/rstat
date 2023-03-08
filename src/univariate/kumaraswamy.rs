@@ -1,11 +1,12 @@
 use crate::{
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand;
-use spaces::real::Interval;
+use spaces::intervals::Closed;
 use std::fmt;
 
 #[inline]
@@ -39,10 +40,10 @@ impl Default for Kumaraswamy {
 }
 
 impl Distribution for Kumaraswamy {
-    type Support = Interval;
+    type Support = Closed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::bounded(0.0, 1.0) }
+    fn support(&self) -> Closed<f64> { Closed::unit() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -68,7 +69,9 @@ impl ContinuousDistribution for Kumaraswamy {
     }
 }
 
-impl UnivariateMoments for Kumaraswamy {
+impl Univariate for Kumaraswamy {}
+
+impl UvMoments for Kumaraswamy {
     fn mean(&self) -> f64 { self.moment_n(1) }
 
     fn variance(&self) -> f64 {

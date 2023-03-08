@@ -1,14 +1,14 @@
 use crate::{
     fitting::{Likelihood, Score, MLE},
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     univariate::binomial::Binomial,
     Convolution,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
-use spaces::discrete::Binary;
+use spaces::discrete::{Binary, binary};
 use std::fmt;
 
 params! {
@@ -57,7 +57,7 @@ impl Distribution for Bernoulli {
     type Support = Binary;
     type Params = Params;
 
-    fn support(&self) -> Binary { Binary }
+    fn support(&self) -> Binary { binary() }
 
     fn params(&self) -> Params { self.params }
 
@@ -83,7 +83,9 @@ impl DiscreteDistribution for Bernoulli {
     }
 }
 
-impl UnivariateMoments for Bernoulli {
+impl Univariate for Bernoulli {}
+
+impl UvMoments for Bernoulli {
     fn mean(&self) -> f64 { self.params.p.into() }
 
     fn variance(&self) -> f64 { self.variance }
@@ -133,8 +135,8 @@ impl ShannonEntropy for Bernoulli {
     }
 }
 
-impl FisherInformation for Bernoulli {
-    fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), 1.0 / self.variance) }
+impl FisherInformation<1> for Bernoulli {
+    fn fisher_information(&self) -> [[f64; 1]; 1] { [[1.0 / self.variance]] }
 }
 
 impl Likelihood for Bernoulli {
@@ -177,4 +179,60 @@ impl Convolution<Bernoulli> for Bernoulli {
 
 impl fmt::Display for Bernoulli {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Ber({})", self.params.p) }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::{Bernoulli, Modes, Quantiles, UvMoments};
+    use std::f64::INFINITY;
+
+    macro_rules! test_bernoulli {
+        ($fn:ident {
+            $($p:literal => $v:expr),+
+        }) => {
+            $(
+                assert_eq!(Bernoulli::new_unchecked($p).$fn(), $v);
+            )+
+        }
+    }
+
+    #[test]
+    fn test_mean() {
+        test_bernoulli!(mean {
+            0.0 => 0.0,
+            0.5 => 0.5,
+            1.0 => 1.0
+        });
+    }
+
+    #[test]
+    fn test_variance() {
+        test_bernoulli!(variance {
+            0.0 => 0.0,
+            0.5 => 0.25,
+            1.0 => 0.0
+        });
+    }
+
+    #[test]
+    fn test_skewness() {
+        test_bernoulli!(skewness {
+            0.0 => INFINITY,
+            0.25 => 0.5 / 0.1875f64.sqrt(),
+            0.5 => 0.0,
+            0.75 => -0.5 / 0.1875f64.sqrt(),
+            1.0 => -INFINITY
+        });
+    }
+
+    #[test]
+    fn test_median() {
+        test_bernoulli!(median {
+            0.0 => 0.0,
+            0.25 => 0.0,
+            0.5 => 0.5,
+            0.75 => 1.0,
+            1.0 => 1.0
+        });
+    }
 }

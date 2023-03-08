@@ -1,16 +1,16 @@
 use crate::{
     consts::PI_E,
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     univariate::bernoulli::Bernoulli,
     utils::*,
     Convolution,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand;
-use spaces::discrete::Ordinal;
+use spaces::intervals::Closed;
 use std::fmt;
 
 pub use crate::params::Count;
@@ -56,10 +56,10 @@ impl From<Params> for Binomial {
 }
 
 impl Distribution for Binomial {
-    type Support = Ordinal;
+    type Support = Closed<usize>;
     type Params = Params;
 
-    fn support(&self) -> Ordinal { Ordinal::new(self.params.n.0) }
+    fn support(&self) -> Closed<usize> { Closed::closed_unchecked(0, self.params.n.0 + 1) }
 
     fn params(&self) -> Params { self.params }
 
@@ -96,7 +96,9 @@ impl DiscreteDistribution for Binomial {
     }
 }
 
-impl UnivariateMoments for Binomial {
+impl Univariate for Binomial {}
+
+impl UvMoments for Binomial {
     fn mean(&self) -> f64 {
         let (n, p) = get_params!(self);
 
@@ -138,11 +140,11 @@ impl ShannonEntropy for Binomial {
     fn shannon_entropy(&self) -> f64 { (2.0 * PI_E * self.variance()).log2() / 2.0 }
 }
 
-impl FisherInformation for Binomial {
-    fn fisher_information(&self) -> Array2<f64> {
+impl FisherInformation<1> for Binomial {
+    fn fisher_information(&self) -> [[f64; 1]; 1] {
         let (n, p) = get_params!(self);
 
-        Array2::from_elem((1, 1), n as f64 / p.unwrap() / self.q.unwrap())
+        [[n as f64 / p.unwrap() / self.q.unwrap()]]
     }
 }
 

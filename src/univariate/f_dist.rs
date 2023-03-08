@@ -1,11 +1,12 @@
 use crate::{
-    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 pub use crate::params::DOF;
@@ -35,10 +36,10 @@ impl FDist {
 }
 
 impl Distribution for FDist {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -78,7 +79,9 @@ impl ContinuousDistribution for FDist {
     }
 }
 
-impl UnivariateMoments for FDist {
+impl Univariate for FDist {}
+
+impl UvMoments for FDist {
     fn mean(&self) -> f64 {
         match self.0.d2.0 {
             d2 if d2 <= 2 => undefined!("Mean is undefined for values of d2 <= 2."),

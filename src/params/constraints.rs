@@ -1,4 +1,3 @@
-use crate::linalg::{Matrix, Vector};
 use failure::{Backtrace, Fail};
 use num::{zero, PrimInt, Zero};
 use std::{
@@ -209,10 +208,10 @@ impl<T, C: Constraint<T>> Constraint<Vec<T>> for All<C> {
     }
 }
 
-impl<T, C: Constraint<T>> Constraint<[T; 2]> for All<C> {
-    fn check(self, value: [T; 2]) -> Result<[T; 2]>
+impl<const N: usize, T, C: Constraint<T>> Constraint<[T; N]> for All<C> {
+    fn check(self, value: [T; N]) -> Result<[T; N]>
     where
-        [T; 2]: Debug,
+        [T; N]: Debug,
         Self: Sized + 'static,
     {
         for v in value.iter() {
@@ -224,47 +223,7 @@ impl<T, C: Constraint<T>> Constraint<[T; 2]> for All<C> {
         Ok(value)
     }
 
-    fn is_satisfied_by(&self, value: &[T; 2]) -> bool {
-        value.iter().all(|v| self.0.is_satisfied_by(v))
-    }
-}
-
-impl<T, C: Constraint<T>> Constraint<Vector<T>> for All<C> {
-    fn check(self, value: Vector<T>) -> Result<Vector<T>>
-    where
-        Vector<T>: Debug,
-        Self: Sized + 'static,
-    {
-        for v in value.iter() {
-            if !self.0.is_satisfied_by(v) {
-                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
-            }
-        }
-
-        Ok(value)
-    }
-
-    fn is_satisfied_by(&self, value: &Vector<T>) -> bool {
-        value.iter().all(|v| self.0.is_satisfied_by(v))
-    }
-}
-
-impl<T, C: Constraint<T>> Constraint<Matrix<T>> for All<C> {
-    fn check(self, value: Matrix<T>) -> Result<Matrix<T>>
-    where
-        Matrix<T>: Debug,
-        Self: Sized + 'static,
-    {
-        for v in value.iter() {
-            if !self.0.is_satisfied_by(&v) {
-                return Err(UnsatisfiedConstraintError::new(value, Box::new(self)));
-            }
-        }
-
-        Ok(value)
-    }
-
-    fn is_satisfied_by(&self, value: &Matrix<T>) -> bool {
+    fn is_satisfied_by(&self, value: &[T; N]) -> bool {
         value.iter().all(|v| self.0.is_satisfied_by(v))
     }
 }
@@ -437,12 +396,12 @@ impl Display for Empty {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Empty") }
 }
 
-impl<T> Constraint<Vec<T>> for Empty {
-    fn is_satisfied_by(&self, vec: &Vec<T>) -> bool { vec.len() == 0 }
+impl<const N: usize, T> Constraint<[T; N]> for Empty {
+    fn is_satisfied_by(&self, vec: &[T; N]) -> bool { N > 0 }
 }
 
-impl<T> Constraint<Vector<T>> for Empty {
-    fn is_satisfied_by(&self, vector: &Vector<T>) -> bool { vector.len() == 0 }
+impl<T> Constraint<Vec<T>> for Empty {
+    fn is_satisfied_by(&self, vec: &Vec<T>) -> bool { vec.len() == 0 }
 }
 
 #[derive(Debug, Clone, Copy)]
@@ -452,8 +411,8 @@ impl Display for Square {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result { write!(f, "Square") }
 }
 
-impl<T> Constraint<Matrix<T>> for Square {
-    fn is_satisfied_by(&self, matrix: &Matrix<T>) -> bool { matrix.is_square() }
+impl<const N: usize, T> Constraint<[[T; N]; N]> for Square {
+    fn is_satisfied_by(&self, matrix: &[[T; N]; N]) -> bool { true }
 }
 
 #[cfg(test)]

@@ -2,15 +2,15 @@ use super::{Params, Grad, Loc, Covariance};
 use crate::{
     consts::{PI_2, PI_E_2},
     fitting::{Likelihood, Score, MLE},
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Convolution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand::Rng;
-use spaces::real::Reals;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -81,10 +81,10 @@ impl UvNormal {
 }
 
 impl Distribution for UvNormal {
-    type Support = Reals;
+    type Support = Reals<f64>;
     type Params = UvNormalParams;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Self::Params { self.0 }
 
@@ -122,7 +122,9 @@ impl ContinuousDistribution for UvNormal {
     }
 }
 
-impl UnivariateMoments for UvNormal {
+impl Univariate for UvNormal {}
+
+impl UvMoments for UvNormal {
     fn mean(&self) -> f64 { self.0.mu.0 }
 
     fn variance(&self) -> f64 { self.0.Sigma.0 }
@@ -154,16 +156,14 @@ impl ShannonEntropy for UvNormal {
     fn shannon_entropy(&self) -> f64 { (PI_E_2 * self.0.Sigma.0).ln() / 2.0 }
 }
 
-impl FisherInformation for UvNormal {
-    fn fisher_information(&self) -> Array2<f64> {
+impl FisherInformation<2> for UvNormal {
+    fn fisher_information(&self) -> [[f64; 2]; 2] {
         let precision = self.precision();
 
-        unsafe {
-            Array2::from_shape_vec_unchecked(
-                (2, 2),
-                vec![precision, 0.0, 0.0, precision * precision / 2.0],
-            )
-        }
+        [
+            [precision, 0.0],
+            [0.0, precision * precision / 2.0],
+        ]
     }
 }
 

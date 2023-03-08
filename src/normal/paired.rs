@@ -2,16 +2,15 @@ use super::{Params, Grad, Loc, Covariance};
 use crate::{
     consts::PI_2,
     fitting::{Likelihood, Score},
-    linalg::{Matrix, Vector},
-    statistics::{MultivariateMoments, Modes, ShannonEntropy},
+    statistics::{MvMoments, Modes, ShannonEntropy},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Multivariate,
 };
-use ndarray::array;
 use rand::Rng;
 use rand_distr::StandardNormal as RandSN;
-use spaces::{real::Reals, TwoSpace};
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
@@ -28,21 +27,7 @@ impl PairedNormalParams {
     }
 }
 
-///////////////////////////////////////////////////////////////////////////////////////////////////
-// Params
-///////////////////////////////////////////////////////////////////////////////////////////////////
 pub type PairedNormalGrad = Grad<[f64; 2], [f64; 2]>;
-
-impl std::ops::Mul<f64> for PairedNormalGrad {
-    type Output = Self;
-
-    fn mul(self, sf: f64) -> Self {
-        Grad {
-            mu: [self.mu[0] * sf, self.mu[1] * sf],
-            Sigma: [self.Sigma[0] * sf, self.Sigma[1]],
-        }
-    }
-}
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 // Distribution
@@ -96,10 +81,10 @@ impl From<PairedNormalParams> for PairedNormal {
 }
 
 impl Distribution for PairedNormal {
-    type Support = TwoSpace<Reals>;
+    type Support = [Reals<f64>; 2];
     type Params = PairedNormalParams;
 
-    fn support(&self) -> TwoSpace<Reals> { TwoSpace::new([Reals, Reals]) }
+    fn support(&self) -> Self::Support { [reals(); 2] }
 
     fn params(&self) -> PairedNormalParams { self.0 }
 
@@ -128,27 +113,23 @@ impl ContinuousDistribution for PairedNormal {
     }
 }
 
-impl MultivariateMoments for PairedNormal {
-    fn mean(&self) -> Vector<f64> { vec![self.0.mu.0[0], self.0.mu.0[1]].into() }
+impl Multivariate<2> for PairedNormal {}
 
-    fn covariance(&self) -> Matrix<f64> {
+impl MvMoments<2> for PairedNormal {
+    fn mean(&self) -> [f64; 2] { self.0.mu.0 }
+
+    fn covariance(&self) -> [[f64; 2]; 2] {
         let (_, Sigma) = get_params!(self);
 
-        array![
+        [
             [Sigma[0], 0.0],
             [0.0, Sigma[1]],
         ]
     }
 
-    fn variance(&self) -> Vector<f64> {
-        let (_, Sigma) = get_params!(self);
+    fn variance(&self) -> [f64; 2] { get_params!(self).1 }
 
-        vec![Sigma[0], Sigma[1]].into()
-    }
-
-    fn correlation(&self) -> Matrix<f64> {
-        array![[1.0, 0.0], [0.0, 1.0]]
-    }
+    fn correlation(&self) -> [[f64; 2]; 2] { [[1.0, 0.0], [0.0, 1.0]] }
 }
 
 impl Modes for PairedNormal {
@@ -204,6 +185,6 @@ impl Score for PairedNormal {
 
 impl fmt::Display for PairedNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "N({:?}, {})", self.mean(), self.covariance())
+        write!(f, "N({:?}, {:?})", self.mean(), self.covariance())
     }
 }

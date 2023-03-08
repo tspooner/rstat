@@ -1,12 +1,13 @@
 use crate::{
     consts::E,
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Reals;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 locscale_params! {
@@ -34,10 +35,10 @@ impl Laplace {
 }
 
 impl Distribution for Laplace {
-    type Support = Reals;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Reals { Reals }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -73,7 +74,9 @@ impl ContinuousDistribution for Laplace {
     }
 }
 
-impl UnivariateMoments for Laplace {
+impl Univariate for Laplace {}
+
+impl UvMoments for Laplace {
     fn mean(&self) -> f64 { self.0.mu.0 }
 
     fn variance(&self) -> f64 { 2.0 * self.0.b.0 * self.0.b.0 }

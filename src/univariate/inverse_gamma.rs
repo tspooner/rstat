@@ -1,11 +1,12 @@
 use crate::{
-    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 shape_params! {
@@ -39,10 +40,10 @@ impl Default for InvGamma {
 }
 
 impl Distribution for InvGamma {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -67,7 +68,9 @@ impl ContinuousDistribution for InvGamma {
     }
 }
 
-impl UnivariateMoments for InvGamma {
+impl Univariate for InvGamma {}
+
+impl UvMoments for InvGamma {
     fn mean(&self) -> f64 {
         match self.0.alpha.0 {
             alpha if alpha <= 1.0 => undefined!("Mean is undefined for alpha <= 1."),

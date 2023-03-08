@@ -1,12 +1,13 @@
 use crate::{
     consts::{ONE_OVER_PI, PI_OVER_4, THREE_HALVES, TWO_OVER_PI},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::intervals::Closed;
 use std::fmt;
 
 locscale_params! {
@@ -40,13 +41,13 @@ impl Default for Arcsine {
 }
 
 impl Distribution for Arcsine {
-    type Support = Interval;
+    type Support = Closed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval {
+    fn support(&self) -> Closed<f64> {
         let (a, b) = get_params!(self);
 
-        Interval::bounded(a, b)
+        Closed::closed_unchecked(a, b)
     }
 
     fn params(&self) -> Params { self.0 }
@@ -72,7 +73,9 @@ impl ContinuousDistribution for Arcsine {
     }
 }
 
-impl UnivariateMoments for Arcsine {
+impl Univariate for Arcsine {}
+
+impl UvMoments for Arcsine {
     fn mean(&self) -> f64 {
         let (a, b) = get_params!(self);
 
@@ -120,7 +123,7 @@ impl fmt::Display for Arcsine {
 
 #[cfg(test)]
 mod tests {
-    use super::{Arcsine, Modes, Quantiles, UnivariateMoments};
+    use super::{Arcsine, Modes, Quantiles, UvMoments};
 
     #[test]
     fn test_mean() {
@@ -151,7 +154,7 @@ mod tests {
     }
 
     #[test]
-    fn test_mode() {
+    fn test_modes() {
         assert_eq!(Arcsine::new_unchecked(0.0, 1.0).modes(), vec![0.0, 1.0]);
         assert_eq!(Arcsine::new_unchecked(-1.0, 1.0).modes(), vec![-1.0, 0.0]);
         assert_eq!(Arcsine::new_unchecked(-1.0, 2.0).modes(), vec![-1.0, 1.0]);

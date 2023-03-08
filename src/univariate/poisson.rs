@@ -1,16 +1,16 @@
 use crate::{
     consts::{NINETEEN_OVER_360, ONE_HALF, ONE_THIRD, ONE_TWELTH, ONE_TWENTY_FOURTH, PI_E_2},
     fitting::{Likelihood, Score, MLE},
-    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{FisherInformation, Modes, Quantiles, ShannonEntropy, UvMoments},
     utils::log_factorial_stirling,
     Convolution,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
-use ndarray::Array2;
 use rand::Rng;
-use spaces::discrete::Naturals;
+use spaces::discrete::{Naturals, naturals};
 use std::fmt;
 
 pub use crate::params::Rate;
@@ -43,10 +43,10 @@ impl Poisson {
 }
 
 impl Distribution for Poisson {
-    type Support = Naturals;
+    type Support = Naturals<u64>;
     type Params = Params;
 
-    fn support(&self) -> Naturals { Naturals }
+    fn support(&self) -> Naturals<u64> { naturals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -69,7 +69,9 @@ impl DiscreteDistribution for Poisson {
     }
 }
 
-impl UnivariateMoments for Poisson {
+impl Univariate for Poisson {}
+
+impl UvMoments for Poisson {
     fn mean(&self) -> f64 { get_lambda!(self) }
 
     fn variance(&self) -> f64 { get_lambda!(self) }
@@ -104,8 +106,8 @@ impl ShannonEntropy for Poisson {
     }
 }
 
-impl FisherInformation for Poisson {
-    fn fisher_information(&self) -> Array2<f64> { Array2::from_elem((1, 1), get_lambda!(self)) }
+impl FisherInformation<1> for Poisson {
+    fn fisher_information(&self) -> [[f64; 1]; 1] { [[get_lambda!(self)]] }
 }
 
 impl Likelihood for Poisson {

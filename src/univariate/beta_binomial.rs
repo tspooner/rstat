@@ -1,12 +1,13 @@
 use crate::{
-    statistics::UnivariateMoments,
+    statistics::UvMoments,
     utils::*,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::discrete::Ordinal;
+use spaces::intervals::Closed;
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -67,10 +68,10 @@ impl From<Params> for BetaBinomial {
 }
 
 impl Distribution for BetaBinomial {
-    type Support = Ordinal;
+    type Support = Closed<usize>;
     type Params = Params;
 
-    fn support(&self) -> Ordinal { Ordinal::new(self.params.n.0) }
+    fn support(&self) -> Closed<usize> { Closed::closed_unchecked(0, self.params.n.0 + 1) }
 
     fn params(&self) -> Params { self.params }
 
@@ -89,7 +90,9 @@ impl DiscreteDistribution for BetaBinomial {
     fn pmf(&self, k: &usize) -> Probability { Probability::new_unchecked(self.pmf_raw(*k)) }
 }
 
-impl UnivariateMoments for BetaBinomial {
+impl Univariate for BetaBinomial {}
+
+impl UvMoments for BetaBinomial {
     fn mean(&self) -> f64 { self.params.n.0 as f64 * self.pi }
 
     fn variance(&self) -> f64 {

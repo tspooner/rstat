@@ -1,6 +1,5 @@
 //! A collection of traits for generalised construction of distributions.
 use crate::{
-    linalg::{Vector, Matrix},
     normal::{MvNormal, DiagonalNormal, IsotropicNormal, BvNormal, PairedNormal, UvNormal},
     ContinuousDistribution,
 };

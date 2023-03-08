@@ -1,12 +1,13 @@
 use crate::{
     consts::ONE_THIRD,
-    statistics::{Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::real::{Reals, reals};
 use std::fmt;
 
 pub use crate::params::{Loc, Shape};
@@ -39,22 +40,10 @@ impl GeneralisedPareto {
 }
 
 impl Distribution for GeneralisedPareto {
-    type Support = Interval;
+    type Support = Reals<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval {
-        use std::cmp::Ordering::*;
-
-        let (mu, sigma, zeta) = get_params!(self);
-
-        match zeta
-            .partial_cmp(&0.0)
-            .expect("Invalid value provided for `zeta`.")
-        {
-            Less => Interval::bounded(mu, mu - sigma / zeta),
-            Equal | Greater => Interval::left_bounded(mu),
-        }
-    }
+    fn support(&self) -> Reals<f64> { reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -77,7 +66,9 @@ impl ContinuousDistribution for GeneralisedPareto {
     }
 }
 
-impl UnivariateMoments for GeneralisedPareto {
+impl Univariate for GeneralisedPareto {}
+
+impl UvMoments for GeneralisedPareto {
     fn mean(&self) -> f64 {
         let (mu, sigma, zeta) = get_params!(self);
 

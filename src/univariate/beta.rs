@@ -1,13 +1,14 @@
 use crate::{
     consts::{ONE_THIRD, TWO_THIRDS},
     fitting::{Likelihood, Score},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand;
-use spaces::real::Interval;
+use spaces::intervals::Closed;
 use special_fun::FloatSpecial;
 use std::fmt;
 
@@ -44,10 +45,10 @@ impl Default for Beta {
 }
 
 impl Distribution for Beta {
-    type Support = Interval;
+    type Support = Closed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::bounded(0.0, 1.0) }
+    fn support(&self) -> Closed<f64> { Closed::unit() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -77,7 +78,9 @@ impl ContinuousDistribution for Beta {
     }
 }
 
-impl UnivariateMoments for Beta {
+impl Univariate for Beta {}
+
+impl UvMoments for Beta {
     fn mean(&self) -> f64 {
         let (a, b) = get_params!(self);
 

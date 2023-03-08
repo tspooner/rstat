@@ -1,14 +1,14 @@
 use crate::{
-    statistics::MultivariateMoments,
+    statistics::MvMoments,
     DiscreteDistribution,
     Distribution,
     Probability,
+    Multivariate,
     SimplexVector,
 };
 use failure::Error;
-use ndarray::{Array1, Array2};
 use rand::Rng;
-use spaces::{discrete::Ordinal, ProductSpace};
+use spaces::intervals::Closed;
 use std::fmt;
 
 pub use crate::params::Count;
@@ -19,20 +19,20 @@ pub use crate::params::Count;
     derive(Serialize, Deserialize),
     serde(crate = "serde_crate")
 )]
-pub struct Params {
+pub struct Params<const N: usize> {
     pub n: Count<usize>,
-    pub ps: SimplexVector,
+    pub ps: SimplexVector<N>,
 }
 
-impl Params {
-    pub fn new(n: usize, ps: Vec<f64>) -> Result<Params, failure::Error> {
+impl<const N: usize> Params<N> {
+    pub fn new(n: usize, ps: [f64; N]) -> Result<Params<N>, failure::Error> {
         Ok(Params {
             n: Count::new(n)?,
             ps: SimplexVector::new(ps)?,
         })
     }
 
-    pub fn new_unchecked(n: usize, ps: Vec<f64>) -> Params {
+    pub fn new_unchecked(n: usize, ps: [f64; N]) -> Params<N> {
         Params {
             n: Count(n),
             ps: SimplexVector::new_unchecked(ps),
@@ -41,59 +41,62 @@ impl Params {
 
     pub fn n(&self) -> &Count<usize> { &self.n }
 
-    pub fn ps(&self) -> &SimplexVector { &self.ps }
+    pub fn ps(&self) -> &SimplexVector<N> { &self.ps }
 }
 
 #[derive(Debug, Clone)]
-pub struct Multinomial(Params);
+pub struct Multinomial<const N: usize>(Params<N>);
 
-impl Multinomial {
-    pub fn new(n: usize, ps: Vec<f64>) -> Result<Multinomial, Error> {
-        let params = Params::new(n, ps)?;
-
-        Ok(Multinomial(params))
+impl<const N: usize> Multinomial<N> {
+    pub fn new(n: usize, ps: [f64; N]) -> Result<Multinomial<N>, Error> {
+        Params::new(n, ps).map(Multinomial)
     }
 
-    pub fn new_unchecked(n: usize, ps: Vec<f64>) -> Multinomial {
+    pub fn new_unchecked(n: usize, ps: [f64; N]) -> Multinomial<N> {
         Multinomial(Params::new_unchecked(n, ps))
     }
+
+    pub const fn n_categories() -> usize { N }
 }
 
-impl Multinomial {
-    #[inline]
-    pub fn n_categories(&self) -> usize { self.0.ps.len() }
+impl<const N: usize> From<Params<N>> for Multinomial<N> {
+    fn from(params: Params<N>) -> Multinomial<N> { Multinomial(params) }
 }
 
-impl From<Params> for Multinomial {
-    fn from(params: Params) -> Multinomial { Multinomial(params) }
-}
+impl<const N: usize> Distribution for Multinomial<N> {
+    type Support = [Closed<usize>; N];
+    type Params = Params<N>;
 
-impl Distribution for Multinomial {
-    type Support = ProductSpace<Ordinal>;
-    type Params = Params;
+    fn support(&self) -> [Closed<usize>; N] {
+        let mut support: [std::mem::MaybeUninit<Closed<usize>>; N] = unsafe {
+            std::mem::MaybeUninit::uninit().assume_init()
+        };
 
-    fn support(&self) -> ProductSpace<Ordinal> {
-        std::iter::repeat(Ordinal::new(self.0.n.0))
-            .take(self.0.ps.len())
-            .collect()
+        for i in 0..N {
+            let s = Closed::closed_unchecked(0, self.0.n.0);
+
+            support[i].write(s);
+        }
+
+        unsafe { (&support as *const _ as *const [Closed<usize>; N]).read() }
     }
 
-    fn params(&self) -> Params { self.0.clone() }
+    fn params(&self) -> Params<N> { self.0.clone() }
 
-    fn cdf(&self, _: &Vec<usize>) -> Probability { unimplemented!() }
+    fn cdf(&self, _: &[usize; N]) -> Probability { unimplemented!() }
 
-    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> Vec<usize> { unimplemented!() }
+    fn sample<R: Rng + ?Sized>(&self, _: &mut R) -> [usize; N] { unimplemented!() }
 }
 
-impl DiscreteDistribution for Multinomial {
-    fn pmf(&self, xs: &Vec<usize>) -> Probability {
+impl<const N: usize> DiscreteDistribution for Multinomial<N> {
+    fn pmf(&self, xs: &[usize; N]) -> Probability {
         match xs.iter().fold(0, |acc, x| acc + x) {
             0 => Probability::zero(),
             _ => Probability::new(self.log_pmf(xs).exp()).unwrap(),
         }
     }
 
-    fn log_pmf(&self, xs: &Vec<usize>) -> f64 {
+    fn log_pmf(&self, xs: &[usize; N]) -> f64 {
         let xn = xs.len();
 
         #[allow(unused_parens)]
@@ -117,49 +120,92 @@ impl DiscreteDistribution for Multinomial {
     }
 }
 
-impl MultivariateMoments for Multinomial {
-    fn mean(&self) -> Array1<f64> { self.0.ps.iter().map(|&p| p * self.0.n.0 as f64).collect() }
+impl<const N: usize> Multivariate<N> for Multinomial<N> {}
 
-    fn variance(&self) -> Array1<f64> {
-        self.0
-            .ps
-            .iter()
-            .map(|&p| (p * (1.0 - p)) * self.0.n.0 as f64)
-            .collect()
-    }
+impl<const N: usize> MvMoments<N> for Multinomial<N> {
+    fn mean(&self) -> [f64; N] { self.0.ps.map(|p| p * self.0.n.0 as f64) }
 
-    fn covariance(&self) -> Array2<f64> {
+    fn variance(&self) -> [f64; N] { self.0.ps.map(|p| (p * (1.0 - p)) * self.0.n.0 as f64) }
+
+    fn covariance(&self) -> [[f64; N]; N] {
         let n = self.0.n.0 as f64;
-        let d = self.0.ps.len();
 
-        Array2::from_shape_fn((d, d), |(i, j)| {
-            if i == j {
-                let p = self.0.ps[i];
+        let mut cov = [[0.0; N]; N];
 
-                (p * (1.0 - p)) * n
-            } else {
-                let pi = self.0.ps[i];
-                let pj = self.0.ps[j];
+        for i in 0..N {
+            for j in 0..i { cov[i][j] = -n * self.0.ps[i] * self.0.ps[j]; }
+            for j in (i + 1)..N { cov[i][j] = -n * self.0.ps[i] * self.0.ps[j]; }
 
-                -pi * pj * n
-            }
-        })
+            cov[i][i] = n * self.0.ps[i] * (1.0 - self.0.ps[i]);
+        }
+
+        cov
     }
 
-    fn correlation(&self) -> Array2<f64> {
-        let d = self.0.ps.len();
+    fn correlation(&self) -> [[f64; N]; N] {
+        let mut corr = [[1.0; N]; N];
 
-        Array2::from_shape_fn((d, d), |(i, j)| {
-            let pi = self.0.ps[i];
-            let pj = self.0.ps[j];
+        macro_rules! update_index {
+            ($i:ident, $j:ident) => {
+                let pi = self.0.ps[$i];
+                let pj = self.0.ps[$j];
 
-            -(pi * pj / (1.0 - pi) / (1.0 - pj)).sqrt()
-        })
+                corr[$i][$j] = -(pi * pj / (1.0 - pi) / (1.0 - pj)).sqrt();
+            }
+        }
+
+        for i in 0..N {
+            for j in 0..i { update_index!(i, j); }
+            for j in (i + 1)..N { update_index!(i, j); }
+        }
+
+        corr
     }
 }
 
-impl fmt::Display for Multinomial {
+impl<const N: usize> fmt::Display for Multinomial<N> {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "Mult({}; {:?})", self.0.n.0, self.0.ps)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_support() {
+        let d = Multinomial::new(2, [0.5, 0.5]).unwrap();
+        let s = d.support();
+
+        assert_eq!(s.len(), 2);
+
+        assert_eq!(s[0].left.0, 0);
+        assert_eq!(s[0].right.0, 2);
+
+        assert_eq!(s[1].left.0, 0);
+        assert_eq!(s[1].right.0, 2);
+    }
+
+    #[test]
+    fn test_cov() {
+        let d = Multinomial::new(5, [0.25, 0.75]).unwrap();
+        let cov = d.covariance();
+
+        assert_eq!(cov[0][0], 0.9375);
+        assert_eq!(cov[0][1], -0.9375);
+        assert_eq!(cov[1][0], -0.9375);
+        assert_eq!(cov[1][1], 0.9375);
+    }
+
+    #[test]
+    fn test_corr() {
+        let d = Multinomial::new(5, [0.25, 0.75]).unwrap();
+        let cov = d.correlation();
+
+        assert_eq!(cov[0][0], 1.0);
+        assert_eq!(cov[0][1], -1.0);
+        assert_eq!(cov[1][0], -1.0);
+        assert_eq!(cov[1][1], 1.0);
     }
 }

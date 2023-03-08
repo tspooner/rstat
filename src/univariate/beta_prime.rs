@@ -1,11 +1,12 @@
 use crate::{
-    statistics::{Modes, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::PositiveReals;
+use spaces::real::{PositiveReals, positive_reals};
 use std::fmt;
 
 shape_params! {
@@ -39,10 +40,10 @@ impl Default for BetaPrime {
 }
 
 impl Distribution for BetaPrime {
-    type Support = PositiveReals;
+    type Support = PositiveReals<f64>;
     type Params = Params;
 
-    fn support(&self) -> PositiveReals { PositiveReals }
+    fn support(&self) -> PositiveReals<f64> { positive_reals() }
 
     fn params(&self) -> Params { self.0 }
 
@@ -70,7 +71,9 @@ impl ContinuousDistribution for BetaPrime {
     }
 }
 
-impl UnivariateMoments for BetaPrime {
+impl Univariate for BetaPrime {}
+
+impl UvMoments for BetaPrime {
     fn mean(&self) -> f64 {
         let (a, b) = get_params!(self);
 

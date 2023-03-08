@@ -1,12 +1,13 @@
 use crate::{
     consts::{THREE_FIFTHS, THREE_HALVES, TWELVE_FIFTHS},
-    statistics::{Modes, Quantiles, ShannonEntropy, UnivariateMoments},
+    statistics::{Modes, Quantiles, ShannonEntropy, UvMoments},
     ContinuousDistribution,
     Distribution,
     Probability,
+    Univariate,
 };
 use rand::Rng;
-use spaces::real::Interval;
+use spaces::intervals::Closed;
 use std::fmt;
 
 pub use crate::params::{Loc, Scale};
@@ -53,10 +54,12 @@ impl Triangular {
 }
 
 impl Distribution for Triangular {
-    type Support = Interval;
+    type Support = Closed<f64>;
     type Params = Params;
 
-    fn support(&self) -> Interval { Interval::bounded(self.0.a.0, self.0.b()) }
+    fn support(&self) -> Closed<f64> {
+        Closed::closed_unchecked(self.0.a.0, self.0.b())
+    }
 
     fn params(&self) -> Params { self.0 }
 
@@ -101,7 +104,9 @@ impl ContinuousDistribution for Triangular {
     }
 }
 
-impl UnivariateMoments for Triangular {
+impl Univariate for Triangular {}
+
+impl UvMoments for Triangular {
     fn mean(&self) -> f64 {
         let (a, b, c) = get_params!(self);
 
