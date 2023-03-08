@@ -206,14 +206,13 @@ impl MLE for UvNormal {
     fn fit_mle(xs: &[f64]) -> Result<Self, failure::Error> {
         let n = xs.len() as f64;
 
+        // We compute the biased estimate here for correctness.
+        // The variance can be rescaled by n / (n - 1) to adjust for
+        // the estimator of mu.
         let mean = xs.iter().fold(0.0, |acc, &x| acc + x) / n;
-        let var = xs
-            .into_iter()
-            .map(|x| x - mean)
-            .fold(0.0, |acc, r| acc + r * r)
-            / (n - 1.0);
+        let var = xs.into_iter().map(|x| x - mean).fold(0.0, |acc, r| acc + r * r) / n;
 
-        UvNormal::new(mean, var.sqrt())
+        UvNormal::new(mean, var)
     }
 }
 
@@ -231,5 +230,18 @@ impl Convolution<UvNormal> for UvNormal {
 impl fmt::Display for UvNormal {
     fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
         write!(f, "N({}, {})", self.0.mu.0, self.variance())
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_fit_mle() {
+        let dist = UvNormal::fit_mle(&[0.0, 1.0, 2.0, 3.0, 4.0]).unwrap();
+
+        assert_eq!(dist.mean(), 2.0);
+        assert_eq!(dist.variance(), 2.0);
     }
 }
