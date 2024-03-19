@@ -103,7 +103,7 @@ impl<const N: usize> MvNormal<N> {
     /// # use rstat::normal::MvNormal;
     /// let cov = [
     ///     [0.5, 2.0],
-    ///     [1.0, 1.0]
+    ///     [2.0, 1.0]
     /// ];
     /// let dist = MvNormal::new([0.0, 1.0], cov);
     ///
